@@ -1,0 +1,105 @@
+{
+  "_note": "编辑官的产出。结构同 web/src/data/run.ts 的 Brief，另加 entries[].tier。只改写 forYou 一句；数字和日期放 facts，取自原话，不要让模型复述。说法都标明是直播里讲的，不替真人说话。",
+  "briefs": [
+    {
+      "person": "hanzong",
+      "meeting": "xm_safety",
+      "readSeconds": 50,
+      "headline": "小米汽车首次完整讲了安全体系：目标是“同档最安全”，安全有一票否决权，安全相关团队超过 3500 人。",
+      "entries": [
+        { "item": "xm_06", "tier": "must", "reasons": ["R6"], "why": "管理者规则：竞品的目标", "forYou": "对方把安全目标定为“做同档最安全的车”，会直接拿来和同价位车型比。" },
+        { "item": "xm_10", "tier": "must", "reasons": ["R6"], "why": "管理者规则：竞品的组织机制", "forYou": "设计、产品、工程、制造都要过安全评估，安全有一票否决权，过不了就不能往下推进。" },
+        { "item": "xm_07", "tier": "must", "reasons": ["R6"], "why": "管理者规则：竞品的组织机制", "forYou": "最高安全决策组织是安全委员会，覆盖设计、研发、工程、制造，由安全团队牵头。" },
+        { "item": "xm_08", "tier": "must", "reasons": ["R6"], "why": "管理者规则：竞品的投入规模", "forYou": "安全相关团队的规模。", "facts": { "what": "安全相关团队超过 3500 人" } },
+        { "item": "xm_04", "tier": "must", "reasons": ["R6"], "why": "管理者规则：竞品的投入规模", "forYou": "重申 2023 年发布会的说法：用 10 倍投入造车，首先是一辆安全的好车。" }
+      ]
+    },
+    {
+      "person": "songlan",
+      "meeting": "xm_safety",
+      "readSeconds": 60,
+      "headline": "对方首次完整公开安全体系：安委会是最高决策组织，所有环节过安全评估，安全有一票否决权；三个事故预防团队只讲了两个。",
+      "entries": [
+        { "item": "xm_07", "tier": "must", "reasons": ["R3"], "why": "你负责安全委员会", "forYou": "安全委员会是最高安全决策组织，覆盖设计、研发、工程、制造，由安全团队牵头，可以和我们安委会的覆盖面逐项对照。" },
+        { "item": "xm_09", "tier": "must", "reasons": ["R3"], "why": "你负责安全评审流程", "forYou": "业务侧评估完以后还要单独过一次安委会安全评估，这一关过不了，事情就不能往下推进。" },
+        { "item": "xm_10", "tier": "must", "reasons": ["R3"], "why": "你负责安全评审流程", "forYou": "评审里安全有一票否决权；侯静雷说这项权力很大，责任和压力也很大。" },
+        { "item": "xm_05", "tier": "must", "reasons": ["R3"], "why": "你负责安全体系建设", "forYou": "他们把安全体系拆成目标、组织、机制三个词：目标是要达成的功能，组织是谁来承接，机制是组织之间怎么协作。" },
+        { "item": "xm_08", "tier": "should", "reasons": ["R5"], "why": "你订阅了「安全组织」", "forYou": "安全相关团队超过 3500 人，这个数字是爽哥接话说的，侯静雷随后答了“是”。", "facts": { "what": "3500 人以上" } },
+        { "item": "xm_11", "tier": "should", "reasons": ["R5"], "why": "你订阅了「竞品安全体系」", "forYou": "侯静雷说有三个事故预防团队，本段只介绍了全域安全部和安全预防团队，第三个要等后面的片段。" }
+      ]
+    },
+    {
+      "person": "weiran",
+      "meeting": "xm_safety",
+      "readSeconds": 40,
+      "headline": "全域安全部覆盖 4 大场景、19 个安全领域；举的两个细节是座椅调节夹手、生态链产品碰撞后飞起。",
+      "entries": [
+        { "item": "xm_14", "tier": "must", "reasons": ["R3"], "why": "你负责座椅安全", "forYou": "丁志举的第一个例子：电动座椅功能越来越多，调节时会不会夹手，要在开发阶段识别规避。" },
+        { "item": "xm_15", "tier": "must", "reasons": ["R3"], "why": "你负责碰撞安全", "forYou": "第二个例子：车里的生态链产品碰撞时会不会飞起来造成二次伤害。" },
+        { "item": "xm_12", "tier": "must", "reasons": ["R3"], "why": "你负责整车安全开发", "forYou": "对方单设了全域安全部，从整车视角做安全开发，负责人是丁志。" },
+        { "item": "xm_13", "tier": "must", "reasons": ["R3"], "why": "你负责整车安全开发", "forYou": "覆盖安全用车、安全避险、安全防护、安全应急 4 个场景，目标是从源头降风险，主被动安全和电池安全都在里面。", "facts": { "what": "4 个场景 · 19 个安全领域" } }
+      ]
+    },
+    {
+      "person": "chengcheng",
+      "meeting": "xm_safety",
+      "readSeconds": 30,
+      "headline": "两个车主运营动作：新车主 90 天安全打卡，连续打满得 4000 积分；App 安全分已经上线 2.0。",
+      "entries": [
+        { "item": "xm_19", "tier": "must", "reasons": ["R3"], "why": "你负责车主积分体系", "forYou": "他们鼓励所有新车主做 90 天安全挑战打卡，用积分换持续的安全驾驶习惯。", "facts": { "what": "连续打卡 90 天 → 4000 积分" } },
+        { "item": "xm_20", "tier": "must", "reasons": ["R3"], "why": "你负责车主 App", "forYou": "App 里推出了安全分，前提是用户授权，现在是 2.0 版本。", "facts": { "what": "安全分 2.0", "when": "已上线" } },
+        { "item": "xm_16", "tier": "should", "reasons": ["R5"], "why": "你订阅了「用车安全」", "forYou": "他们把交付看作安全工作下一阶段的开始，交付后的用车安全由专门的安全预防团队负责。" }
+      ]
+    },
+    {
+      "person": "gaoyuan",
+      "meeting": "xm_safety",
+      "readSeconds": 40,
+      "headline": "对方 2025 年办了 484 场线下高阶驾驶安全培训、10620 人参加；交付后由专门的安全预防团队接手。",
+      "entries": [
+        { "item": "xm_17", "tier": "must", "reasons": ["R3"], "why": "你负责车主驾驶培训", "forYou": "线下高阶驾驶安全培训的规模，准确人数是侯静雷在下一句补充的。", "facts": { "what": "484 场 · 10620 人", "when": "2025 年" } },
+        { "item": "xm_16", "tier": "must", "reasons": ["R3"], "why": "你负责交付体验", "forYou": "侯静雷说交付不是安全工作的结束，而是下一阶段的开始：全域安全部负责把车造好，安全预防团队负责让用户用好车。" },
+        { "item": "xm_18", "tier": "should", "reasons": ["R5"], "why": "你订阅了「车主培训」", "forYou": "他们说自己“应该是”行业内首个完成万人级培训的车企，没有给出处。" },
+        { "item": "xm_19", "tier": "should", "reasons": ["R5"], "why": "你订阅了「车主激励」", "forYou": "线下培训之外，新车主连续打卡 90 天可得 4000 积分。" }
+      ]
+    },
+    {
+      "person": "jiangwan",
+      "meeting": "xm_safety",
+      "readSeconds": 30,
+      "headline": "对方的安全口径是“做同档最安全的车”；“行业内首个万人培训”是没给出处的绝对化说法，引用前要核实。",
+      "entries": [
+        { "item": "xm_06", "tier": "must", "reasons": ["R3"], "why": "你负责品牌定位", "forYou": "安全目标对外的说法是“做同档最安全的车”，这是按价位段直接比较的定位。" },
+        { "item": "xm_18", "tier": "must", "reasons": ["R6"], "why": "品牌市场规则：没给出处的绝对化宣传表述", "forYou": "原话是“应该是行业内首个”，没有给依据；我们的物料如果要引用或回应，先核实出处。" },
+        { "item": "xm_03", "tier": "should", "reasons": ["R5"], "why": "你订阅了「安全理念」", "forYou": "“安全高于一切”是 2023 年 12 月 28 日首次技术发布会提出的，这次是重申，不是新口径。" }
+      ]
+    },
+    {
+      "person": "dengkai",
+      "meeting": "xm_safety",
+      "readSeconds": 30,
+      "headline": "对方交付权益加送价值 699 元的智能双表盘，并引导用户去门店；门店客户可能会问“同档最安全”和“一票否决”。",
+      "entries": [
+        { "item": "xm_01", "tier": "must", "reasons": ["R3"], "why": "你负责购车权益对比", "forYou": "直播开场讲的交付权益，并引导用户去门店或线上了解，可以更新到权益对比表。", "facts": { "what": "智能双表盘（价值 699 元）" } },
+        { "item": "xm_06", "tier": "should", "reasons": ["R5"], "why": "你订阅了「竞品卖点」", "forYou": "对方说要“做同档最安全的车”，客户可能拿这句来对比。" },
+        { "item": "xm_10", "tier": "should", "reasons": ["R5"], "why": "你订阅了「竞品卖点」", "forYou": "对方说安全在所有开发环节有一票否决权，可以准备我们自己的安全评审说法。" }
+      ]
+    }
+  ],
+  "quiet": [
+    {
+      "person": "xunuo",
+      "meeting": "xm_safety",
+      "headline": "这段直播只讲了安全体系，你关注的「电子安全」在第二部分，本段录像没有。没有必读内容，不打扰；第二部分接入后再推。",
+      "digest": ["xm_02"]
+    }
+  ],
+  "hostBrief": {
+    "person": "jiangwan",
+    "meeting": "xm_safety",
+    "host": true,
+    "readSeconds": 40,
+    "headline": "分发版：20 条条目已发给 7 个人，许诺没有必读内容，不打扰；2 处本段未覆盖（电子安全、第三个事故预防团队），1 条绝对化表述待核实。",
+    "entries": []
+  }
+}

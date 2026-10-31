@@ -1,0 +1,1445 @@
+{
+  "id": "xm_safety",
+  "title": "小米汽车安全专场直播 · 安全体系",
+  "project": "p_intel",
+  "date": "2026-10-31",
+  "time": "",
+  "duration": 589,
+  "host": "leijun",
+  "attendees": [
+    "leijun",
+    "houjinglei",
+    "dingzhi",
+    "shuangge"
+  ],
+  "related": [
+    "hanzong",
+    "songlan",
+    "weiran",
+    "xunuo",
+    "chengcheng",
+    "gaoyuan",
+    "jiangwan",
+    "dengkai"
+  ],
+  "source": "会议录像",
+  "summary": "小米汽车首次完整介绍安全体系：目标是“做同档最安全的车”；安全委员会是最高安全决策组织，所有环节要过安全评估，安全有一票否决权；安全相关团队超过 3500 人；全域安全部覆盖 4 大场景、19 个安全领域；2025 年线下驾驶安全培训 484 场、10620 人；新车主 90 天打卡得 4000 积分，App 安全分上线 2.0。本段只有第一部分，电子安全不在其中。",
+  "chapters": [
+    {
+      "name": "购车权益与开场",
+      "start": 0,
+      "end": 30
+    },
+    {
+      "name": "专家介绍",
+      "start": 30,
+      "end": 82
+    },
+    {
+      "name": "安全高于一切",
+      "start": 82,
+      "end": 121
+    },
+    {
+      "name": "22 年的两点感受",
+      "start": 121,
+      "end": 189
+    },
+    {
+      "name": "目标 · 组织 · 机制",
+      "start": 189,
+      "end": 266
+    },
+    {
+      "name": "安全委员会",
+      "start": 266,
+      "end": 361
+    },
+    {
+      "name": "一票否决",
+      "start": 361,
+      "end": 381
+    },
+    {
+      "name": "全域安全部",
+      "start": 381,
+      "end": 470
+    },
+    {
+      "name": "安全预防团队",
+      "start": 470,
+      "end": 589
+    }
+  ],
+  "segments": [
+    {
+      "id": "x01",
+      "speaker": "shuangge",
+      "start": 0,
+      "end": 8.8,
+      "text": "交付的权益啊，并且我们还会送价值699元的那个仪表，那个那个智能双表，对，智能双表盘，对。",
+      "spk": "S1"
+    },
+    {
+      "id": "x02",
+      "speaker": "shuangge",
+      "start": 9,
+      "end": 18.8,
+      "text": "这是一个非常不错的权益，相信呢，希望大家呢感兴趣的可以到门店也可以去看一看，也可以在网络上可以了解一下我们这台车的一些情况啊。",
+      "spk": "S1"
+    },
+    {
+      "id": "x03",
+      "speaker": "leijun",
+      "start": 19,
+      "end": 22.8,
+      "text": "今天的这个安全专场直播啊，主要分两个部分。",
+      "spk": "S2"
+    },
+    {
+      "id": "x04",
+      "speaker": "leijun",
+      "start": 23,
+      "end": 29.8,
+      "text": "第一个部分呢，是小米汽车的安全体系；第二个部分呢，是关于电子安全。",
+      "spk": "S2"
+    },
+    {
+      "id": "x05",
+      "speaker": "leijun",
+      "start": 30,
+      "end": 35.8,
+      "text": "那我首先呢，呃，再详细介绍一下我们第一波的两位专家。",
+      "spk": "S2"
+    },
+    {
+      "id": "x06",
+      "speaker": "leijun",
+      "start": 36,
+      "end": 42.8,
+      "text": "第一位呢，就是侯静雷，是我们小米汽车的副总裁，呃，兼安全部的总经理。",
+      "spk": "S2"
+    },
+    {
+      "id": "x07",
+      "speaker": "leijun",
+      "start": 43,
+      "end": 51.8,
+      "text": "他呢，毕业于北京交通大学的交通运输学院，呃，拿了这个安全技术及工程的硕士。",
+      "spk": "S2"
+    },
+    {
+      "id": "x08",
+      "speaker": "leijun",
+      "start": 52,
+      "end": 64.8,
+      "text": "他就是学这个交通运输这一块的，然后呢，他在安全生产领域的体系建设和管理呢，有22年经验，在这方面呢，是绝顶的专家。",
+      "spk": "S2"
+    },
+    {
+      "id": "x09",
+      "speaker": "leijun",
+      "start": 65,
+      "end": 81.8,
+      "text": "丁志老师的话呢，也有20多年的汽车行业的从业经验，深度参与了多个平台架构及车型的研发，在整车性能、基层仿真分析及安全开发领域具备非常非常丰富的经验。",
+      "spk": "S2"
+    },
+    {
+      "id": "x10",
+      "speaker": "leijun",
+      "start": 82,
+      "end": 86.8,
+      "text": "所以谈到汽车安全的话呢，我刚才也讲了。",
+      "spk": "S2"
+    },
+    {
+      "id": "x11",
+      "speaker": "leijun",
+      "start": 87,
+      "end": 93.8,
+      "text": "这个在我们小米汽车的第一次发布会，那还是在2023年12月28号。",
+      "spk": "S2"
+    },
+    {
+      "id": "x12",
+      "speaker": "leijun",
+      "start": 94,
+      "end": 103.8,
+      "text": "我们小米汽车办了第一次的技术发布会，呃，我们一个章节就是讲安全的，我们提出了安全高于一切这样的设计理念。",
+      "spk": "S2"
+    },
+    {
+      "id": "x13",
+      "speaker": "leijun",
+      "start": 104,
+      "end": 112.8,
+      "text": "这个并且呢，我们用10倍的投入造一辆好车，这辆车它首先得是一辆安全的好车。",
+      "spk": "S2"
+    },
+    {
+      "id": "x14",
+      "speaker": "leijun",
+      "start": 113,
+      "end": 120.8,
+      "text": "我们认为呢用户是一切的出发点，安全呢是一切的基础和前提，安全呢要高于一切。",
+      "spk": "S2"
+    },
+    {
+      "id": "x15",
+      "speaker": "leijun",
+      "start": 121,
+      "end": 130.8,
+      "text": "好，我们首先想问一下静雷啊，他在安全上经验非常的丰富，我觉得你做了20多年安全，你最大的感受是什么？",
+      "raw": "好，我们首先想问一下景雷啊，他在安全上经验非常的丰富，我觉得你做了20多年安全，你最大的感受是什么？",
+      "spk": "S2"
+    },
+    {
+      "id": "x16",
+      "speaker": "houjinglei",
+      "start": 131,
+      "end": 136.8,
+      "text": "对，谢谢雷总啊，呃确实我在这个方面呢工作了22年。",
+      "spk": "S3"
+    },
+    {
+      "id": "x17",
+      "speaker": "houjinglei",
+      "start": 137,
+      "end": 144.8,
+      "text": "呃，我自己感受呃最重要的两点，啊，一个呢是安全是一个完整的体系，需要体系化的建设。",
+      "spk": "S3"
+    },
+    {
+      "id": "x18",
+      "speaker": "houjinglei",
+      "start": 145,
+      "end": 149.8,
+      "text": "第二呢，要坚持长期主义，持续的提升我们的安全性。",
+      "spk": "S3"
+    },
+    {
+      "id": "x19",
+      "speaker": "leijun",
+      "start": 150,
+      "end": 156.8,
+      "text": "那么，所以安全是一个很复杂事情，需要花很长时间，那永不间断的往前推进，是吧？",
+      "spk": "S2"
+    },
+    {
+      "id": "x20",
+      "speaker": "houjinglei",
+      "start": 157,
+      "end": 158.8,
+      "text": "是的，必须坚持长期主义。",
+      "spk": "S2"
+    },
+    {
+      "id": "x21",
+      "speaker": "leijun",
+      "start": 159,
+      "end": 166.8,
+      "text": "好，我们就请静雷呢，呃，第一次完整的、系统的跟大家介绍一下小米的安全体系。",
+      "raw": "好，我们就请景雷呢，呃，第一次完整的、系统的跟大家介绍一下小米的安全体系。",
+      "spk": "S2"
+    },
+    {
+      "id": "x22",
+      "speaker": "leijun",
+      "start": 167,
+      "end": 170.8,
+      "text": "当然啊，这些内容呢非常硬核。",
+      "spk": "S2"
+    },
+    {
+      "id": "x23",
+      "speaker": "leijun",
+      "start": 171,
+      "end": 177.8,
+      "text": "我今天下午听他讲了讲呢，我发现特别的专业，特别的复杂。",
+      "spk": "S2"
+    },
+    {
+      "id": "x24",
+      "speaker": "leijun",
+      "start": 178,
+      "end": 181.8,
+      "text": "我跟他说，你讲着讲着可能网友们都睡着了。",
+      "spk": "S2"
+    },
+    {
+      "id": "x25",
+      "speaker": "leijun",
+      "start": 182,
+      "end": 188.8,
+      "text": "所以呢我就请这样，我就请静雷呢深入浅出的讲一下我们小米汽车的安全体系。",
+      "raw": "所以呢我就请这样，我就请景雷呢深入浅出的讲一下我们小米汽车的安全体系。",
+      "spk": "S2"
+    },
+    {
+      "id": "x26",
+      "speaker": "houjinglei",
+      "start": 189,
+      "end": 193.8,
+      "text": "好呀，这个关于体系化呢，正好借这次直播的机会。",
+      "spk": "S3"
+    },
+    {
+      "id": "x27",
+      "speaker": "houjinglei",
+      "start": 194,
+      "end": 199.8,
+      "text": "呃，首次给大家完整的介绍一下小米汽车的安全体系。",
+      "spk": "S3"
+    },
+    {
+      "id": "x28",
+      "speaker": "houjinglei",
+      "start": 200,
+      "end": 201.8,
+      "text": "那么，呃，什么叫做体系化？",
+      "spk": "S3"
+    },
+    {
+      "id": "x29",
+      "speaker": "houjinglei",
+      "start": 202,
+      "end": 212.8,
+      "text": "实际上有一个比较长的一个定义，但是对于安全来讲呢，有三个词：第一个是目标，第二个是组织，第三个是机制。",
+      "spk": "S3"
+    },
+    {
+      "id": "x30",
+      "speaker": "shuangge",
+      "start": 213,
+      "end": 219.8,
+      "text": "这里我我其实也挺好奇这个目标组织机制为什么是这三个字，它们之间是什么关系？",
+      "spk": "S1"
+    },
+    {
+      "id": "x31",
+      "speaker": "houjinglei",
+      "start": 220,
+      "end": 233.8,
+      "text": "好啊，这是因为啊其实整个的体系呢它有一个完整的概念，就是一个相互联系的部分，为了达成一个特定的功能，最后组成了一个有机整体。",
+      "raw": "好啊，这是因为啊其实整个的体系呢它有一个完整的概念，就是一个相互联系的部分，为了达成一个特定的功能，最后组成了一个有机成底。",
+      "spk": "S3"
+    },
+    {
+      "id": "x32",
+      "speaker": "houjinglei",
+      "start": 234,
+      "end": 245.8,
+      "text": "所以呢目标就是我们要达成什么样的功能，那么组织呢就是谁来承接这些工作，那么机制呢其实是组织和组织之间他们的协作是怎么样子的。",
+      "spk": "S3"
+    },
+    {
+      "id": "x33",
+      "speaker": "shuangge",
+      "start": 246,
+      "end": 251.8,
+      "text": "OK，对，那你可以介绍一下我们的那目标组织和机制，可以分别再给我们介绍一下。",
+      "spk": "S1"
+    },
+    {
+      "id": "x34",
+      "speaker": "houjinglei",
+      "start": 252,
+      "end": 255.8,
+      "text": "好呀，这个小米汽车的安全目标是什么呢？",
+      "spk": "S3"
+    },
+    {
+      "id": "x35",
+      "speaker": "houjinglei",
+      "start": 256,
+      "end": 261.8,
+      "text": "我觉得刚才雷总讲的很好，造一台安全的好车一直是我们的初心。",
+      "spk": "S3"
+    },
+    {
+      "id": "x36",
+      "speaker": "houjinglei",
+      "start": 262,
+      "end": 265.8,
+      "text": "我们的目标呢，就是要做同档最安全的车。",
+      "spk": "S3"
+    },
+    {
+      "id": "x37",
+      "speaker": "houjinglei",
+      "start": 266,
+      "end": 274.8,
+      "text": "那么要聊到呃组织，实际上我们最先要聊的就是我们安全的决策组织和决策机制是什么样的。",
+      "spk": "S3"
+    },
+    {
+      "id": "x38",
+      "speaker": "houjinglei",
+      "start": 275,
+      "end": 281.8,
+      "text": "那么我给大家介绍一下，小米汽车的安全委员会是小米汽车的安全最高的决策组织。",
+      "spk": "S3"
+    },
+    {
+      "id": "x39",
+      "speaker": "houjinglei",
+      "start": 282,
+      "end": 285.8,
+      "text": "大家都知道啊，小米汽车在安全上投入其实是十分巨大的。",
+      "spk": "S3"
+    },
+    {
+      "id": "x40",
+      "speaker": "houjinglei",
+      "start": 286,
+      "end": 293.8,
+      "text": "嗯，仅在人力的投入上呢，啊，我不知道爽哥清不清楚啊，我们实际上相关的安全的团队呢。",
+      "spk": "S3"
+    },
+    {
+      "id": "x41",
+      "speaker": "shuangge",
+      "start": 294,
+      "end": 294.8,
+      "text": "超过了3500人。",
+      "spk": "S1"
+    },
+    {
+      "id": "x42",
+      "speaker": "shuangge",
+      "start": 295,
+      "end": 296.8,
+      "text": "啊，这是个非常庞大的一个团队。",
+      "spk": "S1"
+    },
+    {
+      "id": "x43",
+      "speaker": "houjinglei",
+      "start": 297,
+      "end": 300.8,
+      "text": "是，那么呃怎么来协调这些团队？",
+      "spk": "S3"
+    },
+    {
+      "id": "x44",
+      "speaker": "houjinglei",
+      "start": 301,
+      "end": 306.8,
+      "text": "我们利用小米汽车安全委员会来协调大家的行动，来统一大家的认识。",
+      "spk": "S3"
+    },
+    {
+      "id": "x45",
+      "speaker": "houjinglei",
+      "start": 307,
+      "end": 313.8,
+      "text": "这个安委会呢实际上涵盖了所有的设计、研发、工程、制造等部门。",
+      "spk": "S3"
+    },
+    {
+      "id": "x46",
+      "speaker": "houjinglei",
+      "start": 314,
+      "end": 321.8,
+      "text": "这个团队呢由安全团队来牵头来引领，确保各类的安全决策呢能够安全优先。",
+      "spk": "S3"
+    },
+    {
+      "id": "x47",
+      "speaker": "shuangge",
+      "start": 322,
+      "end": 328.8,
+      "text": "好，也就是说我们现在呢先说的是第一个最重要的一个组织，叫小米汽车的安全委员会。",
+      "spk": "S1"
+    },
+    {
+      "id": "x48",
+      "speaker": "shuangge",
+      "start": 329,
+      "end": 330.8,
+      "text": "对，那它是怎么运作的呢？",
+      "spk": "S1"
+    },
+    {
+      "id": "x49",
+      "speaker": "houjinglei",
+      "start": 331,
+      "end": 332.8,
+      "text": "对，是这样。",
+      "spk": "S3"
+    },
+    {
+      "id": "x50",
+      "speaker": "houjinglei",
+      "start": 333,
+      "end": 343.8,
+      "text": "那么所有的设计产品工程制造环节在业务侧评估完成之后，那么还要过小米汽车安全委员会安全评估这一关。",
+      "spk": "S3"
+    },
+    {
+      "id": "x51",
+      "speaker": "houjinglei",
+      "start": 344,
+      "end": 348.8,
+      "text": "这一关过不了，实际上所有的事情都没有办法向下推进。",
+      "spk": "S3"
+    },
+    {
+      "id": "x52",
+      "speaker": "shuangge",
+      "start": 349,
+      "end": 359.8,
+      "text": "我能不能这么理解，刚才讲到的设计、产品、制造、工程，对所有的开发和设计的环节，到最后的评审都要过一次安全关。",
+      "spk": "S1"
+    },
+    {
+      "id": "x53",
+      "speaker": "houjinglei",
+      "start": 360,
+      "end": 360.8,
+      "text": "是。",
+      "spk": "S1"
+    },
+    {
+      "id": "x54",
+      "speaker": "houjinglei",
+      "start": 361,
+      "end": 363.8,
+      "text": "而且在这个里边呢，安全具备一票否决权。",
+      "spk": "S3"
+    },
+    {
+      "id": "x55",
+      "speaker": "shuangge",
+      "start": 364,
+      "end": 368.8,
+      "text": "一票否决是事事都要都要过，然后还有一票否决权。",
+      "spk": "S1"
+    },
+    {
+      "id": "x56",
+      "speaker": "shuangge",
+      "start": 369,
+      "end": 370.8,
+      "text": "是的，那这个这个权力还确实是很大的。",
+      "raw": "是的，那这个这个权利还确实是很大的。",
+      "spk": "S1"
+    },
+    {
+      "id": "x57",
+      "speaker": "houjinglei",
+      "start": 371,
+      "end": 373.8,
+      "text": "权力很大，但是呢责任和压力也很大。",
+      "raw": "权利很大，但是呢责任和压力也很大。",
+      "spk": "S3"
+    },
+    {
+      "id": "x58",
+      "speaker": "houjinglei",
+      "start": 374,
+      "end": 377.8,
+      "text": "嗯，但是这恰恰反映了充分体现了。",
+      "spk": "S3"
+    },
+    {
+      "id": "x59",
+      "speaker": "houjinglei",
+      "start": 378,
+      "end": 380.8,
+      "text": "小米汽车安全高于一切的理念。",
+      "spk": "S3"
+    },
+    {
+      "id": "x60",
+      "speaker": "houjinglei",
+      "start": 381,
+      "end": 389.8,
+      "text": "那么除了上面我们讲的安全决策组织啊，呃，我还想跟大家呃汇报一下，我们有三个事故预防团队。",
+      "spk": "S3"
+    },
+    {
+      "id": "x61",
+      "speaker": "houjinglei",
+      "start": 390,
+      "end": 397.8,
+      "text": "这是因为安全非常复杂，嗯，有很多基础的扎扎实实的工作，平时呢大家体会并不深刻。",
+      "spk": "S3"
+    },
+    {
+      "id": "x62",
+      "speaker": "houjinglei",
+      "start": 398,
+      "end": 402.8,
+      "text": "首先呢，要提高整车的产品安全性，我们设立了全域安全部。",
+      "spk": "S3"
+    },
+    {
+      "id": "x63",
+      "speaker": "shuangge",
+      "start": 403,
+      "end": 404.8,
+      "text": "就是产品安全性。",
+      "spk": "S1"
+    },
+    {
+      "id": "x64",
+      "speaker": "houjinglei",
+      "start": 405,
+      "end": 411.8,
+      "text": "对，那么我们从整车的视角呢进行安全开发，强化整个产品开发过程中的风险管控。",
+      "spk": "S3"
+    },
+    {
+      "id": "x65",
+      "speaker": "houjinglei",
+      "start": 412,
+      "end": 417.8,
+      "text": "丁志老师呢就是我们全域安全部的负责人，那么有请丁志老师来帮我们介绍一下全域安全。",
+      "spk": "S3"
+    },
+    {
+      "id": "x66",
+      "speaker": "dingzhi",
+      "start": 418,
+      "end": 424.8,
+      "text": "呃，好啊，呃，小米汽车的全域安全业务，它贯穿了呃四个大的安全的场景。",
+      "spk": "S4"
+    },
+    {
+      "id": "x67",
+      "speaker": "dingzhi",
+      "start": 425,
+      "end": 432.8,
+      "text": "第一个的话是安全用车，第二个的话是安全避险，第三个是安全的防护，第四个的话是安全的应急。",
+      "spk": "S4"
+    },
+    {
+      "id": "x68",
+      "speaker": "dingzhi",
+      "start": 433,
+      "end": 435.8,
+      "text": "同时的话，它还覆盖了19个安全领域。",
+      "spk": "S4"
+    },
+    {
+      "id": "x69",
+      "speaker": "dingzhi",
+      "start": 436,
+      "end": 438.8,
+      "text": "呃，目标的话是从源头上面能够降风险。",
+      "spk": "S4"
+    },
+    {
+      "id": "x70",
+      "speaker": "dingzhi",
+      "start": 439,
+      "end": 448.8,
+      "text": "这里面的话既包括大家比较熟悉的呃主被动的安全、电池安全，也深入那些看不见但是比较重要的一些安全的细节。",
+      "spk": "S4"
+    },
+    {
+      "id": "x71",
+      "speaker": "dingzhi",
+      "start": 449,
+      "end": 455.8,
+      "text": "举两个小例子，比如说现在这个电座椅的功能是越来越多了，座椅的调节会不会夹手？",
+      "spk": "S4"
+    },
+    {
+      "id": "x72",
+      "speaker": "dingzhi",
+      "start": 456,
+      "end": 460.8,
+      "text": "生态链的产品在遇到碰撞的时候会不会飞起来造成二次的伤害等等等等。",
+      "spk": "S4"
+    },
+    {
+      "id": "x73",
+      "speaker": "dingzhi",
+      "start": 461,
+      "end": 469.8,
+      "text": "全域安全要做的事情的话，就是在开发阶段识别规避风险，保证的话是交到用户手里面是一辆安全的好车。",
+      "raw": "全安全要做的事情的话，就是在开发阶段识别规避风险，保证的话是交到用户手里面是一辆安全的好车。",
+      "spk": "S4"
+    },
+    {
+      "id": "x74",
+      "speaker": "houjinglei",
+      "start": 470,
+      "end": 478.8,
+      "text": "对，好呀，这个除了这个我们的全域安全部，我们还有第二个团队，就是我们面向用户的安全预防团队。",
+      "spk": "S3"
+    },
+    {
+      "id": "x75",
+      "speaker": "houjinglei",
+      "start": 479,
+      "end": 486.8,
+      "text": "那么呃这个这个部门呢呃我不知道这个爽哥听完之后能不能从名字上。",
+      "spk": "S3"
+    },
+    {
+      "id": "x76",
+      "speaker": "shuangge",
+      "start": 487,
+      "end": 490.8,
+      "text": "一个叫全域安全部，对，一个叫安全预防团队。",
+      "spk": "S1"
+    },
+    {
+      "id": "x77",
+      "speaker": "shuangge",
+      "start": 491,
+      "end": 497.8,
+      "text": "对，刚才因为因为丁老师的工作我是清楚的，他其实更多是聚焦于产品的开发，要确保做一个安全的产品。",
+      "spk": "S1"
+    },
+    {
+      "id": "x78",
+      "speaker": "shuangge",
+      "start": 498,
+      "end": 503.8,
+      "text": "对，但是安全预防团队呃，要不你介绍一下是对呃。",
+      "spk": "S1"
+    },
+    {
+      "id": "x79",
+      "speaker": "houjinglei",
+      "start": 504,
+      "end": 504.8,
+      "text": "这个实际上呢。",
+      "spk": "S3"
+    },
+    {
+      "id": "x80",
+      "speaker": "houjinglei",
+      "start": 505,
+      "end": 508.8,
+      "text": "造一台安全的好车是我们在汽车安全上的第一步。",
+      "spk": "S3"
+    },
+    {
+      "id": "x81",
+      "speaker": "houjinglei",
+      "start": 509,
+      "end": 514.8,
+      "text": "那么车辆的交付呢，并不是我们安全工作的结束，而是下一阶段的开始。",
+      "spk": "S3"
+    },
+    {
+      "id": "x82",
+      "speaker": "houjinglei",
+      "start": 515,
+      "end": 519.8,
+      "text": "怎么让车主体验到好开、驾驶安全，是我们一直在努力的事情。",
+      "spk": "S3"
+    },
+    {
+      "id": "x83",
+      "speaker": "houjinglei",
+      "start": 520,
+      "end": 529.8,
+      "text": "所以简单来讲呢，全域安全部负责把车造好，安全预防部呢，负责让用户用好车、驾驶安全。",
+      "spk": "S3"
+    },
+    {
+      "id": "x84",
+      "speaker": "shuangge",
+      "start": 530,
+      "end": 533.8,
+      "text": "那么在相当于是第一个呢是造一台安全的好车。",
+      "spk": "S1"
+    },
+    {
+      "id": "x85",
+      "speaker": "shuangge",
+      "start": 534,
+      "end": 538.8,
+      "text": "对，第二个呢是在用户的用车的这个有点像在从运营的角度是让这台车呢能够更好的。",
+      "spk": "S1"
+    },
+    {
+      "id": "x86",
+      "speaker": "houjinglei",
+      "start": 539,
+      "end": 540.8,
+      "text": "使用用车安全。",
+      "spk": "S3"
+    },
+    {
+      "id": "x87",
+      "speaker": "houjinglei",
+      "start": 541,
+      "end": 557.8,
+      "text": "对对呃，这个2025年呢这个团队还是做了比较多的事情啊，我举三个例子啊，比方说过去的一年，我们组织了线下的高阶驾驶安全培训，已经线下培训组织了484场，超过1万人参加。",
+      "spk": "S3"
+    },
+    {
+      "id": "x88",
+      "speaker": "houjinglei",
+      "start": 558,
+      "end": 560.8,
+      "text": "实际上准确的数字呢是10620人。",
+      "spk": "S3"
+    },
+    {
+      "id": "x89",
+      "speaker": "houjinglei",
+      "start": 561,
+      "end": 567.8,
+      "text": "那么小米汽车呢，应该是行业内首个完成万人类似培训的整机厂品牌。",
+      "spk": "S3"
+    },
+    {
+      "id": "x90",
+      "speaker": "houjinglei",
+      "start": 568,
+      "end": 579.8,
+      "text": "那么除了线下的培训课程，我们去年还鼓励全部的新车主进行90天的安全挑战打卡，连续打卡90天呢，可以获得4000积分。",
+      "spk": "S3"
+    },
+    {
+      "id": "x91",
+      "speaker": "houjinglei",
+      "start": 580,
+      "end": 584.8,
+      "text": "第三个，除此之外呢，在用户的授权下，我们还在app端呢推出了安全分。",
+      "spk": "S3"
+    },
+    {
+      "id": "x92",
+      "speaker": "houjinglei",
+      "start": 585,
+      "end": 588.6,
+      "text": "目前我们已经上线了2.0版本。",
+      "spk": "S3"
+    }
+  ],
+  "items": [
+    {
+      "id": "xm_01",
+      "type": "info",
+      "title": "交付权益加送价值 699 元的智能双表盘",
+      "detail": "并引导用户去门店看车",
+      "topic": "购车权益",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x01",
+      "quote": "我们还会送价值699元的那个仪表",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_02",
+      "type": "info",
+      "title": "本场分两部分：安全体系、电子安全",
+      "detail": "录像到 09:49 结束，只有第一部分，电子安全不在本段",
+      "topic": "电子安全",
+      "flags": [
+        "本段未覆盖"
+      ],
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x04",
+      "quote": "第二个部分呢，是关于电子安全",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_03",
+      "type": "info",
+      "title": "重申“安全高于一切”的设计理念",
+      "detail": "2023 年 12 月 28 日首次技术发布会提出",
+      "topic": "安全理念",
+      "flags": [
+        "旧闻重申"
+      ],
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x12",
+      "quote": "我们提出了安全高于一切这样的设计理念",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_04",
+      "type": "info",
+      "title": "用 10 倍投入造一辆安全的好车",
+      "detail": "2023 年发布会上的说法",
+      "topic": "安全理念",
+      "flags": [
+        "旧闻重申"
+      ],
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x13",
+      "quote": "我们用10倍的投入造一辆好车",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_05",
+      "type": "info",
+      "title": "安全体系三要素：目标、组织、机制",
+      "detail": "目标是要达成的功能，组织是谁来承接，机制是组织之间怎么协作；称是首次完整对外介绍",
+      "topic": "安全体系",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x29",
+      "quote": "有三个词：第一个是目标，第二个是组织，第三个是机制",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_06",
+      "type": "decision",
+      "title": "安全目标：做同档最安全的车",
+      "topic": "安全目标",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x36",
+      "quote": "我们的目标呢，就是要做同档最安全的车",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_07",
+      "type": "decision",
+      "title": "安全委员会是最高安全决策组织",
+      "detail": "涵盖设计、研发、工程、制造等部门，由安全团队牵头",
+      "topic": "安全组织",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x38",
+      "quote": "小米汽车的安全委员会是小米汽车的安全最高的决策组织",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_08",
+      "type": "info",
+      "title": "安全相关团队超过 3500 人",
+      "detail": "数字由爽哥接话说出，侯静雷随后答“是”",
+      "topic": "安全组织",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x41",
+      "quote": "超过了3500人",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_09",
+      "type": "decision",
+      "title": "所有环节业务评估后还要过安委会安全评估",
+      "detail": "设计、产品、工程、制造都算，这一关过不了不能往下推进",
+      "topic": "评审机制",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x50",
+      "quote": "还要过小米汽车安全委员会安全评估这一关",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_10",
+      "type": "decision",
+      "title": "安全在评审中有一票否决权",
+      "detail": "侯静雷：权力很大，责任和压力也很大",
+      "topic": "评审机制",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x54",
+      "quote": "安全具备一票否决权",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_11",
+      "type": "question",
+      "title": "三个事故预防团队，本段只讲了两个",
+      "detail": "讲了全域安全部、安全预防团队，第三个没有介绍",
+      "topic": "事故预防",
+      "flags": [
+        "本段未覆盖"
+      ],
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x60",
+      "quote": "我们有三个事故预防团队",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_12",
+      "type": "info",
+      "title": "设立全域安全部，从整车视角做安全开发",
+      "detail": "强化产品开发过程中的风险管控，负责人丁志",
+      "topic": "全域安全",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x62",
+      "quote": "我们设立了全域安全部",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_13",
+      "type": "info",
+      "title": "全域安全覆盖 4 大场景、19 个安全领域",
+      "detail": "安全用车、安全避险、安全防护、安全应急；从源头降风险，包括主被动安全和电池安全",
+      "topic": "全域安全",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x68",
+      "quote": "它还覆盖了19个安全领域",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_14",
+      "type": "risk",
+      "title": "电动座椅调节夹手",
+      "detail": "丁志举的细节例子，开发阶段识别规避",
+      "topic": "全域安全",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x71",
+      "quote": "座椅的调节会不会夹手",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_15",
+      "type": "risk",
+      "title": "生态链产品碰撞时飞起造成二次伤害",
+      "detail": "丁志举的细节例子，开发阶段识别规避",
+      "topic": "全域安全",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x72",
+      "quote": "会不会飞起来造成二次的伤害",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_16",
+      "type": "info",
+      "title": "交付不是安全工作的结束，而是下一阶段的开始",
+      "detail": "全域安全部负责把车造好，安全预防团队负责让用户用好车、驾驶安全",
+      "topic": "用车安全",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x81",
+      "quote": "车辆的交付呢，并不是我们安全工作的结束，而是下一阶段的开始",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_17",
+      "type": "info",
+      "title": "2025 年线下高阶驾驶安全培训 484 场、10620 人",
+      "topic": "车主培训",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x87",
+      "quote": "已经线下培训组织了484场，超过1万人参加",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_18",
+      "type": "info",
+      "title": "自称行业内首个完成万人级培训的车企",
+      "detail": "原话带“应该是”，没有给出处",
+      "topic": "车主培训",
+      "flags": [
+        "绝对化表述",
+        "待核实"
+      ],
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x89",
+      "quote": "应该是行业内首个完成万人类似培训的整机厂品牌",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_19",
+      "type": "info",
+      "title": "新车主 90 天安全打卡，连续打满得 4000 积分",
+      "topic": "车主激励",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x90",
+      "quote": "连续打卡90天呢，可以获得4000积分",
+      "sensitivity": "public"
+    },
+    {
+      "id": "xm_20",
+      "type": "info",
+      "title": "App 安全分上线 2.0（需用户授权）",
+      "topic": "App 安全分",
+      "meeting": "xm_safety",
+      "owner": null,
+      "due": null,
+      "seg": "x91",
+      "quote": "在用户的授权下，我们还在app端呢推出了安全分",
+      "sensitivity": "public"
+    }
+  ],
+  "routes": [
+    {
+      "item": "xm_01",
+      "person": "dengkai",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:购车权益对比"
+    },
+    {
+      "item": "xm_02",
+      "person": "xunuo",
+      "reasons": [
+        "R5"
+      ],
+      "tier": "should",
+      "basis": "interest:电子安全"
+    },
+    {
+      "item": "xm_03",
+      "person": "jiangwan",
+      "reasons": [
+        "R5"
+      ],
+      "tier": "should",
+      "basis": "interest:安全理念"
+    },
+    {
+      "item": "xm_04",
+      "person": "hanzong",
+      "reasons": [
+        "R6"
+      ],
+      "tier": "must",
+      "basis": "rule:管理者收竞品投入规模"
+    },
+    {
+      "item": "xm_05",
+      "person": "songlan",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:安全体系建设"
+    },
+    {
+      "item": "xm_06",
+      "person": "hanzong",
+      "reasons": [
+        "R6"
+      ],
+      "tier": "must",
+      "basis": "rule:管理者收竞品目标"
+    },
+    {
+      "item": "xm_06",
+      "person": "jiangwan",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:品牌定位"
+    },
+    {
+      "item": "xm_06",
+      "person": "dengkai",
+      "reasons": [
+        "R5"
+      ],
+      "tier": "should",
+      "basis": "interest:竞品卖点"
+    },
+    {
+      "item": "xm_07",
+      "person": "songlan",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:安全委员会"
+    },
+    {
+      "item": "xm_07",
+      "person": "hanzong",
+      "reasons": [
+        "R6"
+      ],
+      "tier": "must",
+      "basis": "rule:管理者收竞品组织机制"
+    },
+    {
+      "item": "xm_08",
+      "person": "hanzong",
+      "reasons": [
+        "R6"
+      ],
+      "tier": "must",
+      "basis": "rule:管理者收竞品投入规模"
+    },
+    {
+      "item": "xm_08",
+      "person": "songlan",
+      "reasons": [
+        "R5"
+      ],
+      "tier": "should",
+      "basis": "interest:安全组织"
+    },
+    {
+      "item": "xm_09",
+      "person": "songlan",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:安全评审流程"
+    },
+    {
+      "item": "xm_10",
+      "person": "songlan",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:安全评审流程"
+    },
+    {
+      "item": "xm_10",
+      "person": "hanzong",
+      "reasons": [
+        "R6"
+      ],
+      "tier": "must",
+      "basis": "rule:管理者收竞品组织机制"
+    },
+    {
+      "item": "xm_10",
+      "person": "dengkai",
+      "reasons": [
+        "R5"
+      ],
+      "tier": "should",
+      "basis": "interest:竞品卖点"
+    },
+    {
+      "item": "xm_11",
+      "person": "songlan",
+      "reasons": [
+        "R5"
+      ],
+      "tier": "should",
+      "basis": "interest:竞品安全体系"
+    },
+    {
+      "item": "xm_12",
+      "person": "weiran",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:整车安全开发"
+    },
+    {
+      "item": "xm_13",
+      "person": "weiran",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:整车安全开发"
+    },
+    {
+      "item": "xm_14",
+      "person": "weiran",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:座椅安全"
+    },
+    {
+      "item": "xm_15",
+      "person": "weiran",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:碰撞安全"
+    },
+    {
+      "item": "xm_16",
+      "person": "gaoyuan",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:交付体验"
+    },
+    {
+      "item": "xm_16",
+      "person": "chengcheng",
+      "reasons": [
+        "R5"
+      ],
+      "tier": "should",
+      "basis": "interest:用车安全"
+    },
+    {
+      "item": "xm_17",
+      "person": "gaoyuan",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:车主驾驶培训"
+    },
+    {
+      "item": "xm_18",
+      "person": "jiangwan",
+      "reasons": [
+        "R6"
+      ],
+      "tier": "must",
+      "basis": "rule:品牌市场收绝对化宣传表述"
+    },
+    {
+      "item": "xm_18",
+      "person": "gaoyuan",
+      "reasons": [
+        "R5"
+      ],
+      "tier": "should",
+      "basis": "interest:车主培训"
+    },
+    {
+      "item": "xm_19",
+      "person": "chengcheng",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:车主积分体系"
+    },
+    {
+      "item": "xm_19",
+      "person": "gaoyuan",
+      "reasons": [
+        "R5"
+      ],
+      "tier": "should",
+      "basis": "interest:车主激励"
+    },
+    {
+      "item": "xm_20",
+      "person": "chengcheng",
+      "reasons": [
+        "R3"
+      ],
+      "tier": "must",
+      "basis": "owns:车主 App"
+    }
+  ],
+  "status": "ready",
+  "confirmed": [],
+  "dispatcher": "jiangwan",
+  "video": {
+    "path": "data/video/196d80ece5e9f2c22fd9f93f35b988c2.mp4",
+    "duration": 588.76,
+    "width": 544,
+    "height": 960,
+    "fps": 21,
+    "note": "竖屏，画面带 B 站转载水印，不是小米官方源；对外放映前确认版权"
+  },
+  "sourceDoc": "data/小米汽车安全专场直播：小米汽车安全体系详细介绍-2026年10月31日-来自【得到大脑】.md",
+  "speakerMap": [
+    {
+      "label": "说话人1",
+      "spk": "S1",
+      "person": "shuangge",
+      "confidence": 0.85,
+      "evidence": "04:46 侯静雷问“爽哥清不清楚”，说话人1 接“超过了3500人”；07:59 再点名“爽哥”，又是说话人1 接话。开场 00:00–00:18 两段讲购车权益，得到大脑摘要写成雷总，转写标的是说话人1，这两段置信偏低"
+    },
+    {
+      "label": "说话人2",
+      "spk": "S2",
+      "person": "leijun",
+      "confidence": 0.95,
+      "evidence": "02:01 说话人2 提问，说话人3 回“谢谢雷总”；04:16 侯静雷说“刚才雷总讲的很好”，指的是说话人2 在 01:44 讲的“安全的好车”；00:21、00:40 的单人特写和说话人2 的发言段一致"
+    },
+    {
+      "label": "雷军",
+      "spk": "S2",
+      "person": "leijun",
+      "confidence": 0.95,
+      "evidence": "00:19 这一段转写工具单独标成雷军，下一句（说话人2，00:23）接着说“第一个部分呢”，是同一个人，合并到 S2"
+    },
+    {
+      "label": "说话人3",
+      "spk": "S3",
+      "person": "houjinglei",
+      "confidence": 0.95,
+      "evidence": "02:11 “确实我在这个方面工作了22年”，和 00:52 对侯静雷“22年经验”的介绍一致；06:52 由他请丁志介绍全域安全"
+    },
+    {
+      "label": "说话人4",
+      "spk": "S4",
+      "person": "dingzhi",
+      "confidence": 0.95,
+      "evidence": "06:52 “有请丁志老师来帮我们介绍一下全域安全”之后，说话人4 开始讲“小米汽车的全域安全业务”"
+    }
+  ],
+  "speakerFixes": [
+    {
+      "at": "00:02:37",
+      "from": "说话人2",
+      "to": "houjinglei",
+      "reason": "“是的，必须坚持长期主义”是在回答上一句雷军的反问，得到大脑摘要也记为侯静雷确认"
+    },
+    {
+      "at": "00:06:00",
+      "from": "说话人1",
+      "to": "houjinglei",
+      "reason": "“是。”是在确认爽哥上一句“我能不能这么理解……”，下一句侯静雷接着说“而且在这个里边呢”"
+    }
+  ],
+  "textFixes": [
+    {
+      "from": "景雷",
+      "to": "静雷",
+      "reason": "人名热词：侯静雷",
+      "count": 3
+    },
+    {
+      "from": "有机成底",
+      "to": "有机整体",
+      "reason": "同音误识别",
+      "count": 1
+    },
+    {
+      "from": "全安全要做的事情",
+      "to": "全域安全要做的事情",
+      "reason": "漏字：上下文都在讲全域安全",
+      "count": 1
+    },
+    {
+      "from": "权利",
+      "to": "权力",
+      "reason": "同音误识别：这里说的是一票否决的权力",
+      "count": 2
+    }
+  ]
+}

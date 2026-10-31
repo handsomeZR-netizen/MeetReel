@@ -8,19 +8,19 @@ import {
   ArrowLeft, BellOff, Check as CheckIcon, FileVideo, Mic, MessageCircleQuestion, PanelRightClose, PanelRightOpen, Paperclip, PenLine,
   Plus, RotateCcw, ShieldCheck, SquarePen, ThumbsDown, ThumbsUp, UserCheck, X,
 } from 'lucide-react'
-import { ENGINES, REASONS, personById, type EngineId, type PersonId } from '@/data/model'
-import { MEETINGS, itemById, meetingById } from '@/data/meetings'
+import { DEFAULT_MODELS, ME, MODELS, REASONS, personById, type ModelId, type PersonId } from '@/data/model'
+import { MEETINGS, XM, itemById, meetingById } from '@/data/meetings'
 import { mmss, quoteSpan } from '@/data/derive'
 import {
-  AGENTS, GATE_AT, LOG, PHASES, RUN_MEETING, RUN_PEOPLE, RUN_PEOPLE_SORTED, T_END, TOTAL_TOKENS,
-  agentById, agentModel, agentSpan, d11Brief, isQuietIn, logAt, phaseIndex, readyAt, runItemsAt, runRoutesAt, tokensAt,
+  AGENTS, GATE_AT, LOG, PHASES, RUN_ID, RUN_MEETING, RUN_PEOPLE, RUN_PEOPLE_SORTED, T_END, TOTAL_TOKENS,
+  agentById, agentModel, agentSpan, costText, isQuietIn, logAt, phaseIndex, readyAt, runBrief, runItemsAt, runRoutesAt, tokensAt, usedModels,
 } from '@/data/run'
 import { go, goSource, href, useRoute } from '@/lib/router'
 import { actions, useStore } from '@/lib/store'
 import { useClock } from '@/lib/useClock'
 import { cn, cnDate } from '@/lib/utils'
 import { TopBar } from '@/components/shell/TopBar'
-import { Face, FaceStack, Kb, ModelIcon } from '@/components/common/bits'
+import { Face, FaceStack, Kb, ModelIcon, RankTag } from '@/components/common/bits'
 import { FeishuCard } from '@/components/common/FeishuCard'
 import { Switch } from '@/components/ui/misc'
 import { rich, richLen, useStream } from '@/components/common/stream'
@@ -33,22 +33,22 @@ type CanvasTab = 'run' | 'flow' | 'matrix' | 'briefs'
 type Msg = { id: number; q: string; a: string; kind?: 'assign' }
 
 const FOLLOWUPS: { q: string; a: string }[] = [
-  { q: '为什么赵一会收到？', a: '赵一没参会，会上也没人点他的名。但他的关注档案里写着负责**客户端**，而客户端依赖**订单接口**。陈默说要拆字段、客户端也得跟着改 [[it_05]]，所以影响链规则 R4 把这条推给了他，并建议由他负责。' },
-  { q: '林总这次要签批什么？', a: '只有 1 笔：**A 方案扩容预算约 30 万** [[it_07]]。这条是受限内容，金额只有林总、周宁、王珂、陈默能看到；其他人看到的是“扩容按 A 方案推进”。' },
-  { q: '压测排期和之前的决定冲突吗？', a: '有冲突。618 复盘时定过**双 11 至少提前一周压测** [[s618_03]]，但这次压测定在周四（11/5）完成 [[it_10]]，离 11/8 上线只有 3 天。建议在给林总的简报里标出来，或者把压测提前到 11/1。' },
-  { q: '吴桐为什么没收到？', a: '吴桐（数据分析）这场会没有必读条目：没被点名，负责的东西没被提到，依赖的东西也没变。上线日期的变化 [[it_03]] 只放进了他的日报，**不单独打扰**。' },
+  { q: '为什么许诺没收到？', a: '许诺关注的是**电子安全**。直播开场说了分两部分 [[xm_02]]，电子安全在第二部分，这段 9 分 49 秒的录像里没有。他没有必读内容，**不单独打扰**；第二部分接入后再推给他。' },
+  { q: '和我们自己的安委会比，差在哪？', a: '差在**评审机制**。对方：所有环节业务评估后还要过安委会评估 [[xm_09]]，安全有**一票否决权** [[xm_10]]。我们：10/28 安全周会上宋岚说安委会只做事后通报，**评审里没有否决权** [[sf_01]]，她准备下月经营会提方案让安全评审变成一道关 [[sf_02]]。这两条已经在宋岚和韩总的简报里。' },
+  { q: '“3500 人”这个数字可靠吗？', a: '是直播里说的，但要注意**谁说的**：“超过了3500人”是爽哥接话 [[xm_08]]，侯静雷随后答了“是”。审核官一开始发现抽取官挂错了说话人，打回重抽过一次。给韩总的简报里写的是“安全相关团队超过 3500 人”。' },
+  { q: '韩总为什么收到 5 条？', a: '韩总是 **L1 高管**，走管理者规则 R6：竞品的**目标** [[xm_06]]、**组织机制** [[xm_07]] [[xm_10]]、**投入规模** [[xm_08]] [[xm_04]]。具体的开发细节（座椅、二次伤害）只发给负责的魏然，不占高管的时间。' },
 ]
 
 export function Dispatch({ id }: { id?: string }) {
   const route = useRoute()
   const meeting = id ? meetingById(id) : undefined
-  if (meeting && meeting.id !== 'd11') return <AlreadySent id={meeting.id} />
+  if (meeting && meeting.id !== RUN_ID) return <AlreadySent id={meeting.id} />
   return <DispatchView key={id ?? 'new'} attachedAtStart={!!meeting} autorun={route.query.has('run')} />
 }
 
 function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; autorun: boolean }) {
-  const already = useStore(s => s.dispatched.d11)
-  const engine = useStore(s => s.engine)
+  const already = useStore(s => s.dispatched[RUN_ID])
+  const models = useStore(s => s.models)
   const [approved, setApproved] = useState(already)
   const clock = useClock(T_END, { t: already ? T_END : 0, stopAt: approved ? null : GATE_AT })
   const [stage, setStage] = useState<'welcome' | 'run'>(already ? 'run' : 'welcome')
@@ -95,7 +95,7 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (done) actions.dispatch('d11')
+    if (done) actions.dispatch(RUN_ID)
   }, [done])
 
   // 画布跟随进度切页
@@ -110,12 +110,12 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
 
   const ask = (q: string) => {
     const hit = FOLLOWUPS.find(f => f.q === q)
-    setExtra(x => [...x, { id: Date.now(), q, a: hit?.a ?? '演示版只预置了几个问题。可以问：为什么赵一会收到？压测排期和之前的决定冲突吗？' }])
+    setExtra(x => [...x, { id: Date.now(), q, a: hit?.a ?? '这个问题会映还答不上来。可以问：为什么许诺没收到？和我们自己的安委会比，差在哪？' }])
     setDraft('')
   }
   const assign = () => {
-    actions.assign('it_05', 'zhaoyi')
-    setExtra(x => [...x, { id: Date.now(), q: '好，指派给赵一', a: '已指派。赵一会收到一张带原话的确认卡片 [[it_05]]，他点“我来负责”后，账本里这条的负责人就定下来了，你的主持人版会同步变色。', kind: 'assign' }])
+    actions.assign('xm_18', 'linxia')
+    setExtra(x => [...x, { id: Date.now(), q: '好，交给林夏核实', a: '已指派给你组里的**林夏**（L4 竞品研究专员）。她会收到一张带原话的卡片 [[xm_18]]，点“我来负责”后，这条在账本里就有了负责人；核实结果会回到你的发布者版。', kind: 'assign' }])
   }
   const send = () => {
     if (!running) {
@@ -142,7 +142,7 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
   return (
     <>
       <TopBar crumbs={[{ label: '智能分发', to: '/dispatch' }, ...(running || attached ? [{ label: RUN_MEETING.title }] : [])]}>
-        <ModelPicker engine={engine} onPick={actions.setEngine} />
+        <ModelPicker models={models} />
         {running && (
           <button className="text-ink-2 grid size-8 place-items-center rounded-lg hover:bg-black/5" onClick={() => setCanvas(c => !c)} aria-label="画布" title={canvas ? '收起画布' : '打开画布'}>
             {canvas ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}
@@ -166,7 +166,7 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
                 <div className="mx-auto max-w-[760px] px-6 pt-4 pb-10">
                   <UserMessage />
                   <Answer
-                    t={t} engine={engine} instant={instant} gated={gated} approved={approved}
+                    t={t} models={models} instant={instant} gated={gated} approved={approved}
                     onApprove={approve} onMatrix={() => { setCanvas(true); setFollow(false); setCtab('matrix') }}
                     onOpen={openBrief} onCanvas={() => { setCanvas(true); setFollow(true) }}
                     onAsk={ask} onAssign={assign} showFollow={answerDone && !extra.length}
@@ -196,9 +196,9 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
                 onSend={send}
                 generating={generating}
                 canSend={running ? !!draft.trim() : attached}
-                placeholder={running ? '继续追问，例如：压测排期和之前的决定冲突吗？' : attached ? '' : '把会议录像、录音或文本交给会映'}
+                placeholder={running ? '继续追问，例如：和我们自己的安委会比，差在哪？' : attached ? '' : '把会议录像、录音或文本交给会映'}
               />
-              <p className="text-ink-3 mt-2 text-center text-[12px]">会映会出错，重要事项请点原话回到录像核实。演示数据，未连接真实模型。</p>
+              <p className="text-ink-3 mt-2 text-center text-[12px]">会映会出错，重要事项请点原话回到录像核实。</p>
             </motion.div>
           </div>
 
@@ -214,7 +214,7 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
                 <div className="min-h-0 flex-1 overflow-y-auto p-5">
                   <AnimatePresence mode="wait">
                     <motion.div key={ctab + (person ?? '')} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.2 }}>
-                      {ctab === 'run' && <RunTab clock={clock} engine={engine} gated={gated} />}
+                      {ctab === 'run' && <RunTab clock={clock} models={models} gated={gated} />}
                       {ctab === 'flow' && <FlowTab t={t} onOpen={openBrief} />}
                       {ctab === 'matrix' && <MatrixTab t={t} gated={gated} onApprove={approve} onOpen={openBrief} />}
                       {ctab === 'briefs' && (person
@@ -228,7 +228,7 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
           </AnimatePresence>
         </div>
       </LayoutGroup>
-      <BriefPaper meeting="d11" pid={paper} onClose={() => setPaper(null)} />
+      <BriefPaper meeting={RUN_ID} pid={paper} onClose={() => setPaper(null)} />
     </>
   )
 }
@@ -244,10 +244,10 @@ function AlreadySent({ id }: { id: string }) {
         <div className="text-center">
           <span className="text-ink-3 kb-icon-in inline-block"><Kb name="mailbox" size={64} /></span>
           <h2 className="mt-3 text-lg font-semibold">{m.title} 已于 {cnDate(m.date)} 分发</h2>
-          <p className="text-ink-3 mt-1 text-sm">{new Set(m.routes.map(r => r.person)).size} 人收到了各自的简报。演示里只有“双 11 活动上线评审”可以重新跑一遍编排。</p>
+          <p className="text-ink-3 mt-1 text-sm">{new Set(m.routes.map(r => r.person)).size} 人收到了各自的简报，确认和追问都在回流里。</p>
           <div className="mt-4 flex justify-center gap-2">
             <a className="rounded-lg border px-3 py-1.5 text-sm hover:bg-black/5" href={href(`/m/${m.id}`, { tab: 'dist' })}>看分发结果</a>
-            <a className="bg-ink rounded-lg px-3 py-1.5 text-sm text-white" href={href('/dispatch/d11')}>去分发双 11 评审</a>
+            <a className="bg-ink rounded-lg px-3 py-1.5 text-sm text-white" href={href(`/dispatch/${RUN_ID}`)}>去分发{RUN_MEETING.title.replace(/ · .*/, '')}</a>
           </div>
         </div>
       </div>
@@ -257,9 +257,10 @@ function AlreadySent({ id }: { id: string }) {
 
 // ---------------- 顶栏：模型选择 ----------------
 
-function ModelPicker({ engine, onPick }: { engine: EngineId; onPick: (e: EngineId) => void }) {
+function ModelPicker({ models }: { models: ModelId[] }) {
   const [open, setOpen] = useState(false)
-  const cur = ENGINES.find(e => e.id === engine)!
+  const multi = models.length > 1
+  const used = usedModels(models)
   useEffect(() => {
     if (!open) return
     const close = () => setOpen(false)
@@ -269,28 +270,43 @@ function ModelPicker({ engine, onPick }: { engine: EngineId; onPick: (e: EngineI
   return (
     <div className="relative">
       <button className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[13.5px] font-semibold hover:bg-black/5" onClick={e => { e.stopPropagation(); setOpen(o => !o) }}>
-        <ModelIcon icon={engine} size={15} /> {cur.label}
+        <span className="flex items-center">{used.slice(0, 5).map((id, i) => <span key={id} className="grid size-[19px] place-items-center rounded-full bg-white ring-2 ring-white" style={{ marginLeft: i ? -5 : 0 }}><ModelIcon icon={id} size={14} /></span>)}</span>
+        {multi ? `多模型协同 · ${used.length}` : MODELS.find(m => m.id === models[0])!.label}
         <motion.span className="text-ink-3 inline-grid" animate={{ rotate: open ? 180 : 0 }}><MorphIcon icon={ChevronDown} size={14} strokeWidth={2} /></motion.span>
       </button>
       <AnimatePresence>
         {open && (
           <motion.div
-            className="absolute top-10 right-0 z-30 w-[320px] origin-top-right rounded-2xl border bg-white p-1.5 shadow-[0_12px_40px_-8px_rgba(0,0,0,.18)]"
+            className="absolute top-10 right-0 z-30 w-[400px] origin-top-right rounded-2xl border bg-white p-2 shadow-[0_12px_40px_-8px_rgba(0,0,0,.18)]"
             initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.98 }}
             transition={{ duration: 0.16 }}
             onClick={e => e.stopPropagation()}
           >
-            <div className="text-ink-3 px-2.5 pt-2 pb-1.5 text-[12px]">模型可替换 · 评测驱动</div>
-            {ENGINES.map(e => (
-              <button key={e.id} className="flex w-full items-center gap-3 rounded-xl p-2.5 text-left hover:bg-[#F4F4F4]" onClick={() => { onPick(e.id); setOpen(false) }}>
-                <ModelIcon icon={e.id} size={20} />
-                <div className="min-w-0 flex-1">
-                  <b className="block text-[14px] font-medium">{e.full}</b>
-                  <small className="text-ink-3 text-[12px]">{e.sub}{e.yuanPerM ? ` · 约 ¥${((TOTAL_TOKENS * e.yuanPerM) / 1e6).toFixed(3)} / 场` : ' · 自有算力'}</small>
-                </div>
-                <span className="grid w-5 place-items-center">{e.id === engine && <MorphIcon icon={Check} size={16} strokeWidth={2.4} />}</span>
-              </button>
-            ))}
+            <div className="flex items-center gap-2 px-1.5 pt-1 pb-2">
+              <div className="flex rounded-lg bg-[#F2F3F5] p-0.5 text-[12px]">
+                <button onClick={() => actions.setModels(DEFAULT_MODELS)} className={cn('h-6 rounded-md px-2', multi ? 'text-ink bg-white font-medium shadow-sm' : 'text-ink-3')}>多模型协同</button>
+                <button onClick={() => actions.setModels([models[0]])} className={cn('h-6 rounded-md px-2', !multi ? 'text-ink bg-white font-medium shadow-sm' : 'text-ink-3')}>单一模型</button>
+              </div>
+              <span className="text-ink-3 ml-auto text-[11.5px]">{costText(99, models)} / 场</span>
+            </div>
+            <div className="grid max-h-[340px] grid-cols-2 gap-1 overflow-y-auto">
+              {MODELS.map(m => {
+                const on = models.includes(m.id)
+                return (
+                  <button key={m.id} className={cn('flex items-center gap-2 rounded-xl px-2.5 py-2 text-left hover:bg-[#F4F4F4]', on && 'bg-[#F4F6FB]')} onClick={() => (multi ? actions.toggleModel(m.id) : actions.setModels([m.id]))}>
+                    <ModelIcon icon={m.id} size={18} />
+                    <span className="min-w-0 flex-1 leading-tight"><b className="block text-[13px] font-medium">{m.label}</b><small className="text-ink-3 text-[11px]">{m.vendor}{m.open ? ' · 可私有化' : ''}</small></span>
+                    <span className="grid w-4 place-items-center">{on && <MorphIcon icon={Check} size={14} strokeWidth={2.6} />}</span>
+                  </button>
+                )
+              })}
+            </div>
+            <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-1 border-t px-1.5 pt-2 text-[11.5px]">
+              {AGENTS.filter(a => !['orc', 'scribe', 'disp'].includes(a.id)).map(a => {
+                const b = agentModel(a.id, models)
+                return <span key={a.id} className="text-ink-2 inline-flex items-center gap-1"><i className="size-1.5 rounded-full" style={{ background: a.color }} />{a.name}<ModelIcon icon={b.icon} size={12} />{b.label.replace('规则 + ', '')}</span>
+              })}
+            </div>
           </motion.div>
         )}
       </AnimatePresence>
@@ -370,10 +386,10 @@ function Composer(props: { attached: boolean; onDetach: () => void; onAttach: ()
 function FileChip({ onRemove, sent }: { onRemove?: () => void; sent?: boolean }) {
   return (
     <div className={cn('relative inline-flex items-center gap-2.5 rounded-2xl border bg-white py-2 pl-2 text-left', sent ? 'pr-4' : 'pr-9')}>
-      <span className="grid size-9 flex-none place-items-center rounded-[10px] bg-[#2F64F2] text-white"><FileVideo size={18} /></span>
+      <img src={XM.video!.poster} alt="" className="h-11 w-[25px] flex-none rounded-[6px] object-cover" draggable={false} />
       <div className="leading-tight">
-        <b className="block text-[13.5px] font-semibold">双11活动上线评审.mp4</b>
-        <small className="text-ink-3 text-[12px]">会议录像 · 00:58 · 11 段发言 · 8 位相关人{sent ? '' : ' · 关注档案已加载'}</small>
+        <b className="block text-[13.5px] font-semibold">小米汽车安全专场直播.mp4</b>
+        <small className="text-ink-3 text-[12px]">直播录像 · 09:49 · {XM.segments.length} 段发言 · 8 位收到者{sent ? '' : ' · 关注档案已加载'}</small>
       </div>
       {onRemove && <button className="bg-ink absolute top-1.5 right-1.5 grid size-5 place-items-center rounded-full text-white" onClick={onRemove} aria-label="移除"><X size={12} /></button>}
     </div>
@@ -392,11 +408,11 @@ function UserMessage() {
 // ---------------- 主回答 ----------------
 
 function Answer(p: {
-  t: number; engine: EngineId; instant: boolean; gated: boolean; approved: boolean
+  t: number; models: ModelId[]; instant: boolean; gated: boolean; approved: boolean
   onApprove: () => void; onMatrix: () => void; onOpen: (id: PersonId) => void; onCanvas: () => void
   onAsk: (q: string) => void; onAssign: () => void; showFollow: boolean
 }) {
-  const { t, engine, instant, gated, approved } = p
+  const { t, models, instant, gated, approved } = p
   const done = t >= T_END
   const [userOpen, setUserOpen] = useState<boolean | null>(null)
   const open = userOpen ?? !done
@@ -417,7 +433,7 @@ function Answer(p: {
 
   return (
     <div className="mb-7 text-[15px] leading-[1.75]">
-      <Thinking t={t} engine={engine} open={open} onToggle={() => setUserOpen(!open)} onCanvas={p.onCanvas} />
+      <Thinking t={t} models={models} open={open} onToggle={() => setUserOpen(!open)} onCanvas={p.onCanvas} />
       <AnimatePresence>
         {(gated || (approved && t >= GATE_AT && !instant)) && (
           <Approval key="gate" pending={gated} onApprove={p.onApprove} onMatrix={p.onMatrix} />
@@ -429,11 +445,11 @@ function Answer(p: {
       </div>
       {done && n >= total && (
         <>
-          <Actions engine={engine} />
-          {!owners.it_05 && (
+          <Actions models={models} />
+          {!owners.xm_18 && (
             <motion.div className="mt-3 flex flex-wrap gap-2" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.15 }}>
-              <button onClick={p.onAssign} className="bg-ink inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[14px] text-white transition-transform hover:-translate-y-px"><UserCheck size={15} /> 好，指派给赵一</button>
-              <button onClick={() => goSource('d11', 16.6, 'it_05')} className="text-ink-2 inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-[14px] hover:bg-[#F4F4F4]">先回录像听一下原话</button>
+              <button onClick={p.onAssign} className="bg-ink inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-[14px] text-white transition-transform hover:-translate-y-px"><UserCheck size={15} /> 好，交给林夏核实</button>
+              <button onClick={() => goSource(RUN_ID, Math.max(0, quoteSpan(itemById('xm_18')).t0 - 0.4), 'xm_18')} className="text-ink-2 inline-flex items-center gap-1.5 rounded-xl border px-3.5 py-2 text-[14px] hover:bg-[#F4F4F4]">先回录像听一下原话</button>
             </motion.div>
           )}
           {p.showFollow && <Follow onAsk={p.onAsk} asked={[]} />}
@@ -443,7 +459,7 @@ function Answer(p: {
   )
 }
 
-function Thinking({ t, engine, open, onToggle, onCanvas }: { t: number; engine: EngineId; open: boolean; onToggle: () => void; onCanvas: () => void }) {
+function Thinking({ t, models, open, onToggle, onCanvas }: { t: number; models: ModelId[]; open: boolean; onToggle: () => void; onCanvas: () => void }) {
   const done = t >= T_END
   const log = logAt(t)
   const phase = PHASES[phaseIndex(t)]
@@ -471,7 +487,7 @@ function Thinking({ t, engine, open, onToggle, onCanvas }: { t: number; engine: 
             <div className="think-chips">
               {AGENTS.map(a => {
                 const on = busy.includes(a)
-                const m = agentModel(a.id, engine)
+                const m = agentModel(a.id, models)
                 return <span key={a.id} className={on ? 'on' : ''} style={{ '--c': a.color } as CSSProperties} title={m.label}><ModelIcon icon={m.icon} size={12} />{a.name}</span>
               })}
             </div>
@@ -516,9 +532,9 @@ function Approval({ pending, onApprove, onMatrix }: { pending: boolean; onApprov
             <FaceStack ids={recips} size={24} max={7} />
           </div>
           <ul className="text-ink-2 mt-3 grid gap-1.5 text-[13.5px]">
-            <li className="flex items-center gap-2"><BellOff size={14} className="text-ink-3" /> 吴桐这场没有必读，不打扰，只进日报</li>
-            <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-rose-600" /> 扩容预算金额只给 4 个人，其他人看脱敏版</li>
-            <li className="flex items-center gap-2"><PenLine size={14} className="text-amber-600" /> it_05 客户端适配还没有负责人，卡片里建议赵一</li>
+            <li className="flex items-center gap-2"><BellOff size={14} className="text-ink-3" /> 许诺只关注电子安全，本段没有，不打扰，只进日报</li>
+            <li className="flex items-center gap-2"><ShieldCheck size={14} className="text-emerald-600" /> 20 条都是直播公开内容，没有受限条目；只引用原话，不替发言人补充</li>
+            <li className="flex items-center gap-2"><PenLine size={14} className="text-amber-600" /> xm_18“应该是行业内首个”是绝对化表述，已标待核实</li>
           </ul>
           <div className="mt-4 flex gap-2">
             <button onClick={onApprove} className="bg-ink inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-[14px] font-medium text-white transition-transform hover:-translate-y-px"><MorphIcon icon={Check} size={15} strokeWidth={2.6} /> 确认发送</button>
@@ -528,7 +544,7 @@ function Approval({ pending, onApprove, onMatrix }: { pending: boolean; onApprov
       ) : (
         <div className="text-ink-2 flex items-center gap-2 px-4 py-2.5 text-[13.5px]">
           <span className="grid size-5 place-items-center rounded-full bg-emerald-500 text-white"><CheckIcon size={12} strokeWidth={3} /></span>
-          王珂 已确认发送 · 7 份简报
+          {personById(ME).name} 已确认发送 · 7 份简报
         </div>
       )}
     </motion.div>
@@ -549,12 +565,12 @@ function buildBlocks(): Block[] {
   })
   const people = RUN_PEOPLE_SORTED
   const bullets = [
-    '**赵一没参会，也没被点名**，但他负责的客户端依赖订单接口 [[it_05]]。影响链把这条发给了他，并建议由他负责。',
-    '**扩容预算约 30 万** [[it_07]] 只给林总、周宁、王珂、陈默看到金额，其他人看到的是“扩容按 A 方案推进”。',
-    '**it_05 的原话一开始对不上转写**，审核官打回，抽取官重抽后才放行。10 条全部附原话，点一下就能回到录像。',
+    '**直播里没人点到我们任何一个人的名**，R1、R2 一条都没命中。全靠负责（R3）、订阅（R5）和管理者规则（R6），“谁被提到就发给谁”在这里一份都发不出去。',
+    '**同一句“同档最安全”** [[xm_06]] 发给了 3 个人：对韩总是竞争目标，对你是定位口径，对邓凯是门店会被问到的话。',
+    '**xm_08 一开始挂错了人**：“超过了3500人”是爽哥接话、侯静雷确认 [[xm_08]]，审核官打回重抽。20 条全部附原话，点一下就回到录像。',
   ]
   return [
-    text('这场会有 **10 条要点**，我按 8 个人的角色、依赖和权限分好了：**7 个人**各收到一份不同的简报，**吴桐**这次不打扰。'),
+    text('这场直播有 **20 条要点**，我按 8 个人的职级、负责的事和订阅分好了：**7 个人**各收到一份不同的简报，**许诺**这次不打扰。'),
     text('谁收到了什么', 'h3'),
     {
       cost: people.length * 14,
@@ -563,19 +579,19 @@ function buildBlocks(): Block[] {
         return (
           <div key="table" className="mt-1 mb-2 overflow-hidden rounded-2xl border">
             <table className="w-full border-collapse text-[13.5px]">
-              <thead><tr className="bg-[#FAFAFA]">{['收件人', '条数', '为什么发给他', '阅读'].map(h => <th key={h} className="border-b px-3 py-2 text-left font-semibold">{h}</th>)}</tr></thead>
+              <thead><tr className="bg-[#FAFAFA]">{['收到者', '条数', '为什么发给 TA', '阅读'].map(h => <th key={h} className="border-b px-3 py-2 text-left font-semibold">{h}</th>)}</tr></thead>
               <tbody>
                 {people.slice(0, rows).map(pp => {
                   const quiet = isQuietIn(pp.id)
-                  const b = d11Brief(pp.id)
+                  const b = runBrief(pp.id)
                   const reasons = [...new Set(RUN_MEETING.routes.filter(r => r.person === pp.id).flatMap(r => r.reasons))]
                   return (
                     <motion.tr key={pp.id} initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="border-b last:border-0">
-                      <td className="px-3 py-2"><span className="inline-flex items-center gap-2 font-medium whitespace-nowrap"><Face p={pp} size={22} muted={quiet} />{pp.name}<small className="text-ink-3 font-normal">{pp.role}</small></span></td>
+                      <td className="px-3 py-2"><span className="inline-flex items-center gap-2 font-medium whitespace-nowrap"><Face p={pp} size={22} muted={quiet} />{pp.name}<RankTag p={pp} /></span></td>
                       <td className="px-3 py-2 tabular-nums">{quiet ? '—' : b.host ? RUN_MEETING.items.length : b.entries.length}</td>
                       <td className="px-3 py-2">
                         {quiet ? <span className="text-ink-3 inline-flex items-center gap-1 text-[12.5px]"><BellOff size={12} /> 没有必读，不打扰</span>
-                          : b.host ? <span className="text-ink-3 text-[12.5px]">主持人：全部条目和分发情况</span>
+                          : b.host ? <span className="text-ink-3 text-[12.5px]">发布者：全部条目和分发情况</span>
                           : reasons.map(r => <span key={r} className={cn('mr-1 inline-block rounded-full px-2 text-[12px] leading-[1.6]', r === 'R4' ? 'bg-ink text-white' : 'text-ink-2 bg-[#F2F2F2]')}>{REASONS[r]}</span>)}
                       </td>
                       <td className="px-3 py-2 tabular-nums">{quiet ? '—' : `${b.readSeconds}s`}</td>
@@ -611,13 +627,13 @@ function buildBlocks(): Block[] {
         <motion.div key="cards" className="mt-1.5 mb-4 grid grid-cols-[repeat(auto-fill,minmax(160px,1fr))] gap-2" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }}>
           {people.map(pp => {
             const quiet = isQuietIn(pp.id)
-            const b = d11Brief(pp.id)
+            const b = runBrief(pp.id)
             return (
               <button key={pp.id} className={cn('kb-tile flex flex-col rounded-2xl border bg-white p-3 text-left', quiet && 'border-dashed bg-[#FAFAFA]')} onClick={() => onOpen(pp.id)}>
                 <div className="flex items-center gap-2">
                   <Face p={pp} size={28} muted={quiet} />
-                  <div className="min-w-0 leading-tight"><b className="block text-[13.5px]">{pp.name}</b><small className="text-ink-3 text-[11.5px]">{pp.role}</small></div>
-                  <em className="ml-auto rounded-full bg-[#F2F2F2] px-2 py-0.5 text-[11.5px] font-semibold not-italic">{quiet ? '不打扰' : `${b.host ? 10 : b.entries.length} 条`}</em>
+                  <div className="min-w-0 leading-tight"><b className="block text-[13.5px]">{pp.name}</b><small className="text-ink-3 text-[11.5px]">{b.host ? '发布者版' : pp.role}</small></div>
+                  <em className="ml-auto rounded-full bg-[#F2F2F2] px-2 py-0.5 text-[11.5px] font-semibold not-italic">{quiet ? '不打扰' : `${b.host ? RUN_MEETING.items.length : b.entries.length} 条`}</em>
                 </div>
                 <p className="text-ink-2 my-2 line-clamp-3 text-[12.5px] leading-[1.55]">{b.headline}</p>
                 <span className="text-ink-3 mt-auto text-[12px]">在画布中打开 ↗</span>
@@ -627,14 +643,14 @@ function buildBlocks(): Block[] {
         </motion.div>
       ),
     },
-    text('点任意一张卡，在右侧画布里看他收到的飞书卡片。**it_05 客户端适配**还没有负责人，要我指派给**赵一**并通知他确认吗？'),
+    text('点任意一张卡，在右侧画布里看 TA 收到的飞书卡片。**xm_18“行业内首个”**还没人核实出处，要我交给你组里的**林夏**去核实吗？'),
   ]
 }
 
-function Actions({ engine }: { engine: EngineId }) {
+function Actions({ models }: { models: ModelId[] }) {
   const [copied, setCopied] = useState(false)
   const [vote, setVote] = useState<'up' | 'down' | null>(null)
-  const m = agentModel('ext', engine)
+  const used = usedModels(models)
   const ib = 'text-ink-2 grid size-8 place-items-center rounded-lg hover:bg-black/5'
   return (
     <motion.div className="-ml-2 flex items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.1 }}>
@@ -642,7 +658,7 @@ function Actions({ engine }: { engine: EngineId }) {
       <button className={cn(ib, vote === 'up' && 'text-ink')} onClick={() => setVote('up')} aria-label="有用"><ThumbsUp size={16} /></button>
       <button className={cn(ib, vote === 'down' && 'text-ink')} onClick={() => setVote('down')} aria-label="没用"><ThumbsDown size={16} /></button>
       <button className={ib} aria-label="重新生成"><RotateCcw size={16} /></button>
-      <span className="text-ink-3 ml-2 inline-flex items-center gap-1.5 text-[12px]"><ModelIcon icon={m.icon} size={13} /> {m.label} · {TOTAL_TOKENS.toLocaleString()} tokens · {RUN_MEETING.routes.length} 条推送</span>
+      <span className="text-ink-3 ml-2 inline-flex items-center gap-1.5 text-[12px]">{used.map(id => <ModelIcon key={id} icon={id} size={13} />)} {used.length > 1 ? `${used.length} 个模型协同` : MODELS.find(x => x.id === used[0])!.label} · {TOTAL_TOKENS.toLocaleString()} tokens · {costText(99, models)} · {RUN_MEETING.routes.length} 条推送</span>
     </motion.div>
   )
 }
@@ -661,7 +677,7 @@ function Follow({ onAsk, asked }: { onAsk: (q: string) => void; asked: string[] 
 
 function FollowAnswer({ msg, onAsk, last, asked }: { msg: Msg; onAsk: (q: string) => void; last: boolean; asked: string[] }) {
   const [ready, setReady] = useState(false)
-  const confirmedBy = useStore(s => s.confirmed.it_05)
+  const confirmedBy = useStore(s => s.confirmed.xm_18)
   useEffect(() => {
     const id = setTimeout(() => setReady(true), 700)
     return () => clearTimeout(id)
@@ -676,8 +692,8 @@ function FollowAnswer({ msg, onAsk, last, asked }: { msg: Msg; onAsk: (q: string
       {msg.kind === 'assign' && ready && n >= len && (
         <motion.div className="text-ink-2 -mt-1 mb-2 flex items-center gap-2 text-[13.5px]" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
           {confirmedBy
-            ? <><span className="grid size-5 place-items-center rounded-full bg-emerald-500 text-white"><CheckIcon size={12} strokeWidth={3} /></span> 赵一 已确认负责 it_05 · 刚刚</>
-            : <><span className="live-dot" /> 等待赵一确认…</>}
+            ? <><span className="grid size-5 place-items-center rounded-full bg-emerald-500 text-white"><CheckIcon size={12} strokeWidth={3} /></span> 林夏 已确认负责核实 xm_18 · 刚刚</>
+            : <><span className="live-dot" /> 等待林夏确认…</>}
         </motion.div>
       )}
       {ready && n >= len && last && <Follow onAsk={onAsk} asked={asked} />}
@@ -714,11 +730,11 @@ function CanvasHead({ tab, onTab, follow, onFollow, t, gated, done, onClose }: {
   )
 }
 
-function RunTab({ clock, engine, gated }: { clock: ReturnType<typeof useClock>; engine: EngineId; gated: boolean }) {
+function RunTab({ clock, models, gated }: { clock: ReturnType<typeof useClock>; models: ModelId[]; gated: boolean }) {
   const log = LOG.filter(l => clock.t >= l.at).slice().reverse()
   return (
     <div className="flex flex-col gap-4">
-      <AgentTimeline clock={clock} engine={engine} gated={gated} />
+      <AgentTimeline clock={clock} models={models} gated={gated} />
       <div className="rounded-2xl border bg-white">
         <div className="flex items-center justify-between border-b px-4 py-2.5"><b className="text-[13.5px]">运行日志</b><span className="text-ink-3 text-[12px]">{log.length} 条事件</span></div>
         <div className="max-h-[260px] overflow-y-auto p-2">
@@ -777,12 +793,12 @@ function MatrixTab({ t, gated, onApprove, onOpen }: { t: number; gated: boolean;
         <motion.div className="flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3" initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }}>
           <span className="text-amber-700"><Kb name="stamp" size={30} /></span>
           <div className="min-w-0 flex-1 text-[13.5px] leading-snug">
-            <b>发送前看一眼：</b>这是路由官给出的分发矩阵。红圈是影响链——没参会、也没被点名，但该知道的人。
+            <b>发送前看一眼：</b>这是路由官给出的分发矩阵。直播里没点任何人的名，每一格都写着理由：负责、订阅或管理者规则。
           </div>
           <button onClick={onApprove} className="bg-ink flex-none rounded-xl px-3.5 py-2 text-[13.5px] text-white">确认发送</button>
         </motion.div>
       )}
-      <Matrix meeting={RUN_MEETING} t={t} onOpen={onOpen} onItem={it => goSource('d11', Math.max(0, quoteSpan(it).t0 - 0.4), it.id)} />
+      <Matrix meeting={RUN_MEETING} t={t} onOpen={onOpen} onItem={it => goSource(RUN_ID, Math.max(0, quoteSpan(it).t0 - 0.4), it.id)} />
     </div>
   )
 }
@@ -795,7 +811,7 @@ function BriefsTab({ t, done, onOpen }: { t: number; done: boolean; onOpen: (id:
         <b className="font-hand text-[20px]">每人一份简报</b>
         <span className="text-ink-3 text-[12.5px]">{done ? '· 已投递飞书' : '· 编辑官逐人改写中'}</span>
       </div>
-      <StickyNotes meeting="d11" people={RUN_PEOPLE} ready={pid => t >= readyAt(pid)} onOpen={onOpen} />
+      <StickyNotes meeting={RUN_ID} people={RUN_PEOPLE} ready={pid => t >= readyAt(pid)} onOpen={onOpen} />
     </div>
   )
 }
@@ -813,11 +829,11 @@ function BriefView({ pid, onPick, onBack, onPaper }: { pid: PersonId; onPick: (i
           ))}
         </div>
         <button className="text-ink-2 ml-auto rounded-lg border bg-white px-2.5 py-1 text-[12.5px] hover:bg-black/5" onClick={onPaper}>手写版</button>
-        <a className="text-primary rounded-lg border border-[#C9D8FF] bg-white px-2.5 py-1 text-[12.5px] hover:bg-[#F3F6FE]" href={href('/m/d11', { tab: 'people', p: pid })}>成员简报 ↗</a>
+        <a className="text-primary rounded-lg border border-[#C9D8FF] bg-white px-2.5 py-1 text-[12.5px] hover:bg-[#F3F6FE]" href={href(`/m/${RUN_ID}`, { tab: 'people', p: pid })}>成员简报 ↗</a>
       </div>
       <p className="text-ink-3 mb-2 text-[12.5px]">{personById(pid).name} 在飞书里收到的样子 · 点原话回到录像那一秒</p>
-      <FeishuCard meeting="d11" pid={pid} />
-      <p className="text-ink-3 mt-3 text-[12px]">数据：{d11Brief(pid).entries.length} 条 · 读完约 {d11Brief(pid).readSeconds} 秒 · 原话时间 {d11Brief(pid).entries.map(e => mmss(quoteSpan(itemById(e.item)).t0)).join('、') || '—'}</p>
+      <FeishuCard meeting={RUN_ID} pid={pid} />
+      <p className="text-ink-3 mt-3 text-[12px]">数据：{runBrief(pid).entries.length} 条 · 读完约 {runBrief(pid).readSeconds} 秒 · 原话时间 {runBrief(pid).entries.map(e => mmss(quoteSpan(itemById(e.item)).t0)).join('、') || '—'}</p>
     </div>
   )
 }

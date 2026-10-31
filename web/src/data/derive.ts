@@ -2,7 +2,7 @@
 
 import { personById, REASONS, type PersonId } from './model'
 import { ALL_ITEMS, MEETINGS, meetingById, type Item, type Meeting, type Segment } from './meetings'
-import { d11Brief, type Brief, type BriefEntry } from './run'
+import { RUN_ID, runBrief, type Brief, type BriefEntry } from './run'
 
 /** 秒 → 00:17 */
 export const mmss = (s: number) => {
@@ -63,13 +63,13 @@ const WHY: Record<string, (it: Item) => string> = {
   R6: () => '管理者规则',
 }
 
-/** 双 11 这场用编辑官逐人改写的版本，其他会议按路由结果拼一份 */
+/** 主案例用编辑官逐人改写的版本，其他会议按路由结果拼一份；发布者拿到的是发布者版 */
 export function briefFor(meetingId: string, pid: PersonId): Brief {
   const m = meetingById(meetingId)!
-  if (meetingId === 'd11') return d11Brief(pid)
-  if (m.host === pid) {
+  if (meetingId === RUN_ID) return runBrief(pid)
+  if (m.publisher === pid) {
     const n = new Set(m.routes.map(r => r.person)).size
-    return { person: pid, meeting: meetingId, host: true, readSeconds: 40, headline: `主持人版：${m.items.length} 条全部条目已分发给 ${n} 个人。`, entries: [] }
+    return { person: pid, meeting: meetingId, host: true, readSeconds: 40, headline: `发布者版：${m.items.length} 条全部条目已分发给 ${n} 个人。`, entries: [] }
   }
   const rs = m.routes.filter(r => r.person === pid)
   const entries: BriefEntry[] = rs.map(r => {
@@ -85,11 +85,20 @@ export function briefFor(meetingId: string, pid: PersonId): Brief {
   return { person: pid, meeting: meetingId, headline, readSeconds: Math.max(10, entries.length * 10), entries }
 }
 
-/** 某人在所有会议里收到的简报（主持人版也算） */
+/** 这场会不打扰 TA：不是发布者，也没有任何必读条目（只进日报） */
+export const isQuiet = (meetingId: string, pid: PersonId) => {
+  const b = briefFor(meetingId, pid)
+  return !b.host && !b.entries.length
+}
+
+/** 某人收到的简报：别人发布、路由给 TA 的（自己发布的不算“收到”） */
 export function inboxOf(pid: PersonId, dispatched: (id: string) => boolean) {
-  return MEETINGS.filter(m => dispatched(m.id) && (m.host === pid || m.routes.some(r => r.person === pid)))
+  return MEETINGS.filter(m => dispatched(m.id) && m.publisher !== pid && m.routes.some(r => r.person === pid))
     .map(m => ({ meeting: m, brief: briefFor(m.id, pid) }))
 }
+
+/** 某人发布的会议（含还没分发的） */
+export const outboxOf = (pid: PersonId) => MEETINGS.filter(m => m.publisher === pid)
 
 export const reasonText = (r: string) => REASONS[r] ?? r
 

@@ -1,10 +1,10 @@
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import {
-  CalendarCheck, LayoutTemplate, Library, PanelLeftClose, PanelLeftOpen, RotateCcw, Search, SquarePen, Users, Waypoints,
+  CalendarCheck, LayoutTemplate, Library, PanelLeftClose, PanelLeftOpen, RotateCcw, Search, SquarePen, Waypoints,
 } from 'lucide-react'
 import { MEETINGS } from '@/data/meetings'
-import { ME, personById } from '@/data/model'
+import { ME, RANKS, personById } from '@/data/model'
 import { href, useRoute } from '@/lib/router'
 import { actions, useStore } from '@/lib/store'
 import { cn, cnDate } from '@/lib/utils'
@@ -14,7 +14,6 @@ const NAV = [
   { key: 'new', label: '新建会议', icon: SquarePen, to: '/new' },
   { key: 'search', label: '搜索会议', icon: Search, to: null, kbd: 'Ctrl K' },
   { key: 'home', label: '我的会议', icon: CalendarCheck, to: '/' },
-  { key: 'shared', label: '共享给我', icon: Users, to: '/shared' },
   { key: 'dispatch', label: '智能分发', icon: Waypoints, to: '/dispatch' },
   { key: 'kb', label: '会议知识库', icon: Library, to: '/kb' },
   { key: 'templates', label: '模板中心', icon: LayoutTemplate, to: '/templates' },
@@ -29,14 +28,14 @@ const BRAND = {
 
 function activeKey(path: string[]) {
   const [p0] = path
-  if (!p0 || p0 === 'm') return 'home'
+  // 共享给我已并进“我的会议”（发给我的）
+  if (!p0 || p0 === 'm' || p0 === 'shared') return 'home'
   return p0
 }
 
 export function Sidebar({ collapsed, onCollapse, onSearch }: { collapsed: boolean; onCollapse: (v: boolean) => void; onSearch: () => void }) {
   const { path } = useRoute()
   const dispatched = useStore(s => s.dispatched)
-  const fresh = useStore(s => s.events.filter(e => e.fresh && e.person !== ME).length)
   const [menu, setMenu] = useState(false)
   const on = activeKey(path)
   const openMeeting = path[0] === 'm' || path[0] === 'dispatch' ? path[1] : null
@@ -66,7 +65,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch }: { collapsed: boolea
           {NAV.map(n => {
             const I = n.icon
             const active = on === n.key
-            const badge = n.key === 'dispatch' && pending ? pending : n.key === 'shared' && fresh ? fresh : null
+            const badge = n.key === 'dispatch' && pending ? pending : null
             const inner = (
               <>
                 {active && <motion.span layoutId="nav-pill" className="bg-sidebar-accent absolute inset-0 rounded-xl" transition={{ type: 'spring', stiffness: 500, damping: 40 }} />}
@@ -100,7 +99,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch }: { collapsed: boolea
                       <span className={cn('flex-1 truncate text-[14px]', act ? 'font-semibold' : 'font-medium text-[#1F2329]')}>{m.title}</span>
                       {!dispatched[m.id] && <span className="flex-none rounded-md bg-amber-100 px-1.5 py-px text-[10.5px] font-medium text-amber-700">待分发</span>}
                     </div>
-                    <div className="text-ink-3 mt-1 pl-[18px] text-[12.5px] tabular-nums">{cnDate(m.date)} {m.time}</div>
+                    <div className="text-ink-3 mt-1 pl-[18px] text-[12.5px] tabular-nums">{cnDate(m.date)}{m.time ? ` ${m.time}` : ''} · {m.publisher === ME ? '我发布' : `${personById(m.publisher).name} 发布`}</div>
                   </a>
                 )
               })}
@@ -131,7 +130,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch }: { collapsed: boolea
             {!collapsed && (
               <span className="min-w-0 leading-tight">
                 <b className="block text-[15px] font-semibold">{me.name}</b>
-                <span className="text-ink-3 text-[12.5px]">{me.team} | 团队版</span>
+                <span className="text-ink-3 text-[12.5px]">{me.team} · {RANKS[me.rank].level} {RANKS[me.rank].label}</span>
               </span>
             )}
           </button>

@@ -1,9 +1,9 @@
-// 模拟的会议录像画面：左边是共享屏（议程 + 这一议题里已经说出的要点），右边是参会人画面，底部字幕逐字走。
-// 没有真实视频文件，画面完全由时钟 t 和会议数据推导，所以和逐字稿、账本天然对齐。
-import { useMemo, type CSSProperties, type ReactNode } from 'react'
+// 会议录像画面：左边是共享屏（议程 + 这一议题里已经说出的要点），右边是参会人画面或真实录像，底部字幕逐字走。
+// 有真实录像（直播）时，录像跟着时钟 t 播放和跳转；没有时画面完全由 t 和会议数据推导，和逐字稿、账本天然对齐。
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Mic, Play } from 'lucide-react'
-import { ITEM_TYPES, personById } from '@/data/model'
+import { Mic, Play, Volume2, VolumeX } from 'lucide-react'
+import { ITEM_TYPES, personById, type PersonId } from '@/data/model'
 import type { Item, Meeting } from '@/data/meetings'
 import { charAtTime, chapterAt, isSpeaking, itemTime, mmss, quoteSpan, segAt } from '@/data/derive'
 import { cn } from '@/lib/utils'
@@ -18,9 +18,10 @@ interface Props {
   /** 每次定位都换一个 key，触发描边闪一下 */
   pulse?: number
   captions?: boolean
+  speed?: number
 }
 
-export function MeetingVideo({ meeting: m, t, playing, onToggle, focus, pulse = 0, captions = true }: Props) {
+export function MeetingVideo({ meeting: m, t, playing, onToggle, focus, pulse = 0, captions = true, speed = 1 }: Props) {
   const seg = segAt(m, t)
   const speaking = isSpeaking(seg, t)
   const chapter = chapterAt(m, t)
@@ -36,7 +37,7 @@ export function MeetingVideo({ meeting: m, t, playing, onToggle, focus, pulse = 
         <span className="mv-rec"><i /> REC</span>
         <span className="font-mono tabular-nums">{mmss(t)}</span>
         <span className="truncate opacity-80">{m.title}</span>
-        <span className="ml-auto opacity-60 max-sm:hidden">会映录制 · 演示画面</span>
+        <span className="ml-auto opacity-60 max-sm:hidden">{m.video ? '直播录像 · B 站转载' : '会映录制'}</span>
       </div>
 
       <div className="mv-stage">
@@ -77,7 +78,7 @@ export function MeetingVideo({ meeting: m, t, playing, onToggle, focus, pulse = 
           </div>
         </div>
 
-        <div className="mv-tiles">
+        {m.video ? <RealVideo src={m.video.src} poster={m.video.poster} t={t} playing={playing} speed={speed} speaker={speaking ? seg?.speaker : undefined} /> : <div className="mv-tiles">
           {m.attendees.slice(0, 4).map(pid => {
             const p = personById(pid)
             const on = speaking && seg?.speaker === pid
@@ -91,7 +92,7 @@ export function MeetingVideo({ meeting: m, t, playing, onToggle, focus, pulse = 
               </div>
             )
           })}
-        </div>
+        </div>}
       </div>
 
       <AnimatePresence>
@@ -110,6 +111,33 @@ export function MeetingVideo({ meeting: m, t, playing, onToggle, focus, pulse = 
       <div className={cn('mv-big-play', !playing && 'show')}>
         {!playing && <span><Play size={26} fill="currentColor" className="ml-1" /></span>}
       </div>
+    </div>
+  )
+}
+
+/** 真实录像（竖屏）：跟着演示时钟播放、暂停、倍速；时钟跳转时录像也跳过去 */
+function RealVideo({ src, poster, t, playing, speed, speaker }: { src: string; poster: string; t: number; playing: boolean; speed: number; speaker?: PersonId }) {
+  const ref = useRef<HTMLVideoElement>(null)
+  const [muted, setMuted] = useState(false)
+  useEffect(() => {
+    const v = ref.current
+    if (!v) return
+    if (playing) v.play().catch(() => { v.muted = true; setMuted(true); v.play().catch(() => {}) })
+    else v.pause()
+  }, [playing])
+  useEffect(() => {
+    const v = ref.current
+    if (v && Math.abs(v.currentTime - t) > (playing ? 0.8 : 0.05)) v.currentTime = t
+  }, [t, playing])
+  useEffect(() => { if (ref.current) ref.current.playbackRate = speed }, [speed])
+  useEffect(() => { if (ref.current) ref.current.muted = muted }, [muted])
+  return (
+    <div className="mv-real">
+      <video ref={ref} src={src} poster={poster} playsInline preload="auto" />
+      {speaker && <span className="mv-name"><span className="mv-bars"><i /><i /><i /></span>{personById(speaker).name}</span>}
+      <button className="mv-mute" onClick={e => { e.stopPropagation(); setMuted(x => !x) }} aria-label={muted ? '打开声音' : '静音'}>
+        {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
+      </button>
     </div>
   )
 }

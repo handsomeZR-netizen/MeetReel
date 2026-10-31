@@ -6,5 +6,6 @@ import tailwindcss from '@tailwindcss/vite'
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: { alias: { '@': fileURLToPath(new URL('./src', import.meta.url)) } },
-  server: { port: 5173, host: true },
+  // 案例数据（转写、录像、知识库资料）放在仓库根目录的 data/，开发时允许读取
+  server: { port: 5173, host: true, fs: { allow: ['..'] } },
 })

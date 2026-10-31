@@ -1,28 +1,30 @@
-// 成员简报：从主持人视角看某个人收到了什么、要处理什么、为什么发给他。
+// 成员简报：从发布者视角看某个收到者收到了什么、要处理什么、为什么发给 TA。
 // 左边是这个人的简报（议题、待处理事项、其他相关、理由、TA 的发言），右边是会议信息、成员、文件、发送记录。
 import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { MorphIcon } from 'morphicons/react'
 import { Check } from 'lucide'
-import { AtSign, BellOff, CalendarDays, CheckCircle2, ChevronRight, Clock3, Eye, FileText, MapPin, Paperclip, Send, Sparkles, Video } from 'lucide-react'
+import { AtSign, BellOff, CalendarDays, CheckCircle2, ChevronRight, Clock3, Eye, FileText, Image as ImageIcon, MapPin, Paperclip, Send, Sparkles, Video } from 'lucide-react'
 import { REASONS, personById, type PersonId } from '@/data/model'
+import { RUN_ID } from '@/data/run'
 import { MEETINGS } from '@/data/meetings'
 import type { Item, Meeting } from '@/data/meetings'
-import { briefFor, mmss, quoteSpan, recipientsOf, visibility } from '@/data/derive'
+import { briefFor, isQuiet, mmss, quoteSpan, recipientsOf, visibility } from '@/data/derive'
 import { EXTRAS, type FileKind } from '@/data/extras'
 import { goSource } from '@/lib/router'
 import { actions, useStore } from '@/lib/store'
 import { cn, cnDate, weekday } from '@/lib/utils'
 import { Switch } from '@/components/ui/misc'
-import { Face, Kb, SourceChip, TypePill } from '@/components/common/bits'
+import { Face, Kb, LeaderTag, RankTag, SourceChip, TypePill } from '@/components/common/bits'
 import type { KoboyoName } from '@/components/sketch/koboyoData'
 
 type Sub = 'brief' | 'talk' | 'tasks' | 'topics'
 
 const TOPIC_ICON: Record<string, KoboyoName> = {
-  券规则: 'coupon', 上线时间: 'calendar', 接口: 'chain', 扩容: 'rocket', 客服: 'megaphone',
-  数据: 'target', 退款: 'hourglass', 补偿: 'coupon', 目标: 'target', 排期: 'calendar', 预算: 'lock',
-  等级: 'stamp', 技术: 'chain', 积分: 'coupon', 结果: 'target', 稳定性: 'warning', 券: 'coupon', 后续: 'clipboard',
+  购车权益: 'coupon', 电子安全: 'chain', 安全理念: 'lightbulb', 安全体系: 'compass', 安全目标: 'target', 安全组织: 'team',
+  评审机制: 'stamp', 事故预防: 'warning', 全域安全: 'compass', 用车安全: 'route', 车主培训: 'team', 车主激励: 'coupon',
+  'App 安全分': 'target', 座椅安全: 'warning', 'OTA 功能安全': 'chain', 竞品安全体系: 'newspaper', '车主 App': 'target',
+  交付体验: 'handshake', 门店安全话术: 'megaphone', 竞品卖点: 'megaphone', 试驾: 'route',
 }
 
 /** 2026 年的“11/5” → “11/5（周四）” */
@@ -45,7 +47,7 @@ export function PersonBrief({ m, pid, onPick, onItem }: Props) {
   const entryItems = (b.host ? m.items : b.entries.map(e => m.items.find(i => i.id === e.item)!))
   const talk = m.segments.filter(s => s.speaker === pid)
   const tasks = MEETINGS.flatMap(x => x.items).filter(i => i.type === 'action' && ((owners[i.id] ?? i.owner) === pid || (!(owners[i.id] ?? i.owner) && i.suggestedOwner === pid)))
-  const crossTopics = topicGroups(MEETINGS.flatMap(x => (x.host === pid ? x.items : x.routes.filter(r => r.person === pid).map(r => x.items.find(i => i.id === r.item)!))))
+  const crossTopics = topicGroups(MEETINGS.flatMap(x => (x.publisher === pid ? x.items : x.routes.filter(r => r.person === pid).map(r => x.items.find(i => i.id === r.item)!))))
   const following = MEETINGS.filter(x => x.related.includes(pid)).length
 
   const SUBS: { id: Sub; label: string; n?: number }[] = [
@@ -64,13 +66,14 @@ export function PersonBrief({ m, pid, onPick, onItem }: Props) {
           <div className="min-w-0 flex-1">
             <div className="flex flex-wrap items-center gap-2">
               <b className="text-[20px] font-semibold">{p.name}</b>
-              <span className="rounded-md bg-amber-50 px-2 py-0.5 text-[12px] text-amber-700">{p.role}</span>
-              <span className="rounded-md bg-[#F2F0FF] px-2 py-0.5 text-[12px] text-[#5B4BC4]">{p.team}</span>
-              {m.host === pid && <span className="rounded-md bg-[#E0E7FF] px-2 py-0.5 text-[12px] text-[#3730A3]">本场主持</span>}
-              {!m.attendees.includes(pid) && <span className="bg-muted text-ink-3 rounded-md px-2 py-0.5 text-[12px]">没参会</span>}
+              <RankTag p={p} className="text-[12px] leading-[22px]" />
+              <span className="rounded-md bg-[#F2F0FF] px-2 py-0.5 text-[12px] text-[#5B4BC4]">{p.team}{p.group ? ` · ${p.group}` : ''} · {p.role}</span>
+              <LeaderTag pid={pid} className="text-[12px] leading-[22px]" />
+              {m.publisher === pid && <span className="rounded-md bg-[#E0E7FF] px-2 py-0.5 text-[12px] text-[#3730A3]">本场发布者</span>}
+              {!m.external && !m.attendees.includes(pid) && <span className="bg-muted text-ink-3 rounded-md px-2 py-0.5 text-[12px]">没参会</span>}
             </div>
             <div className="text-ink-3 mt-1 flex flex-wrap gap-x-3 text-[12.5px]">
-              <span>关注 {following} 个会议</span><span>负责 {p.profile.owns.join('、') || '—'}</span><span>最近活跃 今天 09:20</span>
+              <span>关注 {following} 个会议</span><span>负责 {p.profile.owns.join('、') || '—'}</span>{p.reportsTo && <span>汇报给 {personById(p.reportsTo).name}</span>}
             </div>
           </div>
           <label className="flex items-center gap-3 rounded-xl border px-3 py-2">
@@ -134,7 +137,7 @@ function BriefTab({ m, pid, quiet, entryItems, onItem }: { m: Meeting; pid: Pers
               {dispatched
                 ? <span className="inline-flex items-center gap-1 rounded-md bg-emerald-50 px-1.5 py-0.5 text-[12px] text-emerald-700"><CheckCircle2 size={12} /> {quiet ? '只进日报' : '已发送'}</span>
                 : <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-[12px] text-amber-700"><Clock3 size={12} /> 待分发 · 预览</span>}
-              {dispatched && <span className="text-ink-3 text-[12px]">{m.id === 'd11' ? '刚刚' : ex.sentAt}</span>}
+              {dispatched && <span className="text-ink-3 text-[12px]">{m.id === RUN_ID ? '刚刚' : ex.sentAt}</span>}
             </div>
             <p className="text-ink-3 mt-1 text-[12.5px] leading-relaxed">
               基于{p.name}的角色（{p.role}）和关注重点（{[...p.profile.interests, ...p.profile.owns].slice(0, 3).join('、') || '—'}）定制，只含和 TA 有关的 {b.host ? m.items.length : b.entries.length} 条，约 {b.readSeconds} 秒读完。
@@ -184,10 +187,10 @@ function BriefTab({ m, pid, quiet, entryItems, onItem }: { m: Meeting; pid: Pers
           )}
 
           <section>
-            <H icon="lightbulb" title={b.host ? '主持人版说明' : `为什么发给${p.name}`} />
+            <H icon="lightbulb" title={b.host ? '发布者版说明' : `为什么发给${p.name}`} />
             <div className="text-ink-2 rounded-2xl border bg-[#FAFAF8] px-4 py-3 text-[13px] leading-relaxed">
               {b.host
-                ? `你是这场会的主持人，主持人版包含全部 ${m.items.length} 条和每条的去向；缺负责人、缺截止的条目会排在最前面。`
+                ? `你是这场会的发布者，发布者版包含全部 ${m.items.length} 条和每条的去向；缺负责人、待核实的条目会排在最前面。`
                 : `路由官对照${p.name}的关注档案：负责 ${p.profile.owns.join('、') || '—'}，依赖 ${p.profile.dependsOn.join('、') || '—'}，订阅 ${p.profile.interests.join('、') || '—'}。这场会命中了 ${reasons.map(r => `${r}（${REASONS[r]}）`).join('、')}，所以只把这 ${b.entries.length} 条发给 TA。`}
             </div>
           </section>
@@ -232,7 +235,7 @@ function TaskRows({ m, pid, items, onItem }: { m: Meeting; pid: PersonId; items:
               <div className="mt-auto pt-1">
                 {canConfirm && !ok
                   ? <button className="bg-primary w-full rounded-lg py-1.5 text-[13px] font-medium text-white" onClick={() => actions.confirm(it.id, pid)}>{owner ? '确认收到' : '我来负责'}</button>
-                  : !owner && it.suggestedOwner && pid === m.host
+                  : !owner && it.suggestedOwner && pid === m.publisher
                     ? <button className="bg-primary w-full rounded-lg py-1.5 text-[13px] font-medium text-white" onClick={() => actions.assign(it.id, it.suggestedOwner!)}>指派给{personById(it.suggestedOwner).name}</button>
                     : <button className="text-primary w-full rounded-lg border border-[#C9D8FF] py-1.5 text-[13px]" onClick={() => onItem(it)}>回到录像核对</button>}
               </div>
@@ -347,10 +350,10 @@ function MeetingInfo({ m }: { m: Meeting }) {
 }
 
 function Members({ m, pid, onPick }: { m: Meeting; pid: PersonId; onPick: (pid: PersonId) => void }) {
-  const quietOf = (x: PersonId) => x !== m.host && !m.routes.some(r => r.person === x)
+  const quietOf = (x: PersonId) => isQuiet(m.id, x)
   return (
     <Card>
-      <H icon="team" title={`本次会议的相关成员（${m.related.length}）`} small />
+      <H icon="team" title={`发布者与收到者（${m.related.length}）`} small />
       <div className="mt-1 grid grid-cols-4 gap-1.5">
         {m.related.map(x => {
           const pp = personById(x)
@@ -362,7 +365,8 @@ function Members({ m, pid, onPick }: { m: Meeting; pid: PersonId; onPick: (pid: 
                 {m.attendees.includes(x) && <span className="absolute -right-0.5 -bottom-0.5 size-2.5 rounded-full border-2 border-white bg-emerald-500" title="参会" />}
               </span>
               <span className={cn('text-[12px] leading-tight', on ? 'text-primary font-semibold' : '')}>{pp.name}</span>
-              <span className="text-ink-3 w-full truncate text-center text-[10.5px] leading-tight">{x === m.host ? '主持' : quietOf(x) ? '不打扰' : pp.role}</span>
+              <RankTag p={pp} short className="text-[10px] leading-[15px]" />
+              <span className="text-ink-3 w-full truncate text-center text-[10.5px] leading-tight">{x === m.publisher ? '发布者' : quietOf(x) ? '不打扰' : pp.role}</span>
             </button>
           )
         })}
@@ -371,8 +375,9 @@ function Members({ m, pid, onPick }: { m: Meeting; pid: PersonId; onPick: (pid: 
   )
 }
 
-const KIND: Record<FileKind, { label: string; bg: string }> = {
+export const KIND: Record<FileKind, { label: string; bg: string }> = {
   doc: { label: 'W', bg: '#2F64F2' }, pdf: { label: 'PDF', bg: '#E5484D' }, xls: { label: 'X', bg: '#1F9D55' }, ppt: { label: 'P', bg: '#E8772E' },
+  md: { label: 'MD', bg: '#3F3F46' }, img: { label: 'IMG', bg: '#0891B2' },
 }
 
 function Files({ m }: { m: Meeting }) {
@@ -382,14 +387,16 @@ function Files({ m }: { m: Meeting }) {
       <H icon="document" title={`相关文件（${files.length}）`} small />
       <div className="mt-1 flex flex-col gap-1">
         {files.map(f => (
-          <div key={f.name} className="flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 hover:bg-black/[.03]">
-            <span className="grid size-9 flex-none place-items-center rounded-lg text-[11px] font-bold text-white" style={{ background: KIND[f.kind].bg }}>{KIND[f.kind].label}</span>
+          <a key={f.name} href={f.url} target="_blank" rel="noreferrer" className={cn('flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 hover:bg-black/[.03]', !f.url && 'pointer-events-none')}>
+            {f.kind === 'img' && f.url
+              ? <img src={f.url} alt="" className="size-9 flex-none rounded-lg object-cover" />
+              : <span className="grid size-9 flex-none place-items-center rounded-lg text-[10.5px] font-bold text-white" style={{ background: KIND[f.kind].bg }}>{f.kind === 'img' ? <ImageIcon size={15} /> : KIND[f.kind].label}</span>}
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-medium">{f.name}</div>
               <div className="text-ink-3 text-[11.5px]">{personById(f.owner).name} · {f.date}</div>
             </div>
             <span className="text-ink-3 flex-none text-[11.5px]">{f.size}</span>
-          </div>
+          </a>
         ))}
       </div>
     </Card>
@@ -400,9 +407,9 @@ function SendLog({ m, pid }: { m: Meeting; pid: PersonId }) {
   const dispatched = useStore(s => s.dispatched[m.id])
   const events = useStore(s => s.events.filter(e => e.meeting === m.id && e.person === pid && e.kind !== 'sent'))
   const ex = EXTRAS[m.id]
-  const quiet = pid !== m.host && !m.routes.some(r => r.person === pid)
+  const quiet = isQuiet(m.id, pid)
   const read = ex.readAt[pid]
-  const live = m.id === 'd11'
+  const live = m.id === RUN_ID
   return (
     <Card>
       <H icon="mailbox" title="发送记录" small />

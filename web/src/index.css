@@ -366,3 +366,23 @@
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
+.sk-sticky.active { outline: 2px solid var(--ink); outline-offset: 3px; }
+
+/* 待我处理：小便利贴（和简报便利贴同一种纸） */
+.sk-todo { position: relative; padding: 12px 14px 10px; font-family: var(--hand); color: var(--ink); border-radius: 2px 2px 12px 2px; box-shadow: 0 1px 1px rgba(0,0,0,.06), 0 8px 16px -10px rgba(0,0,0,.28); }
+.sk-todo::before { content: ''; position: absolute; left: 50%; top: -8px; translate: -50% 0; width: 54px; height: 16px; background: rgba(255,255,255,.55); border: 1px solid rgba(0,0,0,.05); rotate: 2deg; }
+.sk-todo button { font-family: "Inter Variable", -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif; }
+.sk-mini-btn { height: 28px; padding: 0 10px; border-radius: 8px; background: var(--ink); color: #fff; font-size: 12.5px; white-space: nowrap; transition: transform .15s; }
+.sk-mini-btn:hover { transform: translateY(-1px); }
+
+/* 真实录像（竖屏直播）放在共享屏右边 */
+.mv-stage:has(.mv-real) { grid-template-columns: minmax(0, 1fr) auto; }
+.mv-real { position: relative; height: 100%; aspect-ratio: 544 / 960; border-radius: 10px; overflow: hidden; background: #000; }
+.mv-real video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.mv-real .mv-bars i { animation: bar 0.7s ease-in-out infinite; }
+.mv-real .mv-bars i:nth-child(2) { animation-delay: .15s; }
+.mv-real .mv-bars i:nth-child(3) { animation-delay: .3s; }
+.mv-mute { position: absolute; right: 6px; top: 6px; width: 26px; height: 26px; border-radius: 50%; display: grid; place-items: center; background: rgba(0,0,0,.5); color: #fff; }
+.sk-sticky-top { min-width: 0; }
+.sk-sticky-top b { white-space: nowrap; flex: none; }
+.sk-sticky-top small { min-width: 0; overflow: hidden; text-overflow: ellipsis; }

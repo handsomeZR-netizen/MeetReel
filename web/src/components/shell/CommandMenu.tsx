@@ -1,8 +1,9 @@
-import { CalendarCheck, FileText, LayoutTemplate, Library, SquarePen, Users, Waypoints } from 'lucide-react'
+import { CalendarCheck, FileText, LayoutTemplate, Library, SquarePen, Waypoints } from 'lucide-react'
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from '@/components/ui/command'
 import { ALL_ITEMS, MEETINGS } from '@/data/meetings'
-import { PEOPLE, personById, projectById } from '@/data/model'
+import { RANKS, STAFF, personById, projectById } from '@/data/model'
 import { itemTime, mmss } from '@/data/derive'
+import { RUN_ID } from '@/data/run'
 import { go, goSource } from '@/lib/router'
 import { cnDate } from '@/lib/utils'
 import { Face, TypePill } from '@/components/common/bits'
@@ -11,7 +12,6 @@ const PAGES = [
   { label: '我的会议', icon: CalendarCheck, to: '/' },
   { label: '新建会议', icon: SquarePen, to: '/new' },
   { label: '智能分发', icon: Waypoints, to: '/dispatch' },
-  { label: '共享给我', icon: Users, to: '/shared' },
   { label: '会议知识库', icon: Library, to: '/kb' },
   { label: '模板中心', icon: LayoutTemplate, to: '/templates' },
 ]
@@ -55,9 +55,9 @@ export function CommandMenu({ open, onOpenChange }: { open: boolean; onOpenChang
         </CommandGroup>
         <CommandSeparator />
         <CommandGroup heading="人">
-          {PEOPLE.map(p => (
-            <CommandItem key={p.id} value={`人 ${p.name} ${p.role} ${p.team}`} onSelect={() => run(() => go('/shared', { as: p.id }))}>
-              <Face p={p} size={20} />{p.name}<span className="text-muted-foreground text-xs">{p.role}</span>
+          {STAFF.map(p => (
+            <CommandItem key={p.id} value={`人 ${p.name} ${p.role} ${p.team} ${RANKS[p.rank].label}`} onSelect={() => run(() => go('/', { as: p.id }))}>
+              <Face p={p} size={20} />{p.name}<span className="text-muted-foreground text-xs">{RANKS[p.rank].level} {RANKS[p.rank].label} · {p.role}</span>
               <CommandShortcut className="tracking-normal">看 TA 收到的</CommandShortcut>
             </CommandItem>
           ))}
@@ -67,7 +67,7 @@ export function CommandMenu({ open, onOpenChange }: { open: boolean; onOpenChang
           {PAGES.map(({ label, icon: I, to }) => (
             <CommandItem key={to} value={`页面 ${label}`} onSelect={() => run(() => go(to))}><I /> {label}</CommandItem>
           ))}
-          <CommandItem value="页面 逐字稿 原文" onSelect={() => run(() => go('/m/d11'))}><FileText /> 打开双 11 评审的逐字稿</CommandItem>
+          <CommandItem value="页面 逐字稿 原文 小米 直播" onSelect={() => run(() => go(`/m/${RUN_ID}`))}><FileText /> 打开小米安全专场直播的逐字稿</CommandItem>
         </CommandGroup>
       </CommandList>
     </CommandDialog>

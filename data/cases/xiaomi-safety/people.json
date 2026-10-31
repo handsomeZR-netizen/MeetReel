@@ -1,0 +1,155 @@
+{
+  "_note": "speakers 是直播里真实出现的人，只记录直播中自己说出或被介绍的身份，不生成简报、不分派任务；recipients 全部是虚构的收件人（一家虚构车企的竞品研究分发对象），字段与 web/src/data/model.ts 的 Person 一致。",
+  "speakers": [
+    {
+      "id": "leijun",
+      "name": "雷军",
+      "short": "雷",
+      "role": "直播主持 · 小米",
+      "team": "小米",
+      "bg": "#FFEDD5",
+      "fg": "#9A3412",
+      "kind": "speaker",
+      "real": true,
+      "basis": "转写中被称为“雷总”（02:11“谢谢雷总”）；00:19 一段被转写工具直接标为雷军",
+      "profile": { "aliases": ["雷总"], "owns": [], "dependsOn": [], "interests": [], "clearance": "public", "channels": [] }
+    },
+    {
+      "id": "houjinglei",
+      "name": "侯静雷",
+      "short": "静",
+      "role": "小米汽车副总裁兼安全部总经理",
+      "team": "小米汽车",
+      "bg": "#DBEAFE",
+      "fg": "#1E40AF",
+      "kind": "speaker",
+      "real": true,
+      "basis": "00:36 直播中介绍：小米汽车副总裁兼安全部总经理，安全生产领域体系建设和管理 22 年经验；转写把名字误识别为“景雷”",
+      "profile": { "aliases": ["静雷", "景雷"], "owns": [], "dependsOn": [], "interests": [], "clearance": "public", "channels": [] }
+    },
+    {
+      "id": "dingzhi",
+      "name": "丁志",
+      "short": "志",
+      "role": "小米汽车全域安全部负责人",
+      "team": "小米汽车",
+      "bg": "#D1FAE5",
+      "fg": "#065F46",
+      "kind": "speaker",
+      "real": true,
+      "basis": "06:52 侯静雷介绍：全域安全部负责人；01:05 介绍：20 多年汽车行业从业经验",
+      "profile": { "aliases": ["丁老师", "丁志老师"], "owns": [], "dependsOn": [], "interests": [], "clearance": "public", "channels": [] }
+    },
+    {
+      "id": "shuangge",
+      "name": "爽哥",
+      "short": "爽",
+      "role": "直播嘉宾 · 提问",
+      "team": "直播",
+      "bg": "#F1F5F9",
+      "fg": "#475569",
+      "kind": "speaker",
+      "real": true,
+      "basis": "04:46、07:59 侯静雷两次点名“爽哥”，随后都是说话人1 接话；全名和职务直播片段里没有出现，不要补全",
+      "profile": { "aliases": [], "owns": [], "dependsOn": [], "interests": [], "clearance": "public", "channels": [] }
+    }
+  ],
+  "recipients": [
+    {
+      "id": "hanzong",
+      "name": "韩总",
+      "short": "韩",
+      "role": "总经理",
+      "team": "管理层",
+      "bg": "#FEF3C7",
+      "fg": "#92400E",
+      "kind": "recipient",
+      "fictional": true,
+      "profile": { "aliases": ["老板", "管理层"], "owns": ["公司经营", "安全战略"], "dependsOn": [], "interests": ["竞品目标", "组织机制", "投入规模"], "clearance": "confidential", "channels": ["飞书", "90 秒视频"] }
+    },
+    {
+      "id": "songlan",
+      "name": "宋岚",
+      "short": "岚",
+      "role": "安全部负责人",
+      "team": "安全部",
+      "bg": "#E0E7FF",
+      "fg": "#3730A3",
+      "kind": "recipient",
+      "fictional": true,
+      "profile": { "aliases": ["安全部", "安委会"], "owns": ["安全体系建设", "安全委员会", "安全评审流程"], "dependsOn": [], "interests": ["竞品安全体系", "安全组织"], "clearance": "restricted", "channels": ["飞书", "H5"] }
+    },
+    {
+      "id": "weiran",
+      "name": "魏然",
+      "short": "然",
+      "role": "整车安全开发负责人",
+      "team": "整车开发",
+      "bg": "#CCFBF1",
+      "fg": "#115E59",
+      "kind": "recipient",
+      "fictional": true,
+      "profile": { "aliases": ["整车安全", "产品安全"], "owns": ["整车安全开发", "座椅安全", "碰撞安全", "电池安全"], "dependsOn": [], "interests": ["主被动安全"], "clearance": "internal", "channels": ["飞书", "MCP"] }
+    },
+    {
+      "id": "xunuo",
+      "name": "许诺",
+      "short": "诺",
+      "role": "智驾与电子电气安全负责人",
+      "team": "智驾",
+      "bg": "#EDE9FE",
+      "fg": "#5B21B6",
+      "kind": "recipient",
+      "fictional": true,
+      "profile": { "aliases": ["智驾", "电子电气"], "owns": ["智能驾驶", "电子电气架构", "网络安全"], "dependsOn": [], "interests": ["电子安全"], "clearance": "internal", "channels": ["飞书", "日报"] }
+    },
+    {
+      "id": "chengcheng",
+      "name": "程橙",
+      "short": "橙",
+      "role": "车主运营负责人",
+      "team": "用户运营",
+      "bg": "#FCE7F3",
+      "fg": "#9D174D",
+      "kind": "recipient",
+      "fictional": true,
+      "profile": { "aliases": ["车主运营", "新车主运营"], "owns": ["车主积分体系", "车主 App", "车主社区"], "dependsOn": ["用户授权"], "interests": ["用车安全"], "clearance": "internal", "channels": ["飞书"] }
+    },
+    {
+      "id": "gaoyuan",
+      "name": "高远",
+      "short": "远",
+      "role": "交付与车主培训负责人",
+      "team": "交付中心",
+      "bg": "#DCFCE7",
+      "fg": "#166534",
+      "kind": "recipient",
+      "fictional": true,
+      "profile": { "aliases": ["交付", "培训"], "owns": ["交付体验", "车主驾驶培训"], "dependsOn": [], "interests": ["车主培训", "车主激励"], "clearance": "internal", "channels": ["飞书"] }
+    },
+    {
+      "id": "jiangwan",
+      "name": "江晚",
+      "short": "晚",
+      "role": "品牌市场 · 竞品研究",
+      "team": "市场部",
+      "bg": "#FFE4E6",
+      "fg": "#9F1239",
+      "kind": "recipient",
+      "fictional": true,
+      "profile": { "aliases": ["市场", "品牌"], "owns": ["品牌定位", "竞品研究", "对外宣传口径"], "dependsOn": [], "interests": ["安全理念", "宣传口径"], "clearance": "restricted", "channels": ["飞书", "H5"] }
+    },
+    {
+      "id": "dengkai",
+      "name": "邓凯",
+      "short": "凯",
+      "role": "销售渠道负责人",
+      "team": "销售部",
+      "bg": "#FEF9C3",
+      "fg": "#854D0E",
+      "kind": "recipient",
+      "fictional": true,
+      "profile": { "aliases": ["门店", "销售"], "owns": ["门店销售话术", "购车权益对比"], "dependsOn": [], "interests": ["竞品卖点"], "clearance": "internal", "channels": ["飞书"] }
+    }
+  ]
+}

@@ -1,12 +1,12 @@
 // 会议详情 · 溯源：录像、逐字稿、账本三者互相定位。
-// 入口 #/m/d11?t=17&item=it_04 —— 任何地方点“原话”都会落到这里的那一秒。
+// 入口 #/m/xm_safety?t=262&item=xm_06 —— 任何地方点“原话”都会落到这里的那一秒。
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { AlertTriangle, CheckCircle2, Clock3, Download, Link2, Lock, Play, Sparkles, Waypoints } from 'lucide-react'
 import { ITEM_TYPES, personById, projectById, type PersonId } from '@/data/model'
 import { meetingById, type Item, type Meeting } from '@/data/meetings'
-import { chapterAt, itemTime, mmss, quoteSpan, recipientsOf } from '@/data/derive'
-import { RUN_PEOPLE, T_END } from '@/data/run'
+import { chapterAt, isQuiet, itemTime, mmss, quoteSpan, recipientsOf } from '@/data/derive'
+import { RUN_ID, RUN_PEOPLE, T_END } from '@/data/run'
 import { go, href, useRoute } from '@/lib/router'
 import { useStore } from '@/lib/store'
 import { useClock } from '@/lib/useClock'
@@ -14,7 +14,7 @@ import { cn, cnDate, weekday } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { TopBar } from '@/components/shell/TopBar'
-import { Empty, Face, FaceStack, Kb, TypePill } from '@/components/common/bits'
+import { Empty, Face, FaceStack, Kb, RankTag, TypePill } from '@/components/common/bits'
 import { MeetingVideo } from '@/components/player/MeetingVideo'
 import { PlayerControls, Scrubber } from '@/components/player/Scrubber'
 import { Transcript } from '@/components/player/Transcript'
@@ -40,7 +40,7 @@ function MeetingView({ m }: { m: Meeting }) {
   const [captions, setCaptions] = useState(true)
   const [side, setSide] = useState<'tx' | 'items'>('tx')
   const [paper, setPaper] = useState<PersonId | null>(null)
-  const [member, setMember] = useState<PersonId>(m.related.includes('linzong') && m.host !== 'linzong' ? 'linzong' : m.related.find(p => p !== m.host)!)
+  const [member, setMember] = useState<PersonId>(m.related.find(p => p !== m.publisher && !isQuiet(m.id, p)) ?? m.related[0])
   const [copied, setCopied] = useState(false)
   const dispatched = useStore(s => s.dispatched[m.id])
   const confirmed = useStore(s => s.confirmed)
@@ -93,7 +93,7 @@ function MeetingView({ m }: { m: Meeting }) {
   const peopleN = new Set(m.routes.map(r => r.person)).size
 
   const exportMd = () => {
-    const lines = [`# ${m.title}`, '', `${m.date} ${m.time} · 主持 ${personById(m.host).name}`, '', `> ${m.summary}`, '', '## 账本', '']
+    const lines = [`# ${m.title}`, '', `${m.date} ${m.time} · 主持 ${personById(m.host).name} · 发布 ${personById(m.publisher).name}`, '', `> ${m.summary}`, '', '## 账本', '']
     for (const it of [...m.items].sort((a, b) => itemTime(a) - itemTime(b))) {
       const s = quoteSpan(it)
       lines.push(`- [${ITEM_TYPES[it.type].label}] ${it.title}${it.owner ? ` · ${personById(it.owner).name}` : ''}${it.due ? ` · ${it.due}` : ''}`)
@@ -111,9 +111,9 @@ function MeetingView({ m }: { m: Meeting }) {
   const TABS: { id: Tab; label: string; n?: number; hide?: boolean }[] = [
     { id: 'replay', label: '回放与溯源' },
     { id: 'ledger', label: '会议账本', n: m.items.length },
-    { id: 'people', label: '成员简报', n: m.related.length },
+    { id: 'people', label: '收到者简报', n: m.related.length },
     { id: 'dist', label: '分发结果', n: dispatched ? peopleN : undefined },
-    { id: 'run', label: '编排记录', hide: m.id !== 'd11' || !dispatched },
+    { id: 'run', label: '编排记录', hide: m.id !== RUN_ID || !dispatched },
   ]
 
   return (
@@ -145,10 +145,12 @@ function MeetingView({ m }: { m: Meeting }) {
             <div className="text-ink-3 mt-1.5 flex flex-wrap items-center gap-y-1 text-[13px]">
               <span>{cnDate(m.date)} {weekday(m.date)} {m.time}</span>
               <span className="dot-sep">{m.source} {mmss(m.duration)}</span>
-              <span className="dot-sep">主持 {personById(m.host).name}</span>
+              <span className="dot-sep">{m.external ? '直播主持' : '主持'} {personById(m.host).name}</span>
+              <span className="dot-sep inline-flex items-center gap-1.5">发布者 <Face p={m.publisher} size={20} /><b className="text-ink-2 font-medium">{personById(m.publisher).name}</b><RankTag p={m.publisher} /></span>
               <span className="dot-sep inline-flex items-center gap-2">
-                <FaceStack ids={m.related} size={20} max={8} ring={pid => (m.attendees.includes(pid) ? '#22C55E' : undefined)} />
-                参会 {m.attendees.length} · 相关 {m.related.length}
+                收到者 {m.related.filter(x => x !== m.publisher).length} 人
+                <FaceStack ids={m.related.filter(x => x !== m.publisher)} size={20} max={8} ring={pid => (m.attendees.includes(pid) ? '#22C55E' : undefined)} />
+                {!m.external && <span>· 参会 {m.attendees.length}</span>}
               </span>
             </div>
           </div>
@@ -172,7 +174,7 @@ function MeetingView({ m }: { m: Meeting }) {
           <div className="grid h-full grid-cols-[minmax(0,1fr)_400px] max-xl:grid-cols-[minmax(0,1fr)_340px]">
             <div className="min-h-0 overflow-y-auto px-6 py-5">
               <div className="mx-auto max-w-[920px]">
-                <MeetingVideo meeting={m} t={clock.t} playing={clock.playing} onToggle={clock.toggle} focus={focus} pulse={pulse} captions={captions} />
+                <MeetingVideo meeting={m} t={clock.t} playing={clock.playing} onToggle={clock.toggle} focus={focus} pulse={pulse} captions={captions} speed={clock.speed} />
                 <div className="mt-3"><PlayerControls clock={clock} captions={captions} onCaptions={setCaptions} /></div>
                 <div className="mt-3 rounded-xl border px-3 pt-3 pb-3"><Scrubber meeting={m} clock={clock} focusId={focusId} onItem={locate} /></div>
                 <NowPanel m={m} t={clock.t} focusId={focusId} onItem={locate} onSeek={seek} />
@@ -204,7 +206,7 @@ function MeetingView({ m }: { m: Meeting }) {
               <div className="mx-auto flex max-w-[1180px] flex-col gap-6">
                 <DistStats m={m} />
                 <section>
-                  <h3 className="mb-2 text-[15px] font-semibold">路由矩阵 <span className="text-ink-3 text-[13px] font-normal">点人名看他收到的那份，点条目回到录像</span></h3>
+                  <h3 className="mb-2 text-[15px] font-semibold">路由矩阵 <span className="text-ink-3 text-[13px] font-normal">点人名看 TA 收到的那份，点条目回到录像</span></h3>
                   <Matrix meeting={m} onOpen={setPaper} onItem={locate} />
                 </section>
                 <section>
@@ -214,7 +216,7 @@ function MeetingView({ m }: { m: Meeting }) {
               </div>
             ) : (
               <Empty icon="paperPlane" title="这场会还没分发" sub="交给 8 个智能体：抽账本、按人路由、逐人改写，发之前会先给你看矩阵。">
-                <Button className="mt-3" onClick={() => go(`/dispatch/${m.id}`)}><Waypoints /> 开始智能分发</Button>
+                <Button className="mt-3" onClick={() => go(`/dispatch/${m.id}`, { run: 1 })}><Waypoints /> 开始智能分发</Button>
               </Empty>
             )}
           </div>
@@ -370,10 +372,10 @@ function DistStats({ m }: { m: Meeting }) {
   const actions = m.items.filter(i => i.type === 'action')
   const people = new Set(m.routes.map(r => r.person))
   const absent = [...people].filter(p => !m.attendees.includes(p)).length
-  const quiet = m.related.filter(p => p !== m.host && !people.has(p))
+  const quiet = m.related.filter(p => isQuiet(m.id, p))
   const stats = [
     { k: '推送', v: m.routes.length, s: '条，每条写明为什么发给你', icon: 'route' as const },
-    { k: '收件人', v: people.size, s: `人，其中 ${absent} 人没参会`, icon: 'team' as const },
+    { k: '收到者', v: people.size, s: m.external ? '人，直播里没人被点名' : `人，其中 ${absent} 人没参会`, icon: 'team' as const },
     { k: '不打扰', v: quiet.length, s: quiet.length ? `${quiet.map(q => personById(q).name).join('、')}，只进日报` : '每个相关人都有必读', icon: 'coffee' as const },
     { k: '待办确认', v: `${actions.filter(a => confirmed[a.id]).length}/${actions.length}`, s: '负责人在飞书卡片里点“确认”', icon: 'stamp' as const },
   ]
@@ -393,23 +395,23 @@ function DistStats({ m }: { m: Meeting }) {
   )
 }
 
-/** 便利贴的顺序：主持人、管理者在前，不打扰的人在最后 */
+/** 便利贴的顺序：发布者、管理者在前，不打扰的人在最后 */
 export function notePeople(m: Meeting): PersonId[] {
-  if (m.id === 'd11') return RUN_PEOPLE
+  if (m.id === RUN_ID) return RUN_PEOPLE
   const n = (p: PersonId) => m.routes.filter(r => r.person === p).length
-  const rest = m.related.filter(p => p !== m.host).sort((a, b) => n(b) - n(a))
-  return [m.host, ...rest]
+  const rest = m.related.filter(p => p !== m.publisher).sort((a, b) => n(b) - n(a))
+  return [m.publisher, ...rest]
 }
 
-/** 双 11 这场分发时的编排回放 */
+/** 主案例分发时的编排回放 */
 function RunRecord() {
-  const engine = useStore(s => s.engine)
+  const models = useStore(s => s.models)
   const clock = useClock(T_END, { t: T_END })
   return (
     <div className="h-full overflow-y-auto px-6 py-5">
       <div className="mx-auto max-w-[1100px]">
-        <p className="text-ink-3 mb-3 text-[13px]">这是这场会分发时 8 个智能体的完整编排记录，可以拖动或重放。<a className="text-primary ml-1" href={href('/dispatch/d11')}>回到智能分发对话 →</a></p>
-        <AgentTimeline clock={clock} engine={engine} />
+        <p className="text-ink-3 mb-3 text-[13px]">这是这场会分发时 8 个智能体的完整编排记录，可以拖动或重放。<a className="text-primary ml-1" href={href(`/dispatch/${RUN_ID}`)}>回到智能分发对话 →</a></p>
+        <AgentTimeline clock={clock} models={models} />
       </div>
     </div>
   )

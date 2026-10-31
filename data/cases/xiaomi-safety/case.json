@@ -1,0 +1,71 @@
+{
+  "id": "xm_safety",
+  "title": "小米汽车安全专场直播 · 安全体系",
+  "date": "2026-10-31",
+  "time": "",
+  "_dateNote": "date 是导入日期；直播的实际日期片段里没有说（只提到“2025 年”“去年”，所以是 2026 年的直播），用前请补上",
+  "source": "会议录像",
+  "sourceDoc": "data/小米汽车安全专场直播：小米汽车安全体系详细介绍-2026年10月31日-来自【得到大脑】.md",
+  "video": {
+    "path": "data/video/196d80ece5e9f2c22fd9f93f35b988c2.mp4",
+    "duration": 588.76,
+    "width": 544,
+    "height": 960,
+    "fps": 21,
+    "note": "竖屏，画面带 B 站转载水印，不是小米官方源；对外放映前确认版权"
+  },
+  "host": "leijun",
+  "dispatcher": "jiangwan",
+  "project": {
+    "id": "p_intel",
+    "name": "竞品情报",
+    "color": "#0891B2",
+    "soft": "#E6F7FB",
+    "icon": "newspaper",
+    "desc": "竞品发布会、直播的按人分发",
+    "owner": "jiangwan",
+    "members": ["jiangwan", "hanzong", "songlan", "weiran", "xunuo", "chengcheng", "gaoyuan", "dengkai"]
+  },
+  "summary": "小米汽车首次完整介绍安全体系：目标是“做同档最安全的车”；安全委员会是最高安全决策组织，所有环节要过安全评估，安全有一票否决权；安全相关团队超过 3500 人；全域安全部覆盖 4 大场景、19 个安全领域；2025 年线下驾驶安全培训 484 场、10620 人；新车主 90 天打卡得 4000 积分，App 安全分上线 2.0。本段只有第一部分，电子安全不在其中。",
+
+  "speakerMap": [
+    { "label": "说话人1", "spk": "S1", "person": "shuangge", "confidence": 0.85, "evidence": "04:46 侯静雷问“爽哥清不清楚”，说话人1 接“超过了3500人”；07:59 再点名“爽哥”，又是说话人1 接话。开场 00:00–00:18 两段讲购车权益，得到大脑摘要写成雷总，转写标的是说话人1，这两段置信偏低" },
+    { "label": "说话人2", "spk": "S2", "person": "leijun", "confidence": 0.95, "evidence": "02:01 说话人2 提问，说话人3 回“谢谢雷总”；04:16 侯静雷说“刚才雷总讲的很好”，指的是说话人2 在 01:44 讲的“安全的好车”；00:21、00:40 的单人特写和说话人2 的发言段一致" },
+    { "label": "雷军", "spk": "S2", "person": "leijun", "confidence": 0.95, "evidence": "00:19 这一段转写工具单独标成雷军，下一句（说话人2，00:23）接着说“第一个部分呢”，是同一个人，合并到 S2" },
+    { "label": "说话人3", "spk": "S3", "person": "houjinglei", "confidence": 0.95, "evidence": "02:11 “确实我在这个方面工作了22年”，和 00:52 对侯静雷“22年经验”的介绍一致；06:52 由他请丁志介绍全域安全" },
+    { "label": "说话人4", "spk": "S4", "person": "dingzhi", "confidence": 0.95, "evidence": "06:52 “有请丁志老师来帮我们介绍一下全域安全”之后，说话人4 开始讲“小米汽车的全域安全业务”" }
+  ],
+
+  "speakerFixes": [
+    { "at": "00:02:37", "from": "说话人2", "to": "houjinglei", "reason": "“是的，必须坚持长期主义”是在回答上一句雷军的反问，得到大脑摘要也记为侯静雷确认" },
+    { "at": "00:06:00", "from": "说话人1", "to": "houjinglei", "reason": "“是。”是在确认爽哥上一句“我能不能这么理解……”，下一句侯静雷接着说“而且在这个里边呢”" }
+  ],
+
+  "textFixes": [
+    { "from": "景雷", "to": "静雷", "reason": "人名热词：侯静雷" },
+    { "from": "有机成底", "to": "有机整体", "reason": "同音误识别" },
+    { "from": "全安全要做的事情", "to": "全域安全要做的事情", "reason": "漏字：上下文都在讲全域安全" },
+    { "from": "权利", "to": "权力", "reason": "同音误识别：这里说的是一票否决的权力" }
+  ],
+
+  "chapters": [
+    { "name": "购车权益与开场", "start": 0, "end": 30 },
+    { "name": "专家介绍", "start": 30, "end": 82 },
+    { "name": "安全高于一切", "start": 82, "end": 121 },
+    { "name": "22 年的两点感受", "start": 121, "end": 189 },
+    { "name": "目标 · 组织 · 机制", "start": 189, "end": 266 },
+    { "name": "安全委员会", "start": 266, "end": 361 },
+    { "name": "一票否决", "start": 361, "end": 381 },
+    { "name": "全域安全部", "start": 381, "end": 470 },
+    { "name": "安全预防团队", "start": 470, "end": 589 }
+  ],
+
+  "routingRules": {
+    "tierByReason": { "R1": "must", "R2": "must", "R3": "must", "R4": "must", "R5": "should", "R6": "must" },
+    "R6": [
+      { "person": "hanzong", "rule": "管理者：竞品的目标、组织机制和投入规模必读" },
+      { "person": "jiangwan", "rule": "品牌市场：没有给出处的绝对化宣传表述必读" }
+    ],
+    "quietWhenNoMust": true
+  }
+}

@@ -1,4 +1,4 @@
-// 极简 hash 路由：#/m/d11?t=17&item=it_04
+// 极简 hash 路由：#/m/xm_safety?t=262&item=xm_06
 import { useSyncExternalStore } from 'react'
 
 export interface Route {

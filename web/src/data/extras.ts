@@ -1,62 +1,62 @@
 // 会议的附加信息：地点、类型、相关文件、简报的阅读回执（mock）。
+// 主案例的资料是真文件（data/cases/xiaomi-safety/kb/），知识库和成员简报里都能直接打开。
 import type { PersonId } from './model'
 
-export type FileKind = 'doc' | 'pdf' | 'xls' | 'ppt'
+export type FileKind = 'doc' | 'pdf' | 'xls' | 'ppt' | 'md' | 'img'
 
-export interface MeetingFile { name: string; kind: FileKind; owner: PersonId; date: string; size: string }
+export interface MeetingFile { name: string; kind: FileKind; owner: PersonId; date: string; size: string; url?: string }
 
 export interface MeetingExtra {
   place: string
   online: boolean
   kind: string
   files: MeetingFile[]
-  /** 简报投递时间（双 11 那场在演示里实时投递） */
+  /** 简报投递时间（主案例在演示里实时投递） */
   sentAt: string
   /** 谁什么时候读了简报 */
   readAt: Partial<Record<PersonId, string>>
 }
 
+const KB = import.meta.glob<string>('../../../data/cases/xiaomi-safety/kb/*', { eager: true, query: '?url', import: 'default' })
+const kb = (name: string) => Object.entries(KB).find(([k]) => k.endsWith(`/${name}`))?.[1]
+const DEDAO = Object.values(import.meta.glob<string>('../../../data/*【得到大脑】.md', { eager: true, query: '?url', import: 'default' }))[0]
+
 export const EXTRAS: Record<string, MeetingExtra> = {
-  d11: {
-    place: '会议室 A301', online: true, kind: '评审会', sentAt: '10/31 10:21',
+  xm_safety: {
+    place: '直播（B 站转载）', online: true, kind: '竞品直播', sentAt: '10/31 刚刚',
     files: [
-      { name: '双 11 活动方案 V3.0', kind: 'doc', owner: 'wangke', date: '10/31 09:20', size: '12.4 MB' },
-      { name: '扩容方案对比（A / B）', kind: 'xls', owner: 'chenmo', date: '10/30 18:02', size: '1.6 MB' },
-      { name: '优惠券法务意见', kind: 'pdf', owner: 'linzong', date: '10/30 11:15', size: '2.8 MB' },
+      { name: '小米汽车安全专场_会映纪要.pdf', kind: 'pdf', owner: 'jiangwan', date: '10/31 16:02', size: '7 KB', url: kb('小米汽车安全专场_会映纪要.pdf') },
+      { name: '竞品安全体系对标表.docx', kind: 'doc', owner: 'jiangwan', date: '10/31 16:10', size: '38 KB', url: kb('竞品安全体系对标表.docx') },
+      { name: '安全体系拆解_目标组织机制.md', kind: 'md', owner: 'linxia', date: '10/31 16:20', size: '4 KB', url: kb('安全体系拆解_目标组织机制.md') },
+      { name: '得到大脑转写（原文）.md', kind: 'md', owner: 'jiangwan', date: '10/31 11:23', size: '21 KB', url: DEDAO },
+      { name: '直播截图_00-21_开场两部分.jpg', kind: 'img', owner: 'linxia', date: '10/31 15:48', size: '43 KB', url: kb('直播截图_00-21_开场两部分.jpg') },
+      { name: '直播截图_05-30_安全委员会.jpg', kind: 'img', owner: 'linxia', date: '10/31 15:48', size: '60 KB', url: kb('直播截图_05-30_安全委员会.jpg') },
+      { name: '直播截图_08-40_安全预防团队.jpg', kind: 'img', owner: 'linxia', date: '10/31 15:48', size: '47 KB', url: kb('直播截图_08-40_安全预防团队.jpg') },
     ],
-    readAt: { linzong: '10/31 10:26', chenmo: '10/31 10:23', sunyue: '10/31 10:24', zhouning: '10/31 10:30' },
+    readAt: {},
   },
-  cx: {
-    place: '会议室 B205', online: true, kind: '复盘会', sentAt: '10/30 11:08',
+  retail_weekly: {
+    place: '门店运营中心 3F', online: false, kind: '周会', sentAt: '10/30 16:58',
     files: [
-      { name: '10 月 NPS 拆解', kind: 'xls', owner: 'wutong', date: '10/30 09:40', size: '3.1 MB' },
-      { name: '退款工单抽样', kind: 'xls', owner: 'lilin', date: '10/29 17:22', size: '0.9 MB' },
-      { name: '客户满意度复盘', kind: 'ppt', owner: 'yezhou', date: '10/30 09:55', size: '6.2 MB' },
+      { name: '购车权益对比表 v3.xlsx', kind: 'xls', owner: 'linxia', date: '10/30 15:20', size: '0.6 MB' },
+      { name: '门店安全话术卡（草稿）.pptx', kind: 'ppt', owner: 'dengkai', date: '10/30 17:05', size: '3.2 MB' },
     ],
-    readAt: { wangke: '10/30 11:10', lilin: '10/30 11:15', chenmo: '10/30 13:02', linzong: '10/30 14:30' },
+    readAt: { jiangwan: '10/30 17:20', gaoyuan: '10/30 17:02', linxia: '10/30 17:01', hanzong: '10/31 09:10' },
   },
-  q4: {
-    place: '大会议室', online: false, kind: 'OKR 对齐会', sentAt: '10/29 16:40',
+  own_monthly: {
+    place: '会议室 B205', online: true, kind: '月会', sentAt: '10/29 11:40',
     files: [
-      { name: 'Q4 OKR 草案', kind: 'doc', owner: 'linzong', date: '10/29 10:00', size: '0.8 MB' },
-      { name: 'Q4 IT 预算', kind: 'xls', owner: 'zhouning', date: '10/28 16:30', size: '1.2 MB' },
+      { name: '10 月车主 App 数据.xlsx', kind: 'xls', owner: 'chengcheng', date: '10/29 09:30', size: '2.4 MB' },
+      { name: '驾驶评分 × 积分试点方案.docx', kind: 'doc', owner: 'chengcheng', date: '10/29 10:10', size: '0.9 MB' },
     ],
-    readAt: { wangke: '10/29 16:52', sunyue: '10/29 17:01', zhaoyi: '10/29 19:20', zhouning: '10/29 16:45' },
+    readAt: { jiangwan: '10/29 12:05', gaoyuan: '10/29 11:46', hanzong: '10/29 14:30', dengkai: '10/29 13:12' },
   },
-  app: {
-    place: '会议室 A302', online: true, kind: '评审会', sentAt: '10/28 15:20',
+  sf_weekly: {
+    place: '安全部会议室', online: true, kind: '周会', sentAt: '10/28 15:20',
     files: [
-      { name: '会员小程序 2.0 PRD', kind: 'doc', owner: 'wangke', date: '10/27 20:10', size: '4.5 MB' },
-      { name: '会员中心交互稿', kind: 'pdf', owner: 'tangyou', date: '10/28 11:00', size: '18.0 MB' },
+      { name: '安委会常设方案（草案）.docx', kind: 'doc', owner: 'songlan', date: '10/28 13:40', size: '1.1 MB' },
+      { name: '座椅夹手投诉工单.pdf', kind: 'pdf', owner: 'weiran', date: '10/27 18:20', size: '0.7 MB' },
     ],
-    readAt: { tangyou: '10/28 15:25', zhaoyi: '10/28 15:40', lilin: '10/28 17:02' },
-  },
-  s618: {
-    place: '线上会议', online: true, kind: '复盘会', sentAt: '10/20 17:10',
-    files: [
-      { name: '618 转化漏斗', kind: 'xls', owner: 'wutong', date: '10/20 14:00', size: '5.4 MB' },
-      { name: '618 券核销明细', kind: 'xls', owner: 'maxiao', date: '10/20 15:10', size: '2.2 MB' },
-    ],
-    readAt: { wangke: '10/20 17:15', chenmo: '10/20 18:30', linzong: '10/21 09:05', wutong: '10/20 17:12' },
+    readAt: { jiangwan: '10/28 15:31', weiran: '10/28 15:22', xunuo: '10/28 16:05', hanzong: '10/28 18:40', tangchuan: '10/28 15:25' },
   },
 }

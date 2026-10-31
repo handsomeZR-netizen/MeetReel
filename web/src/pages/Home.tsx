@@ -1,335 +1,366 @@
-// 我的会议：主持人的工作台。按项目组织会议；右侧是“需要你处理”和回流动态。
-import { useEffect, useMemo, useRef, type ReactNode } from 'react'
+// 我的会议：发布者和收到者是同一个人的两面。
+// 上：我发布的（我上传、我确认后才发出去）；中：发给我的（别人发布、路由给我的简报）；右：待我处理。
+// 下：全部会议按项目归档，项目标明 Leader。共享给我已经并进来，身份切换在右上角。
+import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { AlertTriangle, ArrowRight, CheckCircle2, Clock3, Eye, MessageCircleQuestion, Play, Send, SquarePen, UserCheck, Waypoints } from 'lucide-react'
-import { ITEM_TYPES, ME, PROJECTS, personById, projectById, type ProjectId } from '@/data/model'
-import { ALL_ITEMS, MEETINGS, itemById, meetingById, type Meeting } from '@/data/meetings'
-import { itemTime, mmss } from '@/data/derive'
-import { go, goSource, href, useRoute } from '@/lib/router'
-import { actions, useStore, type FeedEvent } from '@/lib/store'
+import { ArrowRight, CheckCircle2, ChevronDown, Clock3, MessageCircleQuestion, Play, SquarePen, UserCheck, Waypoints } from 'lucide-react'
+import { ME, PROJECTS, RANKS, STAFF, personById, projectById, type PersonId, type Rank } from '@/data/model'
+import { MEETINGS, itemById, type Meeting } from '@/data/meetings'
+import { inboxOf, isQuiet, outboxOf } from '@/data/derive'
+import { RUN_ID } from '@/data/run'
+import { go, href, useRoute } from '@/lib/router'
+import { actions, useStore } from '@/lib/store'
 import { cn, cnDate, weekday } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
-import { Progress } from '@/components/ui/misc'
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table'
 import { TopBar } from '@/components/shell/TopBar'
-import { Face, FaceStack, Kb, SourceChip, TypePill } from '@/components/common/bits'
+import { Face, FaceStack, Kb, LeaderTag, RankTag, SourceChip } from '@/components/common/bits'
+import { BriefPaper, NOTE_COLORS, Sticky, StickyNotes } from '@/components/sketch/Briefs'
 
 const TODAY = '2026-10-31'
+const hello = () => {
+  const h = new Date().getHours()
+  return h < 11 ? '上午好' : h < 13 ? '中午好' : h < 18 ? '下午好' : '晚上好'
+}
 
 export function Home() {
   const route = useRoute()
-  const project = route.query.get('project') as ProjectId | null
+  const as = (route.query.get('as') as PersonId | null) ?? ME
+  const me = personById(as)
   const dispatched = useStore(s => s.dispatched)
-  const confirmed = useStore(s => s.confirmed)
-  const feedRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (route.query.has('feed')) feedRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-    const id = setTimeout(actions.seen, 2500)
-    return () => clearTimeout(id)
-  }, [route.raw])
-
-  const meetings = useMemo(() => [...MEETINGS].filter(m => !project || m.project === project).sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time)), [project])
-  const thisWeek = MEETINGS.filter(m => m.date >= '2026-10-26').length
-  const briefs = MEETINGS.filter(m => dispatched[m.id]).reduce((n, m) => n + new Set(m.routes.map(r => r.person)).size, 0)
-  const informedAbsent = MEETINGS.filter(m => dispatched[m.id]).reduce((n, m) => n + new Set(m.routes.map(r => r.person).filter(p => !m.attendees.includes(p))).size, 0)
-  const actionsAll = ALL_ITEMS.filter(i => i.type === 'action' && dispatched[i.meeting])
-  const okAll = actionsAll.filter(i => confirmed[i.id]).length
+  const outbox = outboxOf(as)
+  const inbox = useMemo(
+    () => inboxOf(as, id => !!dispatched[id]).sort((a, b) => (b.meeting.date + b.meeting.time).localeCompare(a.meeting.date + a.meeting.time)),
+    [as, dispatched],
+  )
 
   return (
     <>
-      <TopBar crumbs={[{ label: '我的会议', to: '/' }, ...(project ? [{ label: projectById(project).name }] : [])]}>
+      <TopBar crumbs={[{ label: '我的会议', to: '/' }, ...(as !== ME ? [{ label: `以 ${me.name} 的身份预览` }] : [])]}>
         <Button size="sm" onClick={() => go('/new')}><SquarePen /> 新建会议</Button>
       </TopBar>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-[1400px] flex-col gap-6 px-6 py-6">
-          <div className="flex flex-wrap items-end justify-between gap-3">
-            <div>
-              <h1 className="text-[24px] font-semibold tracking-tight">上午好，{personById(ME).name}</h1>
-              <p className="text-ink-3 mt-1 text-[14px]">{cnDate(TODAY)} {weekday(TODAY)} · 本周 {thisWeek} 场会 · 会映已经替你把纪要按人发出去了</p>
+        <div className="mx-auto flex max-w-[1240px] flex-col gap-7 px-6 py-6">
+          <header className="flex flex-wrap items-end justify-between gap-3">
+            <div className="min-w-0">
+              <h1 className="text-[24px] font-semibold tracking-tight">{as === ME ? `${hello()}，${me.name}` : `${me.name} 的会议`}</h1>
+              <div className="text-ink-3 mt-1.5 flex flex-wrap items-center gap-1.5 text-[13.5px]">
+                <span>{me.team}{me.group ? ` · ${me.group}` : ''} · {me.role}</span>
+                <RankTag p={me} /><LeaderTag pid={as} />
+                <span className="ml-1">· {cnDate(TODAY)} {weekday(TODAY)}</span>
+              </div>
             </div>
-          </div>
+            <ViewAs as={as} />
+          </header>
 
-          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-            <Kpi icon="calendar" label="本周会议" value={`${thisWeek}`} unit="场" foot="全部已转写，可回放溯源" />
-            <Kpi icon="mailbox" label="已分发简报" value={`${briefs}`} unit="份" foot="每人只收和自己有关的" />
-            <Kpi icon="team" label="没参会也没漏" value={`${informedAbsent}`} unit="人次" foot="缺席的人也收到了自己那份" />
-            <Kpi icon="stamp" label="待办确认" value={`${okAll}/${actionsAll.length}`} foot="负责人在飞书里点“确认”">
-              <Progress value={(okAll / Math.max(1, actionsAll.length)) * 100} className="mt-2 h-1.5" indicatorClassName="bg-emerald-500" />
-            </Kpi>
-          </div>
-
-          <AnimatePresence>{!dispatched.d11 && <PendingBanner />}</AnimatePresence>
-
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_360px]">
-            <div className="flex min-w-0 flex-col gap-6">
+          <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_340px]">
+            <div className="flex min-w-0 flex-col gap-7">
               <section>
-                <SectionHead title="项目" sub="会议按项目归档，账本和待办跟着项目走" />
-                <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-4">
-                  {PROJECTS.map(p => {
-                    const ms = MEETINGS.filter(m => m.project === p.id)
-                    const acts = ms.flatMap(m => m.items).filter(i => i.type === 'action')
-                    const ok = acts.filter(i => confirmed[i.id]).length
-                    const risks = ms.flatMap(m => m.items).filter(i => i.type === 'risk').length
-                    const on = project === p.id
-                    return (
-                      <a key={p.id} href={href('/', on ? {} : { project: p.id })} className={cn('kb-tile kb-wiggle flex flex-col rounded-2xl border bg-white p-4', on && 'border-ink')}>
-                        <div className="flex items-start gap-3">
-                          <span style={{ color: p.color }}><Kb name={p.icon} size={34} /></span>
-                          <div className="min-w-0 flex-1">
-                            <b className="block text-[15px] font-semibold">{p.name}</b>
-                            <span className="text-ink-3 line-clamp-1 text-[12.5px]">{p.desc}</span>
-                          </div>
-                        </div>
-                        <div className="text-ink-2 mt-3 flex items-center gap-3 text-[12.5px]">
-                          <span>{ms.length} 场会</span><span>{acts.length} 条待办</span>{risks > 0 && <span className="text-rose-600">{risks} 个风险</span>}
-                        </div>
-                        <div className="mt-3 flex items-center gap-2">
-                          <span className="bg-muted h-1.5 flex-1 overflow-hidden rounded-full"><span className="block h-full rounded-full transition-all" style={{ width: `${(ok / Math.max(1, acts.length)) * 100}%`, background: p.color }} /></span>
-                          <span className="text-ink-3 text-[11.5px] tabular-nums">{ok}/{acts.length}</span>
-                        </div>
-                        <div className="mt-3"><FaceStack ids={p.members} size={22} max={6} /></div>
-                      </a>
-                    )
-                  })}
-                </div>
+                <SectionHead role="发布者" title="我发布的" sub="你上传、你确认之后，会映才按人发出去" />
+                {outbox.length ? (
+                  <div className="flex flex-col gap-4">{outbox.map(m => <PublishedCard key={m.id} m={m} />)}</div>
+                ) : (
+                  <div className="text-ink-3 rounded-2xl border border-dashed px-5 py-6 text-[13.5px]">{me.name} 最近没有发布会议。</div>
+                )}
               </section>
 
               <section>
-                <SectionHead title={project ? `${projectById(project).name} · 会议` : '全部会议'} sub="点一行打开回放；原话、逐字稿、录像互相定位">
-                  {project && <a href={href('/')} className="text-primary text-[13px]">看全部</a>}
-                </SectionHead>
-                <div className="overflow-hidden rounded-2xl border bg-white">
-                  <Table>
-                    <TableHeader>
-                      <TableRow className="bg-muted/40 hover:bg-muted/40">
-                        <TableHead className="pl-4">会议</TableHead><TableHead>时间</TableHead><TableHead>相关人</TableHead>
-                        <TableHead>账本</TableHead><TableHead>分发</TableHead><TableHead className="pr-4 text-right" />
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {meetings.map(m => <MeetingRow key={m.id} m={m} />)}
-                    </TableBody>
-                  </Table>
-                </div>
+                <SectionHead role="收到者" title="发给我的" sub={`${inbox.length} 份简报 · 每份只含和你有关的条目，写明为什么发给你`} />
+                {inbox.length ? (
+                  <div className="sk-board rounded-2xl px-4 pb-3">
+                    <div className="sk-stickies">
+                      {inbox.map(({ meeting: m, brief: b }, i) => {
+                        const pub = personById(m.publisher)
+                        return (
+                          <Sticky
+                            key={m.id}
+                            i={i + 2}
+                            title={m.title.replace(/ · .*/, '')}
+                            count={b.entries.length}
+                            foot={<>{pub.name} 发布 · {RANKS[pub.rank].label} · 点开看 →</>}
+                            onClick={() => go('/shared', { as, b: m.id })}
+                          >
+                            <p>{b.headline}</p>
+                          </Sticky>
+                        )
+                      })}
+                    </div>
+                  </div>
+                ) : (
+                  <div className="text-ink-3 rounded-2xl border border-dashed px-5 py-6 text-[13.5px]">还没有别人发给 {me.name} 的简报。</div>
+                )}
               </section>
             </div>
 
-            <div className="flex min-w-0 flex-col gap-6">
-              <NeedsYou />
-              <div ref={feedRef}><Feed /></div>
-            </div>
+            <ToDo as={as} />
           </div>
+
+          <AllMeetings />
         </div>
       </div>
     </>
   )
 }
 
-function SectionHead({ title, sub, children }: { title: string; sub?: string; children?: ReactNode }) {
+function SectionHead({ role, title, sub, children }: { role?: string; title: string; sub?: string; children?: ReactNode }) {
   return (
-    <div className="mb-3 flex items-baseline gap-2">
-      <h2 className="text-[16px] font-semibold">{title}</h2>
+    <div className="mb-3 flex flex-wrap items-baseline gap-2">
+      <h2 className="text-[17px] font-semibold">{title}</h2>
+      {role && <span className="text-ink-2 rounded-md bg-[#F2F3F5] px-1.5 py-px text-[11.5px]">{role}视角</span>}
       {sub && <span className="text-ink-3 text-[12.5px]">{sub}</span>}
       <span className="ml-auto">{children}</span>
     </div>
   )
 }
 
-function Kpi({ icon, label, value, unit, foot, children }: { icon: Parameters<typeof Kb>[0]['name']; label: string; value: string; unit?: string; foot: string; children?: ReactNode }) {
+// ---------------- 身份切换：按职级分组，看清谁是谁 ----------------
+
+const RANK_ORDER: Rank[] = ['exec', 'head', 'lead', 'staff']
+
+function ViewAs({ as }: { as: PersonId }) {
+  const [open, setOpen] = useState(false)
+  useEffect(() => {
+    if (!open) return
+    const close = () => setOpen(false)
+    window.addEventListener('click', close)
+    return () => window.removeEventListener('click', close)
+  }, [open])
   return (
-    <div className="kb-tile kb-wiggle rounded-2xl border bg-gradient-to-t from-[#F6F8FE] to-white p-4">
-      <div className="flex items-start justify-between">
-        <span className="text-ink-3 text-[13px]">{label}</span>
-        <span className="text-ink-2"><Kb name={icon} size={28} /></span>
-      </div>
-      <div className="mt-1 text-[28px] leading-tight font-semibold tabular-nums">{value}{unit && <span className="text-ink-3 ml-1 text-[14px] font-normal">{unit}</span>}</div>
-      {children}
-      <div className="text-ink-3 mt-1.5 text-[12.5px]">{foot}</div>
+    <div className="relative" onClick={e => e.stopPropagation()}>
+      <button className="flex h-9 items-center gap-2 rounded-xl border bg-white pr-2.5 pl-1.5 text-[13px] hover:bg-black/[.02]" onClick={() => setOpen(o => !o)}>
+        <Face p={as} size={24} /><span className="text-ink-3">以</span><b className="font-semibold">{personById(as).name}</b><span className="text-ink-3">的身份看</span>
+        <ChevronDown size={14} className="text-ink-3" />
+      </button>
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            className="absolute top-11 right-0 z-30 w-[340px] rounded-2xl border bg-white p-2 shadow-[0_12px_40px_-8px_rgba(0,0,0,.18)]"
+            initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}
+          >
+            <div className="text-ink-3 px-2 pt-1 pb-2 text-[12px]">切换身份预览：权限闸和简报都按这个人生效</div>
+            {RANK_ORDER.map(r => {
+              const list = STAFF.filter(x => x.rank === r)
+              return (
+                <div key={r} className="mb-1">
+                  <div className="text-ink-3 flex items-center gap-1.5 px-2 py-1 text-[11.5px]"><b className="font-mono">{RANKS[r].level}</b>{RANKS[r].label}</div>
+                  {list.map(x => (
+                    <button key={x.id} className={cn('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-black/[.04]', x.id === as && 'bg-[#EEF3FF]')} onClick={() => { setOpen(false); go('/', x.id === ME ? {} : { as: x.id }) }}>
+                      <Face p={x} size={24} />
+                      <span className="min-w-0 flex-1 truncate text-[13px]"><b className="font-medium">{x.name}</b><span className="text-ink-3 ml-1.5 text-[12px]">{x.team} · {x.role}</span></span>
+                      <LeaderTag pid={x.id} className="max-w-[110px] truncate" />
+                      {x.id === ME && <span className="text-ink-3 text-[11px]">我</span>}
+                    </button>
+                  ))}
+                </div>
+              )
+            })}
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
 
-function PendingBanner() {
-  const m = meetingById('d11')!
+// ---------------- 我发布的：视觉重点 ----------------
+
+function PublishedCard({ m }: { m: Meeting }) {
+  const dispatched = useStore(s => s.dispatched[m.id])
+  const [paper, setPaper] = useState<PersonId | null>(null)
+  const p = projectById(m.project)
+  const receivers = m.related.filter(x => x !== m.publisher)
+  const byRank = RANK_ORDER.map(r => ({ r, n: receivers.filter(x => personById(x).rank === r).length })).filter(x => x.n)
+  const quiet = receivers.filter(x => isQuiet(m.id, x))
+  const people = [m.publisher, ...receivers.filter(x => !quiet.includes(x)), ...quiet]
+  const run = m.id === RUN_ID
+
   return (
-    <motion.div
-      className="flex flex-wrap items-center gap-4 overflow-hidden rounded-2xl border border-[#D6E2FD] bg-gradient-to-r from-[#EEF3FF] via-white to-white px-5 py-4"
-      initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0, paddingTop: 0, paddingBottom: 0, marginTop: -24 }}
-    >
-      <span className="text-primary kb-wiggle on"><Kb name="meeting" size={46} /></span>
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-2"><span className="live-dot" /><b className="text-[15.5px]">{m.title} 刚结束</b><span className="text-ink-3 text-[12.5px]">{cnDate(m.date)} {m.time}</span></div>
-        <p className="text-ink-2 mt-0.5 text-[13.5px]">已转写 {m.segments.length} 段发言 · 参会 {m.attendees.length} 人、相关 {m.related.length} 人 · 5 个人没来，但有事需要他们知道</p>
+    <motion.div layout className={cn('overflow-hidden rounded-3xl border bg-white', !dispatched && 'border-[#C9D8FF] shadow-[0_18px_40px_-28px_rgba(47,100,242,.6)]')}>
+      <div className="flex gap-5 p-5 max-sm:flex-col">
+        {m.video ? (
+          <a href={href(`/m/${m.id}`)} className="group relative block h-[212px] w-[120px] flex-none overflow-hidden rounded-2xl bg-black" title="回放">
+            <img src={m.video.poster} alt="" className="size-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105" draggable={false} />
+            <span className="absolute inset-0 grid place-items-center"><span className="grid size-11 place-items-center rounded-full bg-white/90 text-black shadow-lg transition-transform group-hover:scale-110"><Play size={18} fill="currentColor" className="ml-0.5" /></span></span>
+            <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-[11px] text-white">09:49</span>
+          </a>
+        ) : (
+          <span className="grid size-[88px] flex-none place-items-center rounded-2xl" style={{ background: p.soft, color: p.color }}><Kb name={p.icon} size={48} /></span>
+        )}
+        <div className="flex min-w-0 flex-1 flex-col">
+          <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
+            <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium" style={{ color: p.color, background: p.soft }}><span className="size-1.5 rounded-full" style={{ background: p.color }} />{p.name}</span>
+            <span className="text-ink-2 rounded-full bg-[#F2F3F5] px-2 py-0.5">{m.kind}{m.external ? ' · 外部' : ''}</span>
+            {dispatched
+              ? <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={13} /> 已分发</span>
+              : <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700"><span className="live-dot" /> 已转写 · 等你分发</span>}
+          </div>
+          <a href={href(`/m/${m.id}`)} className="mt-2 text-[20px] leading-snug font-semibold tracking-tight hover:underline">{m.title}</a>
+          <p className="text-ink-2 mt-1.5 line-clamp-2 text-[13.5px] leading-relaxed">{m.summary}</p>
+
+          <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px]">
+            <span className="flex items-center gap-2"><span className="text-ink-3">发布者</span><Face p={m.publisher} size={22} /><b className="font-medium">{personById(m.publisher).name}</b><RankTag p={m.publisher} /></span>
+            <ArrowRight size={14} className="text-ink-4" />
+            <span className="flex items-center gap-2"><span className="text-ink-3">收到者 {receivers.length} 人</span><FaceStack ids={receivers} size={22} max={8} /></span>
+            <span className="text-ink-3">{byRank.map(x => `${x.n} 位${RANKS[x.r].label}`).join(' · ')}</span>
+          </div>
+          {m.external && !dispatched && (
+            <p className="text-ink-3 mt-2 text-[12.5px]">直播里没人点到我们任何人的名。会映按每个人负责的事、订阅的话题和管理者规则判断谁该知道，发出去之前先给你看。</p>
+          )}
+
+          <div className="mt-auto flex flex-wrap gap-2 pt-4">
+            {dispatched ? (
+              <>
+                <Button variant="outline" onClick={() => go(`/m/${m.id}`, { tab: 'dist' })}>看分发结果</Button>
+                <Button variant="ghost" onClick={() => go(`/m/${m.id}`)}><Play /> 回放与溯源</Button>
+              </>
+            ) : (
+              <>
+                <Button onClick={() => go(`/dispatch/${m.id}`, { run: 1 })}><Waypoints /> 开始智能分发</Button>
+                <Button variant="outline" onClick={() => go(`/m/${m.id}`)}><Play /> 先看回放</Button>
+              </>
+            )}
+          </div>
+        </div>
       </div>
-      <div className="flex gap-2">
-        <Button variant="outline" onClick={() => go(`/m/${m.id}`)}><Play /> 先看回放</Button>
-        <Button onClick={() => go(`/dispatch/${m.id}`, { run: 1 })}><Waypoints /> 开始智能分发</Button>
-      </div>
+      <AnimatePresence initial={false}>
+        {dispatched && (
+          <motion.div className="sk-board border-t px-5 pt-3 pb-2" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
+            <div className="flex items-center gap-2"><Kb name="mailbox" size={24} /><b className="font-hand text-[19px]">每人一份简报 · {run ? '已投递飞书' : `${cnDate(m.date)} 已投递`}</b></div>
+            <StickyNotes meeting={m.id} people={people} ready={() => true} onOpen={setPaper} />
+          </motion.div>
+        )}
+      </AnimatePresence>
+      <BriefPaper meeting={m.id} pid={paper} onClose={() => setPaper(null)} />
     </motion.div>
   )
 }
 
-function MeetingRow({ m }: { m: Meeting }) {
-  const dispatched = useStore(s => s.dispatched[m.id])
-  const confirmed = useStore(s => s.confirmed)
-  const p = projectById(m.project)
-  const counts = (['decision', 'action', 'change', 'risk'] as const).map(k => ({ k, n: m.items.filter(i => i.type === k).length })).filter(x => x.n)
-  const acts = m.items.filter(i => i.type === 'action')
-  const ok = acts.filter(i => confirmed[i.id]).length
-  const people = new Set(m.routes.map(r => r.person)).size
-  return (
-    <TableRow className="group cursor-pointer" onClick={() => go(`/m/${m.id}`)}>
-      <TableCell className="py-3 pl-4">
-        <div className="flex items-center gap-2.5">
-          <span className="grid size-9 flex-none place-items-center rounded-xl" style={{ background: p.soft, color: p.color }}><Kb name={p.icon} size={20} /></span>
-          <div className="min-w-0">
-            <div className="truncate font-medium">{m.title}</div>
-            <div className="text-ink-3 text-xs">{p.name} · {m.source} {mmss(m.duration)}</div>
-          </div>
-        </div>
-      </TableCell>
-      <TableCell className="text-ink-2 tabular-nums">{cnDate(m.date)} <span className="text-ink-3">{m.time}</span></TableCell>
-      <TableCell><FaceStack ids={m.related} size={22} max={5} ring={pid => (m.attendees.includes(pid) ? '#22C55E' : undefined)} /></TableCell>
-      <TableCell>
-        <div className="flex gap-2.5 text-xs">
-          {counts.map(c => <span key={c.k} className="inline-flex items-center gap-1"><i className="size-1.5 rounded-full" style={{ background: ITEM_TYPES[c.k].color }} />{ITEM_TYPES[c.k].label} {c.n}</span>)}
-        </div>
-      </TableCell>
-      <TableCell>
-        {dispatched ? (
-          <div className="flex items-center gap-2 text-xs">
-            <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={13} /> {people} 人</span>
-            <span className="text-ink-3">确认 {ok}/{acts.length}</span>
-          </div>
-        ) : <span className="inline-flex items-center gap-1 rounded-md bg-amber-50 px-1.5 py-0.5 text-xs text-amber-700"><Clock3 size={12} /> 待分发</span>}
-      </TableCell>
-      <TableCell className="pr-4 text-right">
-        {dispatched
-          ? <span className="text-ink-3 group-hover:text-ink inline-flex items-center gap-1 text-xs">回放 <ArrowRight size={13} /></span>
-          : <Button size="sm" className="h-7" onClick={e => { e.stopPropagation(); go(`/dispatch/${m.id}`, { run: 1 }) }}><Waypoints /> 分发</Button>}
-      </TableCell>
-    </TableRow>
-  )
-}
+// ---------------- 待我处理：一张张小便利贴 ----------------
 
-function NeedsYou() {
+interface Todo { key: string; tone: number; kind: string; icon: ReactNode; title: string; sub?: string; item?: string; act?: ReactNode }
+
+function ToDo({ as }: { as: PersonId }) {
   const dispatched = useStore(s => s.dispatched)
   const owners = useStore(s => s.owners)
   const confirmed = useStore(s => s.confirmed)
   const answered = useStore(s => s.answered)
-  const asks = useStore(s => s.events.filter(e => e.kind === 'ask' && !answered[e.id]))
-  const mine = ALL_ITEMS.filter(i => i.type === 'action' && i.owner === ME && i.meeting !== 'd11')
-  const rows: ReactNode[] = []
-
-  if (!dispatched.d11) {
-    rows.push(
-      <Row key="pending" icon={<Waypoints size={15} />} tone="amber" title="双 11 活动上线评审 待分发" sub="8 位相关人里 5 位没参会">
-        <Button size="sm" className="h-7" onClick={() => go('/dispatch/d11', { run: 1 })}>去分发</Button>
-      </Row>,
-    )
-  }
-  if (dispatched.d11 && !owners.it_05) {
-    rows.push(
-      <Row key="owner" icon={<UserCheck size={15} />} tone="amber" title="客户端适配还没有负责人" sub="it_05 · 会上没定，建议赵一" item="it_05">
-        <Button size="sm" className="h-7" onClick={() => actions.assign('it_05', 'zhaoyi')}>指派给赵一</Button>
-      </Row>,
-    )
-  }
-  for (const e of asks) {
-    rows.push(
-      <Row key={e.id} icon={<MessageCircleQuestion size={15} />} tone="blue" title={`${personById(e.person).name} 追问：${e.text}`} sub={e.item ? itemById(e.item).title : ''} item={e.item}>
-        <Button size="sm" variant="outline" className="h-7" onClick={() => actions.answer(e.id, e.item?.startsWith('it_') ? '已转问孙悦（会上没说公告时间）' : '已转问林总')}>
-          {e.item?.startsWith('it_') ? '转问孙悦' : '转问林总'}
-        </Button>
-      </Row>,
-    )
-  }
-  rows.push(
-    <Row key="conflict" icon={<AlertTriangle size={15} />} tone="rose" title="压测排期和 618 复盘的决定冲突" sub="618 定过“至少提前一周压测”，这次只提前 3 天">
-      <Button size="sm" variant="outline" className="h-7" onClick={() => go('/kb', { q: '压测风险之前提过吗？' })}>看依据</Button>
-    </Row>,
-  )
-  for (const it of mine.filter(i => !confirmed[i.id] || i.id === 'q4_04')) {
-    rows.push(
-      <Row key={it.id} icon={<Clock3 size={15} />} tone="gray" title={`你的待办：${it.title}`} sub={`${it.due ? `${it.due} 截止 · ` : ''}${meetingById(it.meeting)!.title}`} item={it.id} />,
-    )
-  }
-
-  return (
-    <section>
-      <SectionHead title="需要你处理" sub={`${rows.length} 件`} />
-      <div className="flex flex-col gap-2">
-        <AnimatePresence initial={false}>{rows}</AnimatePresence>
-      </div>
-    </section>
-  )
-}
-
-function Row({ icon, tone, title, sub, item, children }: { icon: ReactNode; tone: 'amber' | 'blue' | 'rose' | 'gray'; title: string; sub?: string; item?: string; children?: ReactNode }) {
-  const toneCls = { amber: 'bg-amber-50 text-amber-600', blue: 'bg-[#EEF3FF] text-primary', rose: 'bg-rose-50 text-rose-600', gray: 'bg-muted text-ink-2' }[tone]
-  return (
-    <motion.div layout initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, x: 20, height: 0 }} className="kb-tile rounded-2xl border bg-white p-3">
-      <div className="flex items-start gap-2.5">
-        <span className={cn('grid size-7 flex-none place-items-center rounded-lg', toneCls)}>{icon}</span>
-        <div className="min-w-0 flex-1">
-          <div className="text-[13.5px] leading-snug font-medium">{title}</div>
-          {sub && <div className="text-ink-3 mt-0.5 truncate text-[12px]">{sub}</div>}
-          {item && <SourceChip item={itemById(item)} className="-ml-0.5 mt-1" />}
-        </div>
-        {children && <div className="flex-none">{children}</div>}
-      </div>
-    </motion.div>
-  )
-}
-
-const VERB: Record<FeedEvent['kind'], string> = {
-  confirm: '确认了', ask: '追问', assign: '指派', not_me: '退回了', answer: '回复', sent: '', read: '',
-}
-
-function Feed() {
   const events = useStore(s => s.events)
+  const done = useStore(s => s.done)
+  const rows: Todo[] = []
+  // 追问发给条目负责人；没有负责人的回到发布者
+  const askedTo = (item: string, meeting: string) => owners[item] ?? itemById(item).owner ?? meetingPublisher(meeting)
+
+  for (const e of events.filter(e => e.kind === 'ask' && !answered[e.id] && e.item && askedTo(e.item, e.meeting) === as)) {
+    const reply = REPLY[e.item!] ?? '已转给林夏核实'
+    rows.push({
+      key: `ask${e.id}`, tone: 2, kind: '追问', icon: <MessageCircleQuestion size={14} />, title: `${personById(e.person).name}：${e.text}`, item: e.item,
+      act: <button className="sk-mini-btn" onClick={() => actions.answer(e.id, reply)}>{reply.length > 10 ? '回复' : reply}</button>,
+    })
+  }
+  if (as === ME && dispatched[RUN_ID] && !owners.xm_18) {
+    rows.push({
+      key: 'verify', tone: 4, kind: '待核实', icon: <UserCheck size={14} />, title: '“行业内首个万人级培训”没给出处，物料引用前要核实', item: 'xm_18',
+      act: <button className="sk-mini-btn" onClick={() => actions.assign('xm_18', 'linxia')}>交给组员林夏</button>,
+    })
+  }
+  if (as === ME && dispatched[RUN_ID] && owners.xm_18) {
+    rows.push({ key: 'verify2', tone: 3, kind: confirmed.xm_18 ? '已接手' : '已指派', icon: <UserCheck size={14} />, title: `林夏${confirmed.xm_18 ? '确认负责' : '待确认'}：核实“行业首个”的出处`, item: 'xm_18' })
+  }
+  for (const m of MEETINGS) {
+    for (const it of m.items.filter(i => i.type === 'action' && (owners[i.id] ?? i.owner) === as && dispatched[m.id] && !done[i.id])) {
+      rows.push({
+        key: it.id, tone: confirmed[it.id] ? 0 : 1, kind: confirmed[it.id] ? '我的待办' : '待我确认', icon: <Clock3 size={14} />,
+        title: it.title, sub: `${it.due ? `${it.due} 截止 · ` : it.flags?.includes('缺截止') ? '还没定截止 · ' : ''}${m.title}`, item: it.id,
+        act: confirmed[it.id] ? undefined : <button className="sk-mini-btn" onClick={() => actions.confirm(it.id, as)}>我来负责</button>,
+      })
+    }
+  }
+  if (as === ME) {
+    rows.push({
+      key: 'gap', tone: 5, kind: '跨会议发现', icon: <Kb name="brain" size={15} />, title: '竞品安全评审有一票否决权，我们的安委会还没有', sub: '小米直播 × 10/28 安全周会',
+      act: <button className="sk-mini-btn" onClick={() => go('/kb', { q: '竞品的一票否决和我们差在哪？' })}>看依据</button>,
+    })
+  }
+
+  return (
+    <aside className="min-w-0">
+      <SectionHead title="待我处理" sub={`${rows.length} 件`} />
+      <div className="flex flex-col gap-3">
+        <AnimatePresence initial={false}>
+          {rows.map((r, i) => (
+            <motion.div
+              key={r.key}
+              layout
+              className="sk-todo"
+              style={{ background: NOTE_COLORS[r.tone % NOTE_COLORS.length], rotate: `${i % 2 ? 0.6 : -0.8}deg` }}
+              initial={{ opacity: 0, y: 10, scale: 0.96 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, x: 30, height: 0 }}
+              whileHover={{ rotate: '0deg', y: -2 }}
+            >
+              <div className="flex items-center gap-1.5 text-[12px] opacity-70">{r.icon}<span>{r.kind}</span></div>
+              <div className="mt-1 text-[15px] leading-snug">{r.title}</div>
+              {r.sub && <div className="mt-0.5 text-[12.5px] opacity-60">{r.sub}</div>}
+              <div className="mt-1.5 flex items-center gap-2">
+                {r.item && <SourceChip item={itemById(r.item)} className="-ml-0.5 min-w-0 font-sans" />}
+                {r.act && <span className="ml-auto flex-none">{r.act}</span>}
+              </div>
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {!rows.length && <div className="text-ink-3 rounded-2xl border border-dashed px-4 py-5 text-[13px]">没有待处理的事。</div>}
+      </div>
+    </aside>
+  )
+}
+
+const meetingPublisher = (id: string) => MEETINGS.find(m => m.id === id)!.publisher
+
+const REPLY: Record<string, string> = {
+  ow_06: '11/3 先发门店一版草稿',
+  xm_01: '直播里没说期限，已让林夏去门店核实',
+  xm_19: '直播只说了 4000 积分，没说折算，已转林夏查规则',
+}
+
+// ---------------- 全部会议：按项目，标明 Leader ----------------
+
+function AllMeetings() {
+  const dispatched = useStore(s => s.dispatched)
+  const confirmed = useStore(s => s.confirmed)
+  const custom = useStore(s => s.projects)
+  const projects = [...PROJECTS, ...custom]
   return (
     <section>
-      <SectionHead title="回流动态" sub="确认、追问、改派都会回到账本" />
-      <div className="rounded-2xl border bg-white p-1.5">
-        <AnimatePresence initial={false}>
-          {events.slice(0, 12).map(e => {
-            const it = e.item ? itemById(e.item) : null
-            const m = meetingById(e.meeting)!
-            return (
-              <motion.div
-                key={e.id}
-                layout
-                initial={{ opacity: 0, height: 0, backgroundColor: '#EEF3FF' }}
-                animate={{ opacity: 1, height: 'auto', backgroundColor: e.fresh ? '#F5F8FF' : 'rgba(255,255,255,0)' }}
-                transition={{ duration: 0.5 }}
-                className="overflow-hidden rounded-xl"
-              >
-                <div className="flex gap-2.5 px-2.5 py-2.5">
-                  <Face p={e.person} size={28} />
-                  <div className="min-w-0 flex-1 text-[13px] leading-snug">
-                    <div>
-                      <b className="font-semibold">{personById(e.person).name}</b>{' '}
-                      {e.kind === 'sent' ? <span className="text-ink-2"><Send size={12} className="mr-1 inline" />{e.text}</span>
-                        : e.kind === 'read' ? <span className="text-ink-2"><Eye size={12} className="mr-1 inline" />{e.text}</span>
-                        : e.kind === 'ask' ? <span className="text-ink-2">追问：“{e.text}”</span>
-                        : e.kind === 'assign' || e.kind === 'answer' ? <span className="text-ink-2">{e.text}</span>
-                        : <span className="text-ink-2">{VERB[e.kind]}</span>}
-                      {it && e.kind !== 'ask' && <span className="text-ink-2"> <TypePill item={it} className="mx-0.5 align-[1px]" /> {it.title}</span>}
-                    </div>
-                    <div className="text-ink-3 mt-1 flex items-center gap-1.5 text-[11.5px]">
-                      {e.fresh && <span className="live-dot" />}
-                      <span>{e.when}</span><span>·</span>
-                      <a className="hover:text-ink truncate" href={href(`/m/${m.id}`)} onClick={ev => ev.stopPropagation()}>{m.title}</a>
-                      {it && <button className="text-primary ml-auto flex-none hover:underline" onClick={() => goSource(it.meeting, Math.max(0, itemTime(it) - 0.4), it.id)}>原话 {mmss(itemTime(it))}</button>}
-                    </div>
-                  </div>
+      <SectionHead title="全部会议" sub="按项目归档；点一行打开回放，原话、逐字稿、录像互相定位" />
+      <div className="grid gap-3 md:grid-cols-2">
+        {projects.map(p => {
+          const ms = MEETINGS.filter(m => m.project === p.id).sort((a, b) => b.date.localeCompare(a.date))
+          return (
+            <div key={p.id} className="rounded-2xl border bg-white">
+              <div className="flex items-center gap-2.5 border-b px-4 py-3">
+                <span style={{ color: p.color }}><Kb name={p.icon} size={26} /></span>
+                <div className="min-w-0 flex-1">
+                  <b className="text-[14.5px]">{p.name}</b>
+                  <div className="text-ink-3 truncate text-[12px]">{p.desc}</div>
                 </div>
-              </motion.div>
-            )
-          })}
-        </AnimatePresence>
+                <span className="flex flex-none items-center gap-1.5 text-[12px]" title="项目组 Leader"><Face p={p.leader} size={22} /><span className="text-ink-2">{personById(p.leader).name}</span><span className="rounded-md bg-amber-50 px-1.5 text-[11px] leading-[18px] text-amber-700">Leader</span></span>
+              </div>
+              {ms.length ? ms.map(m => {
+                const acts = m.items.filter(i => i.type === 'action')
+                const ok = acts.filter(i => confirmed[i.id]).length
+                const n = new Set(m.routes.map(r => r.person)).size
+                return (
+                  <a key={m.id} href={href(`/m/${m.id}`)} className="group flex items-center gap-3 border-b px-4 py-2.5 last:border-0 hover:bg-black/[.015]">
+                    <span className="text-ink-3 w-10 flex-none text-[12px] tabular-nums">{m.date.slice(5).replace('-', '/')}</span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-[13.5px] font-medium">{m.title}</span>
+                      <span className="text-ink-3 block truncate text-[12px]">{personById(m.publisher).name} 发布 → {n} 人收到{acts.length ? ` · 待办确认 ${ok}/${acts.length}` : ''}</span>
+                    </span>
+                    {dispatched[m.id]
+                      ? <ArrowRight size={14} className="text-ink-4 group-hover:text-ink flex-none" />
+                      : <span className="flex-none rounded-md bg-amber-50 px-1.5 py-0.5 text-[11.5px] text-amber-700">待分发</span>}
+                  </a>
+                )
+              }) : <div className="text-ink-3 px-4 py-4 text-[12.5px]">还没有会议，新建会议时选这个项目。</div>}
+            </div>
+          )
+        })}
       </div>
     </section>
   )

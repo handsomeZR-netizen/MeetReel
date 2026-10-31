@@ -1,7 +1,11 @@
-// 五场会议的 mock：转写（秒级时间）、账本条目（锚定到原话）、议题章节、路由结果。
+// 会议数据：主案例“小米汽车安全专场直播”（真实录像 + 转写，数据在 data/cases/xiaomi-safety/），
+// 加上同一家虚构车企本周的三场内部会议。内部会议和直播互相印证，知识库、路由理由都会跨会议引用。
 // 每条条目的 quote 必须是所在发言段 text 的子串，溯源（视频定位、逐字稿高亮）靠它算位置。
 
 import type { ItemType, PersonId, ProjectId, Sensitivity } from './model'
+import xmJson from '../../../data/cases/xiaomi-safety/meeting.json'
+import xmVideo from '../../../data/video/196d80ece5e9f2c22fd9f93f35b988c2.mp4?url'
+import xmPoster from '../../../data/cases/xiaomi-safety/poster.jpg'
 
 export interface Segment {
   id: string
@@ -35,6 +39,8 @@ export interface Route {
   item: string
   person: PersonId
   reasons: string[]
+  /** must = 必读，should = 建议看 */
+  tier?: 'must' | 'should'
   /** 编排演示里这条推送出现的时刻（秒） */
   at?: number
 }
@@ -50,15 +56,24 @@ export interface Meeting {
   date: string
   time: string
   duration: number
+  /** 会上的主持人（直播里是雷军） */
   host: PersonId
+  /** 发布者：上传、确认分发的人；收件人看到“谁发来的” */
+  publisher: PersonId
   attendees: PersonId[]
+  /** 收到者候选：路由官在这些人里判断要不要打扰 */
   related: PersonId[]
-  source: '录音' | '飞书妙记' | '会议录像'
+  source: '录音' | '飞书妙记' | '会议录像' | '直播录像'
+  kind: string
+  /** 外部会议（发布会、直播）：发言人不是公司员工 */
+  external?: boolean
   summary: string
   chapters: Chapter[]
   segments: Segment[]
   items: Item[]
   routes: Route[]
+  /** 真实录像（竖屏直播） */
+  video?: { src: string; poster: string; width: number; height: number }
   /** 初始状态：ready = 已转写、待分发 */
   status: MeetingStatus
   /** 已经确认过的待办（会前就存在的回流） */
@@ -68,294 +83,191 @@ export interface Meeting {
 type ItemInput = Omit<Item, 'meeting' | 'sensitivity'> & { sensitivity?: Sensitivity }
 const items = (meeting: string, list: ItemInput[]): Item[] => list.map(x => ({ sensitivity: 'internal', ...x, meeting }))
 
-// ---------------- 双 11 活动上线评审（演示主线） ----------------
+// ---------------- 小米汽车安全专场直播（主案例） ----------------
 
-const D11: Meeting = {
-  id: 'd11',
-  title: '双 11 活动上线评审',
-  project: 'p_promo',
-  date: '2026-10-31',
-  time: '10:00',
-  duration: 58,
-  host: 'wangke',
-  attendees: ['wangke', 'sunyue', 'chenmo'],
-  related: ['wangke', 'linzong', 'chenmo', 'sunyue', 'zhaoyi', 'lilin', 'zhouning', 'wutong'],
-  source: '会议录像',
-  summary: '券改为满 300 减 30；上线提前到 11/8；订单接口拆字段，客户端要跟着改；扩容走 A 方案，预算待财务签批；周四压测是硬节点。',
-  chapters: [
-    { name: '券规则', start: 0, end: 12.8 },
-    { name: '上线时间', start: 12.8, end: 16.8 },
-    { name: '订单接口', start: 16.8, end: 25.8 },
-    { name: '扩容', start: 25.8, end: 38.7 },
-    { name: '客服', start: 38.7, end: 47.7 },
-    { name: '风险与收尾', start: 47.7, end: 58 },
-  ],
-  segments: [
-    { id: 'g01', speaker: 'wangke', start: 0, end: 7.6, text: '双 11 活动快速过一下。第一，法务说“满 300 减 40”有风险，券改成满 300 减 30。孙悦，物料跟着改。' },
-    { id: 'g02', speaker: 'sunyue', start: 8.0, end: 12.6, text: '行，物料我 11 月 6 号前改完。上线时间还是 11 号吗？' },
-    { id: 'g03', speaker: 'wangke', start: 13.0, end: 16.4, text: '提前到 8 号，留三天预热。' },
-    { id: 'g04', speaker: 'chenmo', start: 17.0, end: 25.6, text: '那订单接口的 coupon_amount 要拆成两个字段，客户端也得跟着改。新接口我 11 月 5 号前给。' },
-    { id: 'g05', speaker: 'wangke', start: 26.0, end: 28.4, text: '好。第二，扩容。' },
-    { id: 'g06', speaker: 'chenmo', start: 29.0, end: 34.4, text: '压测还没做完。我建议走 A 方案，预算大概 30 万。' },
-    { id: 'g07', speaker: 'wangke', start: 35.0, end: 38.4, text: 'A 方案先推，预算请财务签批。' },
-    { id: 'g08', speaker: 'sunyue', start: 39.0, end: 43.4, text: '券规则变了，客服那边话术要不要更新？' },
-    { id: 'g09', speaker: 'wangke', start: 44.0, end: 47.4, text: '要，客服 7 号前把 FAQ 更新好。' },
-    { id: 'g10', speaker: 'chenmo', start: 48.0, end: 53.4, text: '还有个风险：周四前压测做不完，8 号上线就悬。' },
-    { id: 'g11', speaker: 'wangke', start: 54.0, end: 58.0, text: '那周四压测是硬节点，陈默负责。散会。' },
-  ],
-  items: items('d11', [
-    { id: 'it_01', type: 'change', title: '券改为满 300 减 30', detail: '法务认为“满 300 减 40”有风险', topic: '券规则', owner: null, due: null, seg: 'g01', quote: '券改成满 300 减 30' },
-    { id: 'it_02', type: 'action', title: '按新券规则改物料', topic: '券规则', owner: 'sunyue', due: '11/6', seg: 'g02', quote: '物料我 11 月 6 号前改完' },
-    { id: 'it_03', type: 'change', title: '上线从 11/11 提前到 11/8', detail: '留三天预热', topic: '上线时间', owner: null, due: '11/8', seg: 'g03', quote: '提前到 8 号，留三天预热' },
-    { id: 'it_04', type: 'action', title: '交付拆分后的订单新接口', detail: 'coupon_amount 拆成两个字段', topic: '接口', owner: 'chenmo', due: '11/5', seg: 'g04', quote: '新接口我 11 月 5 号前给' },
-    { id: 'it_05', type: 'action', title: '客户端适配拆分后的订单接口', detail: 'coupon_amount 拆成两个字段，客户端需要同步修改', topic: '接口', owner: null, suggestedOwner: 'zhaoyi', due: null, seg: 'g04', quote: '客户端也得跟着改', flags: ['缺负责人', '缺截止'] },
-    { id: 'it_06', type: 'decision', title: '扩容先走 A 方案', topic: '扩容', owner: null, due: null, seg: 'g07', quote: 'A 方案先推' },
-    { id: 'it_07', type: 'action', title: '扩容预算约 30 万，待财务签批', topic: '扩容', owner: 'zhouning', ownerBasis: '按角色', due: null, seg: 'g06', quote: '预算大概 30 万', sensitivity: 'restricted', visibleTo: ['zhouning', 'linzong', 'wangke', 'chenmo'], redacted: '扩容按 A 方案推进（预算细节受限）' },
-    { id: 'it_08', type: 'action', title: '按新券规则更新客服 FAQ', topic: '客服', owner: 'lilin', ownerBasis: '按角色', due: '11/7', seg: 'g09', quote: '客服 7 号前把 FAQ 更新好' },
-    { id: 'it_09', type: 'risk', title: '周四前压测做不完，8 号上线有风险', topic: '扩容', owner: null, due: null, seg: 'g10', quote: '周四前压测做不完，8 号上线就悬' },
-    { id: 'it_10', type: 'action', title: '周四完成压测（硬节点）', topic: '扩容', owner: 'chenmo', due: '周四', seg: 'g11', quote: '周四压测是硬节点，陈默负责' },
-  ]),
-  routes: [
-    { item: 'it_02', person: 'sunyue', reasons: ['R1'], at: 10.55 },
-    { item: 'it_04', person: 'chenmo', reasons: ['R1'], at: 10.65 },
-    { item: 'it_10', person: 'chenmo', reasons: ['R1'], at: 10.75 },
-    { item: 'it_08', person: 'lilin', reasons: ['R2'], at: 10.85 },
-    { item: 'it_06', person: 'chenmo', reasons: ['R3'], at: 10.95 },
-    { item: 'it_09', person: 'chenmo', reasons: ['R3'], at: 11.05 },
-    { item: 'it_01', person: 'sunyue', reasons: ['R3'], at: 11.15 },
-    { item: 'it_01', person: 'linzong', reasons: ['R6'], at: 11.25 },
-    { item: 'it_03', person: 'linzong', reasons: ['R6'], at: 11.32 },
-    { item: 'it_06', person: 'linzong', reasons: ['R6'], at: 11.39 },
-    { item: 'it_09', person: 'linzong', reasons: ['R6'], at: 11.46 },
-    { item: 'it_05', person: 'zhaoyi', reasons: ['R2', 'R4'], at: 12.0 },
-    { item: 'it_03', person: 'zhaoyi', reasons: ['R4'], at: 12.2 },
-    { item: 'it_01', person: 'lilin', reasons: ['R4'], at: 12.5 },
-    { item: 'it_03', person: 'lilin', reasons: ['R5'], at: 12.62 },
-    { item: 'it_03', person: 'sunyue', reasons: ['R5'], at: 12.74 },
-    { item: 'it_07', person: 'zhouning', reasons: ['R2'], at: 13.15 },
-    { item: 'it_07', person: 'linzong', reasons: ['R6'], at: 13.3 },
-  ],
+const raw = xmJson as unknown as Omit<Meeting, 'publisher' | 'kind' | 'video'> & { dispatcher: PersonId; video: { width: number; height: number } }
+
+export const XM: Meeting = {
+  ...raw,
+  publisher: raw.dispatcher,
+  source: '直播录像',
+  kind: '竞品直播',
+  external: true,
+  video: { src: xmVideo, poster: xmPoster, width: raw.video.width, height: raw.video.height },
   status: 'ready',
   confirmed: [],
 }
 
-// ---------------- 客户满意度复盘 ----------------
+// ---------------- 安全周会（内部，虚构） ----------------
 
-const CX: Meeting = {
-  id: 'cx',
-  title: '客户满意度复盘',
-  project: 'p_cx',
-  date: '2026-10-30',
-  time: '10:00',
-  duration: 54,
-  host: 'yezhou',
-  attendees: ['yezhou', 'wutong', 'lilin', 'wangke'],
-  related: ['yezhou', 'wutong', 'lilin', 'wangke', 'chenmo', 'linzong', 'zhouning', 'maxiao'],
-  source: '飞书妙记',
-  summary: 'NPS 掉了 8 分，退款到账慢是主因；王珂和陈默 11/8 前出 24 小时退款方案；客服话术 11/3 前上线；双 11 客服加 5 人。',
-  chapters: [
-    { name: '数据', start: 0, end: 14.8 },
-    { name: '退款', start: 14.8, end: 34.8 },
-    { name: '客服', start: 34.8, end: 46.8 },
-    { name: '补偿', start: 46.8, end: 54 },
-  ],
-  segments: [
-    { id: 'c01', speaker: 'yezhou', start: 0, end: 7.4, text: '先看数据。这个月 NPS 从 42 掉到 34，掉了 8 分，差评主要集中在退款。' },
-    { id: 'c02', speaker: 'wutong', start: 8.0, end: 14.6, text: '我拆了一下，差评里 63% 提到退款到账慢，平均要 3.2 天。' },
-    { id: 'c03', speaker: 'lilin', start: 15.2, end: 21.8, text: '客服这边也一样，退款类工单占了四成，话术只能安抚，解决不了问题。' },
-    { id: 'c04', speaker: 'yezhou', start: 22.4, end: 28.6, text: '退款时效得从 48 小时压到 24 小时。王珂，这个你和陈默出个方案。' },
-    { id: 'c05', speaker: 'wangke', start: 29.2, end: 34.4, text: '可以，我 11 月 8 号前和陈默一起出方案。' },
-    { id: 'c06', speaker: 'lilin', start: 35.0, end: 40.4, text: '那话术我先改，11 月 3 号前上线新版。' },
-    { id: 'c07', speaker: 'yezhou', start: 41.0, end: 46.4, text: '另外双 11 期间客服加 5 个人，这个定了。' },
-    { id: 'c08', speaker: 'wangke', start: 47.0, end: 53.0, text: '差评用户要不要补一张券？这个我还没想好，大家想想。' },
-  ],
-  items: items('cx', [
-    { id: 'cx_01', type: 'info', title: 'NPS 从 42 降到 34', topic: '数据', owner: null, due: null, seg: 'c01', quote: 'NPS 从 42 掉到 34' },
-    { id: 'cx_02', type: 'risk', title: '退款到账慢是差评主因（63%）', detail: '平均到账 3.2 天', topic: '退款', owner: null, due: null, seg: 'c02', quote: '差评里 63% 提到退款到账慢' },
-    { id: 'cx_03', type: 'action', title: '出退款时效 48h → 24h 方案', detail: '和陈默一起，把退款到账从 48 小时压到 24 小时', topic: '退款', owner: 'wangke', due: '11/8', seg: 'c05', quote: '我 11 月 8 号前和陈默一起出方案' },
-    { id: 'cx_04', type: 'action', title: '上线退款类客服新话术', topic: '客服', owner: 'lilin', due: '11/3', seg: 'c06', quote: '话术我先改，11 月 3 号前上线新版' },
-    { id: 'cx_05', type: 'decision', title: '双 11 期间客服增加 5 人', topic: '客服', owner: null, due: null, seg: 'c07', quote: '双 11 期间客服加 5 个人' },
-    { id: 'cx_06', type: 'question', title: '要不要给差评用户补券', topic: '补偿', owner: null, suggestedOwner: 'wangke', due: null, seg: 'c08', quote: '差评用户要不要补一张券', flags: ['待决策'] },
-  ]),
-  routes: [
-    { item: 'cx_01', person: 'linzong', reasons: ['R6'] },
-    { item: 'cx_01', person: 'wutong', reasons: ['R3'] },
-    { item: 'cx_02', person: 'linzong', reasons: ['R6'] },
-    { item: 'cx_02', person: 'chenmo', reasons: ['R4'] },
-    { item: 'cx_02', person: 'wangke', reasons: ['R3'] },
-    { item: 'cx_03', person: 'wangke', reasons: ['R1'] },
-    { item: 'cx_03', person: 'chenmo', reasons: ['R1'] },
-    { item: 'cx_04', person: 'lilin', reasons: ['R1'] },
-    { item: 'cx_05', person: 'lilin', reasons: ['R2'] },
-    { item: 'cx_05', person: 'zhouning', reasons: ['R2'] },
-    { item: 'cx_05', person: 'linzong', reasons: ['R6'] },
-    { item: 'cx_06', person: 'wangke', reasons: ['R1'] },
-    { item: 'cx_06', person: 'maxiao', reasons: ['R3'] },
-    { item: 'cx_06', person: 'linzong', reasons: ['R6'] },
-  ],
-  status: 'sent',
-  confirmed: ['cx_04', 'cx_03'],
-}
-
-// ---------------- Q4 OKR 对齐会 ----------------
-
-const Q4: Meeting = {
-  id: 'q4',
-  title: 'Q4 OKR 对齐会',
-  project: 'p_q4',
-  date: '2026-10-29',
-  time: '15:30',
-  duration: 46,
-  host: 'linzong',
-  attendees: ['linzong', 'sunyue', 'wangke', 'chenmo', 'zhouning'],
-  related: ['linzong', 'sunyue', 'wangke', 'chenmo', 'zhouning', 'zhaoyi', 'tangyou'],
-  source: '会议录像',
-  summary: 'Q4 目标 GMV 1.2 亿；会员小程序 2.0 推到 12 月；王珂 11/4 前交 KR 拆解；扩容可能超预算，周宁下周复核。',
-  chapters: [
-    { name: '目标', start: 0, end: 13 },
-    { name: '排期', start: 13, end: 27 },
-    { name: '预算', start: 27, end: 46 },
-  ],
-  segments: [
-    { id: 'q01', speaker: 'linzong', start: 0, end: 6.8, text: 'Q4 就一个 O：双 11 和年货节打穿，GMV 目标 1.2 个亿。' },
-    { id: 'q02', speaker: 'sunyue', start: 7.4, end: 12.6, text: '市场这边的 KR 是拉新 50 万，主要压在双 11。' },
-    { id: 'q03', speaker: 'wangke', start: 13.2, end: 20.2, text: '会员小程序 2.0 原计划 11 月上，我建议推到 12 月，先保双 11。' },
-    { id: 'q04', speaker: 'linzong', start: 20.8, end: 26.6, text: '同意，推到 12 月。王珂 11 月 4 号前把 KR 拆解交上来。' },
-    { id: 'q05', speaker: 'chenmo', start: 27.2, end: 33.4, text: '风险是服务器预算，双 11 峰值要扩容，现在的预算可能不够。' },
-    { id: 'q06', speaker: 'zhouning', start: 34.0, end: 40.6, text: 'Q4 的 IT 预算还剩 80 万，我下周复核一下扩容的口子。' },
-    { id: 'q07', speaker: 'linzong', start: 41.2, end: 45.6, text: '好，周宁复核完直接跟我说。散会。' },
-  ],
-  items: items('q4', [
-    { id: 'q4_01', type: 'decision', title: 'Q4 目标：GMV 1.2 亿', topic: '目标', owner: null, due: null, seg: 'q01', quote: 'GMV 目标 1.2 个亿' },
-    { id: 'q4_02', type: 'info', title: '市场 KR：拉新 50 万', topic: '目标', owner: 'sunyue', due: null, seg: 'q02', quote: 'KR 是拉新 50 万' },
-    { id: 'q4_03', type: 'change', title: '会员小程序 2.0 推迟到 12 月', topic: '排期', owner: null, due: '12 月', seg: 'q04', quote: '同意，推到 12 月' },
-    { id: 'q4_04', type: 'action', title: '提交 Q4 KR 拆解', topic: '目标', owner: 'wangke', due: '11/4', seg: 'q04', quote: '王珂 11 月 4 号前把 KR 拆解交上来' },
-    { id: 'q4_05', type: 'risk', title: '双 11 扩容可能超出服务器预算', topic: '预算', owner: null, due: null, seg: 'q05', quote: '现在的预算可能不够' },
-    { id: 'q4_06', type: 'action', title: '复核扩容预算口子', detail: 'Q4 IT 预算剩余 80 万，复核双 11 扩容能否覆盖', topic: '预算', owner: 'zhouning', due: '下周', seg: 'q06', quote: '我下周复核一下扩容的口子', sensitivity: 'restricted', visibleTo: ['zhouning', 'linzong', 'chenmo', 'wangke'], redacted: '财务复核扩容预算（金额受限）' },
-  ]),
-  routes: [
-    { item: 'q4_01', person: 'zhaoyi', reasons: ['R5'] },
-    { item: 'q4_01', person: 'tangyou', reasons: ['R5'] },
-    { item: 'q4_01', person: 'sunyue', reasons: ['R3'] },
-    { item: 'q4_01', person: 'wangke', reasons: ['R3'] },
-    { item: 'q4_02', person: 'sunyue', reasons: ['R1'] },
-    { item: 'q4_03', person: 'wangke', reasons: ['R1'] },
-    { item: 'q4_03', person: 'zhaoyi', reasons: ['R4'] },
-    { item: 'q4_03', person: 'tangyou', reasons: ['R4'] },
-    { item: 'q4_04', person: 'wangke', reasons: ['R1'] },
-    { item: 'q4_05', person: 'chenmo', reasons: ['R1'] },
-    { item: 'q4_05', person: 'zhouning', reasons: ['R2'] },
-    { item: 'q4_06', person: 'zhouning', reasons: ['R1'] },
-    { item: 'q4_06', person: 'chenmo', reasons: ['R4'] },
-  ],
-  status: 'sent',
-  confirmed: ['q4_06'],
-}
-
-// ---------------- 产品需求评审（会员小程序 2.0） ----------------
-
-const APP: Meeting = {
-  id: 'app',
-  title: '产品需求评审',
-  project: 'p_app',
+const SF: Meeting = {
+  id: 'sf_weekly',
+  title: '安全周会 · 安委会评审机制',
+  project: 'p_safety',
   date: '2026-10-28',
   time: '14:00',
-  duration: 44,
-  host: 'wangke',
-  attendees: ['wangke', 'tangyou', 'zhaoyi', 'chenmo', 'sunyue'],
-  related: ['wangke', 'tangyou', 'zhaoyi', 'chenmo', 'sunyue', 'lilin', 'linzong'],
-  source: '录音',
-  summary: '会员等级定为 4 档；唐悠 11/1 前出高保真；赵一评估分包；积分接口和支付回调工期紧；积分过期下次再定。',
+  duration: 66,
+  host: 'songlan',
+  publisher: 'songlan',
+  attendees: ['songlan', 'weiran', 'xunuo', 'tangchuan'],
+  related: ['songlan', 'hanzong', 'weiran', 'xunuo', 'tangchuan', 'jiangwan', 'gaoyuan'],
+  source: '会议录像',
+  kind: '周会',
+  summary: '安委会现在只做事后通报、评审里没有否决权；宋岚下月经营会提方案，让安全评审变成一道关。座椅回位夹手的投诉要补进开发阶段清单（魏然 11/7）；OTA 大版本做功能安全全量复核（许诺）。安委会改常设需要追加编制和预算（受限）。竞品安全专场直播由江晚跟进、按人分发。',
   chapters: [
-    { name: '等级', start: 0, end: 13.1 },
-    { name: '技术', start: 13.1, end: 27.5 },
-    { name: '积分', start: 27.5, end: 44 },
+    { name: '安委会评审', start: 0, end: 15.6 },
+    { name: '座椅夹手投诉', start: 15.6, end: 29.6 },
+    { name: 'OTA 功能安全', start: 29.6, end: 41.6 },
+    { name: '组织与编制', start: 41.6, end: 50.6 },
+    { name: '竞品直播', start: 50.6, end: 66 },
   ],
   segments: [
-    { id: 'a01', speaker: 'wangke', start: 0, end: 7.2, text: '会员小程序 2.0 的需求过一下。等级体系从 6 档简化成 4 档，大家有意见吗？' },
-    { id: 'a02', speaker: 'tangyou', start: 7.8, end: 12.8, text: '设计上 4 档更清楚，高保真我 11 月 1 号前出。' },
-    { id: 'a03', speaker: 'zhaoyi', start: 13.4, end: 20.4, text: '小程序主包已经快 2M 了，加会员中心得做分包，我先评估一下。' },
-    { id: 'a04', speaker: 'chenmo', start: 21.0, end: 27.2, text: '积分接口要改，支付回调也得跟着动，工期有点紧。' },
-    { id: 'a05', speaker: 'wangke', start: 27.8, end: 32.4, text: '那 4 档就这么定了。积分要不要设过期？' },
-    { id: 'a06', speaker: 'sunyue', start: 33.0, end: 38.6, text: '市场希望一年过期，能促活跃；但客服可能会被投诉。' },
-    { id: 'a07', speaker: 'wangke', start: 39.2, end: 43.6, text: '积分过期这个先不定，下次评审再说。' },
+    { id: 's01', speaker: 'songlan', start: 0, end: 7.4, text: '今天主要对一下安委会评审的事。现在我们的安委会只做事后通报，评审里没有否决权，项目能带着安全问题往下走。' },
+    { id: 's02', speaker: 'songlan', start: 7.8, end: 15.2, text: '我想在下个月的经营会上提一个方案，让安全评审变成一道关，过不了就不能进下一个阶段。' },
+    { id: 's03', speaker: 'weiran', start: 15.6, end: 22.4, text: '座椅这块上周又有一个投诉，电动座椅回位的时候夹到了小孩的手，开发阶段没有这个工况。' },
+    { id: 's04', speaker: 'songlan', start: 22.8, end: 29.2, text: '这个要补进开发阶段的安全检查清单，魏然你牵头，11 月 7 号前给我一版，唐川配合整理评审记录。' },
+    { id: 's05', speaker: 'xunuo', start: 29.6, end: 36.6, text: '电子电气这边，OTA 升级之后的功能安全复核现在还是抽查，我建议每次大版本都全量过一遍。' },
+    { id: 's06', speaker: 'songlan', start: 37.0, end: 41.2, text: '可以，许诺你先出一个复核流程，下次周会过。' },
+    { id: 's07', speaker: 'songlan', start: 41.6, end: 50.2, text: '另外组织上，安委会要改成常设机构，需要追加 2 个编制、预算大概 80 万，这个我单独和韩总汇报。' },
+    { id: 's08', speaker: 'weiran', start: 50.6, end: 56.4, text: '还有一个，竞品那边这周要做安全专场直播，我们要不要盯一下？' },
+    { id: 's09', speaker: 'songlan', start: 56.8, end: 66, text: '江晚那边在跟，直播完让她按人发一下，我们组重点看组织和机制。' },
   ],
-  items: items('app', [
-    { id: 'app_01', type: 'decision', title: '会员等级从 6 档简化为 4 档', topic: '等级', owner: null, due: null, seg: 'a05', quote: '4 档就这么定了' },
-    { id: 'app_02', type: 'action', title: '交付会员中心高保真设计稿', topic: '等级', owner: 'tangyou', due: '11/1', seg: 'a02', quote: '高保真我 11 月 1 号前出' },
-    { id: 'app_03', type: 'action', title: '评估小程序分包方案', detail: '主包接近 2M，加会员中心需要分包', topic: '技术', owner: 'zhaoyi', due: null, seg: 'a03', quote: '我先评估一下', flags: ['缺截止'] },
-    { id: 'app_04', type: 'risk', title: '积分接口和支付回调改造，工期紧', topic: '技术', owner: null, due: null, seg: 'a04', quote: '支付回调也得跟着动，工期有点紧' },
-    { id: 'app_05', type: 'question', title: '积分要不要设一年过期', detail: '市场希望促活跃，客服担心投诉', topic: '积分', owner: null, due: null, seg: 'a07', quote: '积分过期这个先不定', flags: ['待决策'] },
+  items: items('sf_weekly', [
+    { id: 'sf_01', type: 'risk', title: '安委会评审没有否决权，项目能带着安全问题往下走', topic: '评审机制', owner: null, due: null, seg: 's01', quote: '评审里没有否决权' },
+    { id: 'sf_02', type: 'decision', title: '下月经营会提方案：安全评审变成一道关', detail: '过不了就不能进下一个阶段', topic: '评审机制', owner: 'songlan', due: '11 月经营会', seg: 's02', quote: '让安全评审变成一道关' },
+    { id: 'sf_03', type: 'risk', title: '电动座椅回位夹手投诉，开发阶段缺这个工况', topic: '座椅安全', owner: null, due: null, seg: 's03', quote: '电动座椅回位的时候夹到了小孩的手' },
+    { id: 'sf_04', type: 'action', title: '座椅夹手补进开发阶段安全检查清单', topic: '座椅安全', owner: 'weiran', due: '11/7', seg: 's04', quote: '魏然你牵头，11 月 7 号前给我一版' },
+    { id: 'sf_05', type: 'action', title: '整理座椅相关的评审记录', topic: '座椅安全', owner: 'tangchuan', due: '11/7', seg: 's04', quote: '唐川配合整理评审记录' },
+    { id: 'sf_06', type: 'action', title: '出 OTA 大版本功能安全全量复核流程', topic: 'OTA 功能安全', owner: 'xunuo', due: '下次周会', seg: 's06', quote: '许诺你先出一个复核流程' },
+    { id: 'sf_07', type: 'decision', title: '安委会改常设：追加 2 个编制、预算约 80 万', topic: '安全组织', owner: 'songlan', due: null, seg: 's07', quote: '需要追加 2 个编制、预算大概 80 万', sensitivity: 'restricted', visibleTo: ['songlan', 'hanzong', 'jiangwan'], redacted: '安委会改为常设机构（编制和预算仅限名单内）' },
+    { id: 'sf_08', type: 'action', title: '跟进竞品安全专场直播，直播完按人分发', topic: '竞品安全体系', owner: 'jiangwan', due: '直播后', seg: 's09', quote: '直播完让她按人发一下' },
   ]),
   routes: [
-    { item: 'app_01', person: 'tangyou', reasons: ['R3'] },
-    { item: 'app_01', person: 'zhaoyi', reasons: ['R3'] },
-    { item: 'app_01', person: 'sunyue', reasons: ['R5'] },
-    { item: 'app_01', person: 'lilin', reasons: ['R4'] },
-    { item: 'app_02', person: 'tangyou', reasons: ['R1'] },
-    { item: 'app_03', person: 'zhaoyi', reasons: ['R1'] },
-    { item: 'app_04', person: 'chenmo', reasons: ['R1'] },
-    { item: 'app_04', person: 'linzong', reasons: ['R6'] },
-    { item: 'app_05', person: 'sunyue', reasons: ['R1'] },
-    { item: 'app_05', person: 'lilin', reasons: ['R4'] },
+    { item: 'sf_04', person: 'weiran', reasons: ['R1'] },
+    { item: 'sf_05', person: 'tangchuan', reasons: ['R1'] },
+    { item: 'sf_06', person: 'xunuo', reasons: ['R1'] },
+    { item: 'sf_08', person: 'jiangwan', reasons: ['R1'] },
+    { item: 'sf_01', person: 'hanzong', reasons: ['R6'] },
+    { item: 'sf_02', person: 'hanzong', reasons: ['R6'] },
+    { item: 'sf_07', person: 'hanzong', reasons: ['R6'] },
+    { item: 'sf_02', person: 'tangchuan', reasons: ['R4'] },
+    { item: 'sf_03', person: 'gaoyuan', reasons: ['R5'] },
+    { item: 'sf_01', person: 'jiangwan', reasons: ['R5'] },
   ],
   status: 'sent',
-  confirmed: ['app_02'],
+  confirmed: ['sf_04', 'sf_06', 'sf_08'],
 }
 
-// ---------------- 618 大促复盘 ----------------
+// ---------------- 车主运营月会（内部，虚构） ----------------
 
-const S618: Meeting = {
-  id: 's618',
-  title: '618 大促复盘',
-  project: 'p_promo',
-  date: '2026-10-20',
+const OW: Meeting = {
+  id: 'own_monthly',
+  title: '车主运营月会',
+  project: 'p_owner',
+  date: '2026-10-29',
+  time: '10:30',
+  duration: 62,
+  host: 'chengcheng',
+  publisher: 'chengcheng',
+  attendees: ['chengcheng', 'gaoyuan', 'dengkai'],
+  related: ['chengcheng', 'gaoyuan', 'dengkai', 'jiangwan', 'hanzong', 'songlan'],
+  source: '飞书妙记',
+  kind: '月会',
+  summary: '驾驶行为评分打开率只有 6%，决定把评分和积分挂钩、先在新车主试点；交付当天引导开通（高远）。线下驾驶培训今年 60 多场，场地是瓶颈。积分方案 11/10 前给韩总。门店安全口径不统一，由江晚出统一版本、放进竞品说法。',
+  chapters: [
+    { name: 'App 数据', start: 0, end: 14.2 },
+    { name: '交付与培训', start: 14.2, end: 30.8 },
+    { name: '积分方案', start: 30.8, end: 38.6 },
+    { name: '门店口径', start: 38.6, end: 62 },
+  ],
+  segments: [
+    { id: 'o01', speaker: 'chengcheng', start: 0, end: 6.8, text: '这个月车主 App 的日活涨了一点，但驾驶行为评分这个功能，打开率只有 6%。' },
+    { id: 'o02', speaker: 'chengcheng', start: 7.2, end: 13.8, text: '我想把评分和积分挂钩，连续安全驾驶有积分奖励，先在新车主里试。' },
+    { id: 'o03', speaker: 'gaoyuan', start: 14.2, end: 19.6, text: '交付这边可以配合，交付当天就引导开通，培训课里也讲。' },
+    { id: 'o04', speaker: 'gaoyuan', start: 20.0, end: 30.4, text: '线下驾驶培训今年办了 60 多场，报名的人不少，但场地是瓶颈，一个城市一个月排不了几场。' },
+    { id: 'o05', speaker: 'chengcheng', start: 30.8, end: 38.2, text: '积分的预算我来算，11 月 10 号前出方案给韩总。' },
+    { id: 'o06', speaker: 'dengkai', start: 38.6, end: 47.8, text: '门店这边客户问得最多的是安全，尤其是碰撞和电池，销售口径不统一。' },
+    { id: 'o07', speaker: 'chengcheng', start: 48.2, end: 62, text: '口径这个让江晚那边统一出一版，竞品怎么说的也放进去。' },
+  ],
+  items: items('own_monthly', [
+    { id: 'ow_01', type: 'info', title: '驾驶行为评分打开率只有 6%', topic: '车主 App', owner: null, due: null, seg: 'o01', quote: '打开率只有 6%' },
+    { id: 'ow_02', type: 'decision', title: '评分和积分挂钩，先在新车主里试点', topic: '车主激励', owner: 'chengcheng', due: null, seg: 'o02', quote: '我想把评分和积分挂钩' },
+    { id: 'ow_03', type: 'action', title: '交付当天引导开通评分，培训课里讲', topic: '交付体验', owner: 'gaoyuan', due: null, seg: 'o03', quote: '交付当天就引导开通' },
+    { id: 'ow_04', type: 'risk', title: '线下驾驶培训今年 60 多场，场地是瓶颈', topic: '车主培训', owner: null, due: null, seg: 'o04', quote: '但场地是瓶颈' },
+    { id: 'ow_05', type: 'action', title: '积分方案 11/10 前给韩总', topic: '车主激励', owner: 'chengcheng', due: '11/10', seg: 'o05', quote: '11 月 10 号前出方案给韩总' },
+    { id: 'ow_06', type: 'action', title: '统一门店安全口径，放进竞品说法', topic: '门店安全话术', owner: 'jiangwan', due: null, seg: 'o07', quote: '让江晚那边统一出一版', flags: ['缺截止'] },
+  ]),
+  routes: [
+    { item: 'ow_03', person: 'gaoyuan', reasons: ['R1'] },
+    { item: 'ow_06', person: 'jiangwan', reasons: ['R1'] },
+    { item: 'ow_05', person: 'hanzong', reasons: ['R1', 'R6'] },
+    { item: 'ow_02', person: 'hanzong', reasons: ['R6'] },
+    { item: 'ow_04', person: 'hanzong', reasons: ['R6'] },
+    { item: 'ow_02', person: 'gaoyuan', reasons: ['R4'] },
+    { item: 'ow_06', person: 'dengkai', reasons: ['R4'] },
+    { item: 'ow_04', person: 'songlan', reasons: ['R5'] },
+  ],
+  status: 'sent',
+  confirmed: ['ow_03', 'ow_05'],
+}
+
+// ---------------- 门店销售周会（内部，虚构） ----------------
+
+const RT: Meeting = {
+  id: 'retail_weekly',
+  title: '门店销售周会',
+  project: 'p_retail',
+  date: '2026-10-30',
   time: '16:00',
-  duration: 39,
-  host: 'sunyue',
-  attendees: ['sunyue', 'wutong', 'chenmo', 'maxiao', 'wangke'],
-  related: ['sunyue', 'wutong', 'chenmo', 'maxiao', 'wangke', 'linzong', 'lilin'],
+  duration: 54,
+  host: 'dengkai',
+  publisher: 'dengkai',
+  attendees: ['dengkai', 'gaoyuan', 'linxia'],
+  related: ['dengkai', 'gaoyuan', 'linxia', 'jiangwan', 'chengcheng', 'hanzong'],
   source: '录音',
-  summary: 'GMV 达成 96%；峰值下单失败率 2.1%，扩容做晚了；定下双 11 至少提前一周压测；券核销率 38% 要复盘。',
+  kind: '周会',
+  summary: '进店客户三成主动问安全；竞品交付权益在加码，权益对比表要更新（林夏整理素材）。交付环节讲安全太散，做一页门店安全话术卡：江晚出内容，11/5 前印到门店。试驾加主动安全体验环节（高远排场地）。',
   chapters: [
-    { name: '结果', start: 0, end: 6.5 },
-    { name: '稳定性', start: 6.5, end: 26.3 },
-    { name: '券', start: 26.3, end: 32.3 },
-    { name: '后续', start: 32.3, end: 39 },
+    { name: '进店数据', start: 0, end: 5.6 },
+    { name: '竞品权益', start: 5.6, end: 20.4 },
+    { name: '安全话术', start: 20.4, end: 39.2 },
+    { name: '试驾体验', start: 39.2, end: 54 },
   ],
   segments: [
-    { id: 's01', speaker: 'sunyue', start: 0, end: 6.2, text: '618 整体 GMV 达成 96%，差一点没到目标。' },
-    { id: 's02', speaker: 'wutong', start: 6.8, end: 13.4, text: '转化漏斗里，峰值那一个小时下单失败率到了 2.1%，丢了不少单。' },
-    { id: 's03', speaker: 'chenmo', start: 14.0, end: 19.6, text: '那会儿库存服务扛不住，扩容做晚了。' },
-    { id: 's04', speaker: 'sunyue', start: 20.2, end: 26.0, text: '教训记下来：双 11 一定提前压测，至少提前一周。' },
-    { id: 's05', speaker: 'maxiao', start: 26.6, end: 32.0, text: '券的核销率只有 38%，我复盘一下券的设计。' },
-    { id: 's06', speaker: 'sunyue', start: 32.6, end: 38.4, text: '吴桐出一份完整的漏斗分析，下周给。' },
+    { id: 'r01', speaker: 'dengkai', start: 0, end: 5.2, text: '这周进店客户里，有三成会主动问安全，比上个月多。' },
+    { id: 'r02', speaker: 'dengkai', start: 5.6, end: 13.4, text: '竞品那边交付权益在加码，听说要送表盘之类的配件，我们的权益对比表要更新。' },
+    { id: 'r03', speaker: 'linxia', start: 13.8, end: 20.0, text: '对比表的素材我来整理，竞品直播一结束就补进去。' },
+    { id: 'r04', speaker: 'gaoyuan', start: 20.4, end: 25.6, text: '交付环节我们也在讲安全，但讲法比较散，客户记不住。' },
+    { id: 'r05', speaker: 'dengkai', start: 26.0, end: 38.8, text: '我建议做一页门店安全话术卡，江晚那边出内容，我们 11 月 5 号前印到门店。' },
+    { id: 'r06', speaker: 'gaoyuan', start: 39.2, end: 54, text: '试驾的时候可以加一个主动安全的体验环节，我来排一下哪些门店有场地。' },
   ],
-  items: items('s618', [
-    { id: 's618_01', type: 'info', title: '618 GMV 达成 96%', topic: '结果', owner: null, due: null, seg: 's01', quote: 'GMV 达成 96%' },
-    { id: 's618_02', type: 'risk', title: '峰值时段下单失败率 2.1%', detail: '库存服务扛不住，扩容做晚了', topic: '稳定性', owner: null, due: null, seg: 's02', quote: '下单失败率到了 2.1%' },
-    { id: 's618_03', type: 'decision', title: '双 11 至少提前一周压测', topic: '稳定性', owner: null, due: null, seg: 's04', quote: '双 11 一定提前压测，至少提前一周' },
-    { id: 's618_04', type: 'action', title: '复盘券的设计（核销率 38%）', topic: '券', owner: 'maxiao', due: null, seg: 's05', quote: '我复盘一下券的设计' },
-    { id: 's618_05', type: 'action', title: '输出完整的转化漏斗分析', topic: '后续', owner: 'wutong', due: '下周', seg: 's06', quote: '吴桐出一份完整的漏斗分析，下周给' },
+  items: items('retail_weekly', [
+    { id: 'rt_01', type: 'info', title: '三成进店客户主动问安全', topic: '竞品卖点', owner: null, due: null, seg: 'r01', quote: '有三成会主动问安全' },
+    { id: 'rt_02', type: 'change', title: '竞品交付权益加码，权益对比表要更新', topic: '购车权益', owner: 'dengkai', due: null, seg: 'r02', quote: '我们的权益对比表要更新' },
+    { id: 'rt_03', type: 'action', title: '整理权益对比素材，竞品直播后补进去', topic: '购车权益', owner: 'linxia', due: '直播后', seg: 'r03', quote: '对比表的素材我来整理' },
+    { id: 'rt_04', type: 'risk', title: '交付环节安全讲法散，客户记不住', topic: '交付体验', owner: null, due: null, seg: 'r04', quote: '讲法比较散，客户记不住' },
+    { id: 'rt_05', type: 'action', title: '门店安全话术卡：江晚出内容，11/5 前印到门店', topic: '门店安全话术', owner: 'jiangwan', due: '11/5', seg: 'r05', quote: '江晚那边出内容' },
+    { id: 'rt_06', type: 'action', title: '试驾加主动安全体验环节，排门店场地', topic: '试驾', owner: 'gaoyuan', due: null, seg: 'r06', quote: '我来排一下哪些门店有场地', flags: ['缺截止'] },
   ]),
   routes: [
-    { item: 's618_01', person: 'linzong', reasons: ['R6'] },
-    { item: 's618_01', person: 'wangke', reasons: ['R3'] },
-    { item: 's618_02', person: 'chenmo', reasons: ['R3'] },
-    { item: 's618_02', person: 'linzong', reasons: ['R6'] },
-    { item: 's618_03', person: 'chenmo', reasons: ['R3'] },
-    { item: 's618_03', person: 'wangke', reasons: ['R3'] },
-    { item: 's618_03', person: 'linzong', reasons: ['R6'] },
-    { item: 's618_04', person: 'maxiao', reasons: ['R1'] },
-    { item: 's618_05', person: 'wutong', reasons: ['R1'] },
-    { item: 's618_02', person: 'lilin', reasons: ['R4'] },
+    { item: 'rt_03', person: 'linxia', reasons: ['R1'] },
+    { item: 'rt_05', person: 'jiangwan', reasons: ['R1'] },
+    { item: 'rt_06', person: 'gaoyuan', reasons: ['R1'] },
+    { item: 'rt_02', person: 'jiangwan', reasons: ['R5'] },
+    { item: 'rt_01', person: 'jiangwan', reasons: ['R5'] },
+    { item: 'rt_05', person: 'gaoyuan', reasons: ['R4'] },
+    { item: 'rt_04', person: 'chengcheng', reasons: ['R5'] },
+    { item: 'rt_01', person: 'hanzong', reasons: ['R6'] },
   ],
   status: 'sent',
-  confirmed: ['s618_04', 's618_05'],
+  confirmed: ['rt_03', 'rt_05'],
 }
 
-export const MEETINGS: Meeting[] = [D11, CX, Q4, APP, S618]
+export const MEETINGS: Meeting[] = [XM, RT, OW, SF]
 
 export const meetingById = (id: string) => MEETINGS.find(m => m.id === id)
 export const ALL_ITEMS: Item[] = MEETINGS.flatMap(m => m.items)
 export const itemById = (id: string) => ALL_ITEMS.find(i => i.id === id)!
+
+/** 某人收到简报的会议里，TA 是发布者的那些 */
+export const publishedBy = (pid: PersonId) => MEETINGS.filter(m => m.publisher === pid)

@@ -5,6 +5,7 @@ import { personById } from '@/data/model'
 import { itemById } from '@/data/meetings'
 import { mmss, quoteSpan } from '@/data/derive'
 import { goSource } from '@/lib/router'
+import { RUN_ID } from '@/data/run'
 
 type Tok = { k: 'text'; s: string; b: boolean } | { k: 'cite'; id: string }
 
@@ -43,7 +44,7 @@ export function rich(s: string, n: number, showMeeting?: (meetingId: string) => 
 export function Cite({ id, showMeeting }: { id: string; showMeeting?: (meetingId: string) => boolean }) {
   const it = itemById(id)
   const { t0, seg, meeting } = quoteSpan(it)
-  const withTitle = showMeeting ? showMeeting(meeting.id) : meeting.id !== 'd11'
+  const withTitle = showMeeting ? showMeeting(meeting.id) : meeting.id !== RUN_ID
   return (
     <motion.button
       className="chat-cite"

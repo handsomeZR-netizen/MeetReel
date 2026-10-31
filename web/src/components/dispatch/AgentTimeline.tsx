@@ -5,7 +5,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { MorphIcon } from 'morphicons/react'
 import { Pause, Play } from 'lucide'
 import { CornerDownRight, RefreshCw, RotateCcw, X } from 'lucide-react'
-import type { EngineId } from '@/data/model'
+import type { ModelId } from '@/data/model'
 import {
   AGENTS, AXIS_MAX, JOBS, LOG, RUN_MEETING, SPANS, T_END, TOTAL_TOKENS,
   agentById, agentModel, clamp01, costText, tokensAt, type SpanKind,
@@ -27,12 +27,12 @@ const HEIGHT = TOP + AGENTS.length * LANE_H + AXIS_H
 
 interface Props {
   clock: Clock
-  engine: EngineId
-  /** 等主持人确认投递时显示 */
+  models: ModelId[]
+  /** 等发布者确认投递时显示 */
   gated?: boolean
 }
 
-export function AgentTimeline({ clock, engine, gated }: Props) {
+export function AgentTimeline({ clock, models, gated }: Props) {
   const { t } = clock
   const ref = useRef<HTMLDivElement>(null)
   const [w, setW] = useState(640)
@@ -64,7 +64,7 @@ export function AgentTimeline({ clock, engine, gated }: Props) {
     <section className="tld">
       <div className="tld-title">{RUN_MEETING.title} · 多智能体编排</div>
       <div className="tld-sub">
-        {status} · <b>{Math.min(t, T_END).toFixed(1)}s</b> · <b>{tokens.toLocaleString()}</b> tokens · {costText(tokens, engine)}
+        {status} · <b>{Math.min(t, T_END).toFixed(1)}s</b> · <b>{tokens.toLocaleString()}</b> tokens · {costText(t, models)}
       </div>
 
       <div className="tld-ticker">
@@ -85,7 +85,7 @@ export function AgentTimeline({ clock, engine, gated }: Props) {
       <div className="tld-body">
         <ul className="tld-lanes" style={{ paddingTop: TOP }}>
           {AGENTS.map(a => {
-            const m = agentModel(a.id, engine)
+            const m = agentModel(a.id, models)
             return (
               <li key={a.id} style={{ height: LANE_H, '--c': a.bright } as CSSProperties} className={active.has(a.id) ? 'on' : ''} title={a.duty}>
                 <span className="dot" style={{ background: a.bright }} />
@@ -206,8 +206,8 @@ export function AgentTimeline({ clock, engine, gated }: Props) {
                 <div className="h">
                   <i className="size-2 rounded-full" style={{ background: agentById(hovered.agent).bright }} />
                   <b>{agentById(hovered.agent).name}</b>
-                  <ModelIcon icon={agentModel(hovered.agent, engine).icon} size={12} />
-                  <span>{agentModel(hovered.agent, engine).label}</span>
+                  <ModelIcon icon={agentModel(hovered.agent, models).icon} size={12} />
+                  <span>{agentModel(hovered.agent, models).label}</span>
                 </div>
                 <div className="t">{hovered.title}</div>
                 <div className="m">

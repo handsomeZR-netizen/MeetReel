@@ -1,8 +1,8 @@
-// 手绘风的简报：便利贴墙（每人一张）+ 点开后的简报纸。原话可以直接跳回录像。
-import { useEffect } from 'react'
+// 手绘风的简报：便利贴（可复用的单张 Sticky）、便利贴墙（每人一张）+ 点开后的简报纸。原话可以直接跳回录像。
+import { useEffect, type ReactNode, type Ref } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Lock, X } from 'lucide-react'
-import { ITEM_TYPES, REASONS, personById, type PersonId } from '@/data/model'
+import { ITEM_TYPES, REASONS, RANKS, personById, type PersonId } from '@/data/model'
 import { meetingById } from '@/data/meetings'
 import { briefFor, mmss, quoteSpan, recipientsOf, visibility } from '@/data/derive'
 import { goSource } from '@/lib/router'
@@ -10,9 +10,37 @@ import { actions, useStore } from '@/lib/store'
 import { Kb } from '@/components/common/bits'
 import { Rough } from './rough'
 
-const NOTE_COLORS = ['#FFF3B0', '#FFD8E4', '#D0EBFF', '#D3F9D8', '#E5DBFF', '#FFE8CC', '#C5F6FA', '#EDEDE8']
+export const NOTE_COLORS = ['#FFF3B0', '#FFD8E4', '#D0EBFF', '#D3F9D8', '#E5DBFF', '#FFE8CC', '#C5F6FA', '#EDEDE8']
 const TILT = [-2.5, 1.5, -1, 2, -1.8, 1, -2.2, 1.2]
 const INK = '#1E1E1E'
+
+/** 一张便利贴：标题 + 小字身份 + 右上角大数字 + 正文 + 底部提示。我的会议、发给我的、分发画布都用它 */
+export function Sticky({ ref, i = 0, title, sub, count, children, foot, quiet, active, onClick, className, delay = 0 }: {
+  ref?: Ref<HTMLButtonElement>; i?: number; title: ReactNode; sub?: ReactNode; count?: ReactNode; children?: ReactNode; foot?: ReactNode
+  quiet?: boolean; active?: boolean; onClick?: () => void; className?: string; delay?: number
+}) {
+  return (
+    <motion.button
+      ref={ref}
+      className={`sk-sticky ${quiet ? 'quiet' : ''} ${active ? 'active' : ''} ${className ?? ''}`}
+      style={{ background: NOTE_COLORS[i % NOTE_COLORS.length] }}
+      initial={{ opacity: 0, scale: 0.6, rotate: -12, y: 30 }}
+      animate={{ opacity: 1, scale: 1, rotate: active ? 0 : TILT[i % TILT.length], y: active ? -4 : 0 }}
+      whileHover={{ scale: 1.04, rotate: 0, y: -6, zIndex: 3 }}
+      transition={{ type: 'spring', stiffness: 260, damping: 16, delay }}
+      onClick={onClick}
+    >
+      <span className="sk-tape" />
+      <div className="sk-sticky-top">
+        <b>{title}</b>
+        {sub && <small>{sub}</small>}
+        {count != null && <em>{count}</em>}
+      </div>
+      {children}
+      {foot && <span className="sk-sticky-open">{foot}</span>}
+    </motion.button>
+  )
+}
 
 export function StickyNotes({ meeting, people, ready, onOpen }: { meeting: string; people: PersonId[]; ready: (pid: PersonId) => boolean; onOpen: (pid: PersonId) => void }) {
   const m = meetingById(meeting)!
@@ -25,25 +53,18 @@ export function StickyNotes({ meeting, people, ready, onOpen }: { meeting: strin
         return (
           <AnimatePresence key={pid} mode="popLayout">
             {ready(pid) ? (
-              <motion.button
+              <Sticky
                 key="note"
-                className={`sk-sticky ${quiet ? 'quiet' : ''}`}
-                style={{ background: NOTE_COLORS[i % NOTE_COLORS.length] }}
-                initial={{ opacity: 0, scale: 0.6, rotate: -12, y: 30 }}
-                animate={{ opacity: 1, scale: 1, rotate: TILT[i % TILT.length], y: 0 }}
-                whileHover={{ scale: 1.04, rotate: 0, y: -6, zIndex: 3 }}
-                transition={{ type: 'spring', stiffness: 260, damping: 16 }}
+                i={i}
+                quiet={quiet}
+                title={p.name}
+                sub={b.host ? '发布者' : `${RANKS[p.rank].level} · ${p.role}`}
+                count={quiet ? <Kb name="coffee" size={20} /> : b.host ? m.items.length : b.entries.length}
+                foot={quiet ? '不打扰，只进日报' : '点开看 →'}
                 onClick={() => onOpen(pid)}
               >
-                <span className="sk-tape" />
-                <div className="sk-sticky-top">
-                  <b>{p.name}</b>
-                  <small>{b.host ? '主持' : p.role}</small>
-                  <em>{quiet ? <Kb name="coffee" size={20} /> : b.host ? m.items.length : b.entries.length}</em>
-                </div>
                 <p>{b.headline}</p>
-                <span className="sk-sticky-open">{quiet ? '不打扰，只进日报' : '点开看 →'}</span>
-              </motion.button>
+              </Sticky>
             ) : (
               <motion.div key="slot" className="sk-sticky-slot" exit={{ opacity: 0 }}>{p.name}</motion.div>
             )}
@@ -86,7 +107,7 @@ function PaperBody({ meeting, pid, onClose }: { meeting: string; pid: PersonId; 
       <button className="sk-paper-x" onClick={onClose} aria-label="关闭"><X size={18} /></button>
       <div className="sk-paper-head">
         <span className="sk-paper-face" style={{ background: p.bg, color: p.fg }}>{p.short}</span>
-        <div><b>{p.name}</b><small>{b.host ? '主持' : p.role}{quiet ? ' · 这场不打扰' : ` · 约 ${b.readSeconds} 秒读完`}</small></div>
+        <div><b>{p.name}</b><small>{b.host ? '发布者版' : `${RANKS[p.rank].level} ${RANKS[p.rank].label} · ${p.role}`}{quiet ? ' · 这场不打扰' : ` · 约 ${b.readSeconds} 秒读完`}</small></div>
       </div>
       <p className="sk-paper-headline">{b.headline}</p>
       {quiet && <div className="flex items-center gap-3 py-3.5 text-[17px] text-[#4A4A4A]"><Kb name="coffee" size={40} /> 没有需要你必读的内容。和你沾边的变化放进了日报。</div>}

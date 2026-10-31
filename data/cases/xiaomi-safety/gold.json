@@ -1,0 +1,743 @@
+{
+  "meeting_id": "xm_safety",
+  "_note": "评测标准答案（需求文档 8.2 / 8.4）。routing 里没列出的（条目, 人）组合都算 none；本场全部公开，permission 都是 allow。",
+  "items": [
+    {
+      "item_id": "xm_01",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "交付权益加送价值 699 元的智能双表盘",
+      "detail": "并引导用户去门店看车",
+      "topic": "购车权益",
+      "owner": null,
+      "due": null,
+      "speaker": "爽哥",
+      "sources": [
+        {
+          "seg_id": "x01",
+          "quote": "我们还会送价值699元的那个仪表",
+          "start": 1.8,
+          "end": 4.9
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_02",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "本场分两部分：安全体系、电子安全",
+      "detail": "录像到 09:49 结束，只有第一部分，电子安全不在本段",
+      "topic": "电子安全",
+      "owner": null,
+      "due": null,
+      "speaker": "雷军",
+      "sources": [
+        {
+          "seg_id": "x04",
+          "quote": "第二个部分呢，是关于电子安全",
+          "start": 26.7,
+          "end": 29.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": [
+        "本段未覆盖"
+      ]
+    },
+    {
+      "item_id": "xm_03",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "重申“安全高于一切”的设计理念",
+      "detail": "2023 年 12 月 28 日首次技术发布会提出",
+      "topic": "安全理念",
+      "owner": null,
+      "due": null,
+      "speaker": "雷军",
+      "sources": [
+        {
+          "seg_id": "x12",
+          "quote": "我们提出了安全高于一切这样的设计理念",
+          "start": 100.2,
+          "end": 103.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": [
+        "旧闻重申"
+      ]
+    },
+    {
+      "item_id": "xm_04",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "用 10 倍投入造一辆安全的好车",
+      "detail": "2023 年发布会上的说法",
+      "topic": "安全理念",
+      "owner": null,
+      "due": null,
+      "speaker": "雷军",
+      "sources": [
+        {
+          "seg_id": "x13",
+          "quote": "我们用10倍的投入造一辆好车",
+          "start": 105.4,
+          "end": 108.8
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": [
+        "旧闻重申"
+      ]
+    },
+    {
+      "item_id": "xm_05",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "安全体系三要素：目标、组织、机制",
+      "detail": "目标是要达成的功能，组织是谁来承接，机制是组织之间怎么协作；称是首次完整对外介绍",
+      "topic": "安全体系",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x29",
+          "quote": "有三个词：第一个是目标，第二个是组织，第三个是机制",
+          "start": 207.3,
+          "end": 212.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_06",
+      "meeting_id": "xm_safety",
+      "type": "decision",
+      "title": "安全目标：做同档最安全的车",
+      "detail": null,
+      "topic": "安全目标",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x36",
+          "quote": "我们的目标呢，就是要做同档最安全的车",
+          "start": 262,
+          "end": 265.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_07",
+      "meeting_id": "xm_safety",
+      "type": "decision",
+      "title": "安全委员会是最高安全决策组织",
+      "detail": "涵盖设计、研发、工程、制造等部门，由安全团队牵头",
+      "topic": "安全组织",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x38",
+          "quote": "小米汽车的安全委员会是小米汽车的安全最高的决策组织",
+          "start": 277,
+          "end": 281.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_08",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "安全相关团队超过 3500 人",
+      "detail": "数字由爽哥接话说出，侯静雷随后答“是”",
+      "topic": "安全组织",
+      "owner": null,
+      "due": null,
+      "speaker": "爽哥",
+      "sources": [
+        {
+          "seg_id": "x41",
+          "quote": "超过了3500人",
+          "start": 294,
+          "end": 294.7
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_09",
+      "meeting_id": "xm_safety",
+      "type": "decision",
+      "title": "所有环节业务评估后还要过安委会安全评估",
+      "detail": "设计、产品、工程、制造都算，这一关过不了不能往下推进",
+      "topic": "评审机制",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x50",
+          "quote": "还要过小米汽车安全委员会安全评估这一关",
+          "start": 339.3,
+          "end": 343.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_10",
+      "meeting_id": "xm_safety",
+      "type": "decision",
+      "title": "安全在评审中有一票否决权",
+      "detail": "侯静雷：权力很大，责任和压力也很大",
+      "topic": "评审机制",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x54",
+          "quote": "安全具备一票否决权",
+          "start": 362.3,
+          "end": 363.7
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_11",
+      "meeting_id": "xm_safety",
+      "type": "question",
+      "title": "三个事故预防团队，本段只讲了两个",
+      "detail": "讲了全域安全部、安全预防团队，第三个没有介绍",
+      "topic": "事故预防",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x60",
+          "quote": "我们有三个事故预防团队",
+          "start": 387.4,
+          "end": 389.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": [
+        "本段未覆盖"
+      ]
+    },
+    {
+      "item_id": "xm_12",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "设立全域安全部，从整车视角做安全开发",
+      "detail": "强化产品开发过程中的风险管控，负责人丁志",
+      "topic": "全域安全",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x62",
+          "quote": "我们设立了全域安全部",
+          "start": 400.8,
+          "end": 402.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_13",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "全域安全覆盖 4 大场景、19 个安全领域",
+      "detail": "安全用车、安全避险、安全防护、安全应急；从源头降风险，包括主被动安全和电池安全",
+      "topic": "全域安全",
+      "owner": null,
+      "due": null,
+      "speaker": "丁志",
+      "sources": [
+        {
+          "seg_id": "x68",
+          "quote": "它还覆盖了19个安全领域",
+          "start": 433.8,
+          "end": 435.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_14",
+      "meeting_id": "xm_safety",
+      "type": "risk",
+      "title": "电动座椅调节夹手",
+      "detail": "丁志举的细节例子，开发阶段识别规避",
+      "topic": "全域安全",
+      "owner": null,
+      "due": null,
+      "speaker": "丁志",
+      "sources": [
+        {
+          "seg_id": "x71",
+          "quote": "座椅的调节会不会夹手",
+          "start": 453.8,
+          "end": 455.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_15",
+      "meeting_id": "xm_safety",
+      "type": "risk",
+      "title": "生态链产品碰撞时飞起造成二次伤害",
+      "detail": "丁志举的细节例子，开发阶段识别规避",
+      "topic": "全域安全",
+      "owner": null,
+      "due": null,
+      "speaker": "丁志",
+      "sources": [
+        {
+          "seg_id": "x72",
+          "quote": "会不会飞起来造成二次的伤害",
+          "start": 458.1,
+          "end": 460.1
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_16",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "交付不是安全工作的结束，而是下一阶段的开始",
+      "detail": "全域安全部负责把车造好，安全预防团队负责让用户用好车、驾驶安全",
+      "topic": "用车安全",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x81",
+          "quote": "车辆的交付呢，并不是我们安全工作的结束，而是下一阶段的开始",
+          "start": 509.4,
+          "end": 514.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_17",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "2025 年线下高阶驾驶安全培训 484 场、10620 人",
+      "detail": null,
+      "topic": "车主培训",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x87",
+          "quote": "已经线下培训组织了484场，超过1万人参加",
+          "start": 553.4,
+          "end": 557.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_18",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "自称行业内首个完成万人级培训的车企",
+      "detail": "原话带“应该是”，没有给出处",
+      "topic": "车主培训",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x89",
+          "quote": "应该是行业内首个完成万人类似培训的整机厂品牌",
+          "start": 562.8,
+          "end": 567.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": [
+        "绝对化表述",
+        "待核实"
+      ]
+    },
+    {
+      "item_id": "xm_19",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "新车主 90 天安全打卡，连续打满得 4000 积分",
+      "detail": null,
+      "topic": "车主激励",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x90",
+          "quote": "连续打卡90天呢，可以获得4000积分",
+          "start": 575.7,
+          "end": 579.6
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    },
+    {
+      "item_id": "xm_20",
+      "meeting_id": "xm_safety",
+      "type": "info",
+      "title": "App 安全分上线 2.0（需用户授权）",
+      "detail": null,
+      "topic": "App 安全分",
+      "owner": null,
+      "due": null,
+      "speaker": "侯静雷",
+      "sources": [
+        {
+          "seg_id": "x91",
+          "quote": "在用户的授权下，我们还在app端呢推出了安全分",
+          "start": 581.4,
+          "end": 584.7
+        }
+      ],
+      "sensitivity": "public",
+      "visible_to": null,
+      "redacted_view": null,
+      "flags": []
+    }
+  ],
+  "routing": [
+    {
+      "item_id": "xm_01",
+      "person_id": "dengkai",
+      "tier": "must",
+      "reasons": [
+        "R3:购车权益对比"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_02",
+      "person_id": "xunuo",
+      "tier": "should",
+      "reasons": [
+        "R5:电子安全"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_03",
+      "person_id": "jiangwan",
+      "tier": "should",
+      "reasons": [
+        "R5:安全理念"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_04",
+      "person_id": "hanzong",
+      "tier": "must",
+      "reasons": [
+        "R6:管理者收竞品投入规模"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_05",
+      "person_id": "songlan",
+      "tier": "must",
+      "reasons": [
+        "R3:安全体系建设"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_06",
+      "person_id": "hanzong",
+      "tier": "must",
+      "reasons": [
+        "R6:管理者收竞品目标"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_06",
+      "person_id": "jiangwan",
+      "tier": "must",
+      "reasons": [
+        "R3:品牌定位"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_06",
+      "person_id": "dengkai",
+      "tier": "should",
+      "reasons": [
+        "R5:竞品卖点"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_07",
+      "person_id": "songlan",
+      "tier": "must",
+      "reasons": [
+        "R3:安全委员会"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_07",
+      "person_id": "hanzong",
+      "tier": "must",
+      "reasons": [
+        "R6:管理者收竞品组织机制"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_08",
+      "person_id": "hanzong",
+      "tier": "must",
+      "reasons": [
+        "R6:管理者收竞品投入规模"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_08",
+      "person_id": "songlan",
+      "tier": "should",
+      "reasons": [
+        "R5:安全组织"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_09",
+      "person_id": "songlan",
+      "tier": "must",
+      "reasons": [
+        "R3:安全评审流程"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_10",
+      "person_id": "songlan",
+      "tier": "must",
+      "reasons": [
+        "R3:安全评审流程"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_10",
+      "person_id": "hanzong",
+      "tier": "must",
+      "reasons": [
+        "R6:管理者收竞品组织机制"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_10",
+      "person_id": "dengkai",
+      "tier": "should",
+      "reasons": [
+        "R5:竞品卖点"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_11",
+      "person_id": "songlan",
+      "tier": "should",
+      "reasons": [
+        "R5:竞品安全体系"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_12",
+      "person_id": "weiran",
+      "tier": "must",
+      "reasons": [
+        "R3:整车安全开发"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_13",
+      "person_id": "weiran",
+      "tier": "must",
+      "reasons": [
+        "R3:整车安全开发"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_14",
+      "person_id": "weiran",
+      "tier": "must",
+      "reasons": [
+        "R3:座椅安全"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_15",
+      "person_id": "weiran",
+      "tier": "must",
+      "reasons": [
+        "R3:碰撞安全"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_16",
+      "person_id": "gaoyuan",
+      "tier": "must",
+      "reasons": [
+        "R3:交付体验"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_16",
+      "person_id": "chengcheng",
+      "tier": "should",
+      "reasons": [
+        "R5:用车安全"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_17",
+      "person_id": "gaoyuan",
+      "tier": "must",
+      "reasons": [
+        "R3:车主驾驶培训"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_18",
+      "person_id": "jiangwan",
+      "tier": "must",
+      "reasons": [
+        "R6:品牌市场收绝对化宣传表述"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_18",
+      "person_id": "gaoyuan",
+      "tier": "should",
+      "reasons": [
+        "R5:车主培训"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_19",
+      "person_id": "chengcheng",
+      "tier": "must",
+      "reasons": [
+        "R3:车主积分体系"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_19",
+      "person_id": "gaoyuan",
+      "tier": "should",
+      "reasons": [
+        "R5:车主激励"
+      ],
+      "permission": "allow"
+    },
+    {
+      "item_id": "xm_20",
+      "person_id": "chengcheng",
+      "tier": "must",
+      "reasons": [
+        "R3:车主 App"
+      ],
+      "permission": "allow"
+    }
+  ],
+  "quiet": [
+    "xunuo"
+  ]
+}

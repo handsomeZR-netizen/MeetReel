@@ -1,11 +1,12 @@
 // 手绘路由矩阵“谁收到什么”：行是账本条目，列是人，打勾是推送；影响链（R4）用红圈标出来。
-// 传 t 时按编排剧本逐格画出（只用于双 11 那场），不传则一次画完。
+// 传 t 时按编排剧本逐格画出（只用于主案例那场），不传则一次画完。
 import { useMemo, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Lock } from 'lucide-react'
-import { ITEM_TYPES, personById, type PersonId } from '@/data/model'
+import { ITEM_TYPES, REASON_SHORT, personById, type PersonId } from '@/data/model'
 import type { Item, Meeting } from '@/data/meetings'
-import { QUIET_AT, RUN_PEOPLE, itemState } from '@/data/run'
+import { QUIET_AT, RUN_ID, RUN_PEOPLE, itemState } from '@/data/run'
+import { isQuiet } from '@/data/derive'
 import { Kb } from '@/components/common/bits'
 import { Rough, RoughArrow } from './rough'
 
@@ -24,16 +25,18 @@ interface Props {
 }
 
 export function Matrix({ meeting: m, t = 99, onOpen, onItem }: Props) {
-  const live = m.id === 'd11' && t < 99
+  const live = m.id === RUN_ID && t < 99
   const people = useMemo(() => orderPeople(m), [m])
   const items = m.items
   const routes = m.routes.filter(r => (r.at ?? 0) <= t)
   const routing = !live || t >= 10.3
-  const quiet = people.filter(pid => pid !== m.host && !m.routes.some(r => r.person === pid))
+  const quiet = people.filter(pid => isQuiet(m.id, pid))
   const quietShown = !live || t >= QUIET_AT
   const r4 = m.routes.find(r => r.reasons.includes('R4') && !m.attendees.includes(r.person))
   const lockItem = items.find(i => i.sensitivity === 'restricted')
   const lockN = lockItem?.visibleTo?.length ?? 0
+  // 没有影响链时，标出“一句话发给好几个人、理由各不同”的那条
+  const fan = r4 ? null : [...new Set(m.routes.map(r => r.item))].map(id => ({ id, rs: m.routes.filter(r => r.item === id) })).filter(x => x.rs.length >= 3).sort((a, b) => b.rs.length - a.rs.length)[0]
 
   const W = PAD * 2 + LBL + people.length * COL
   const gridH = items.length * ROW
@@ -65,7 +68,7 @@ export function Matrix({ meeting: m, t = 99, onOpen, onItem }: Props) {
             return <Rough key={pid} shape={{ kind: 'ellipse', x: cx(j), y: HEAD - 28, w: 34, h: 34 }} opts={{ stroke: INK, fill: muted ? '#EEEEEA' : p.bg, fillStyle: 'solid', strokeWidth: 1.4 }} draw={0.3} delay={j * 0.05} />
           })}
           {routing && items.map((it, i) => visible(it) && (
-            <Rough key={'host' + it.id} shape={{ kind: 'ellipse', x: cx(people.indexOf(m.host)), y: ry(i), w: 7, h: 7 }} opts={{ stroke: '#9A9A9A', fill: '#9A9A9A', fillStyle: 'solid', roughness: 0.4 }} draw={0.2} delay={i * 0.02} />
+            <Rough key={'host' + it.id} shape={{ kind: 'ellipse', x: cx(people.indexOf(m.publisher)), y: ry(i), w: 7, h: 7 }} opts={{ stroke: '#9A9A9A', fill: '#9A9A9A', fillStyle: 'solid', roughness: 0.4 }} draw={0.2} delay={i * 0.02} />
           ))}
           {routes.map((r, k) => {
             const i = items.findIndex(x => x.id === r.item)
@@ -141,6 +144,12 @@ export function Matrix({ meeting: m, t = 99, onOpen, onItem }: Props) {
               {personById(r4.person).name}没参会、没被点名，<br />但{depText(m, r4.item)}
             </Note>
           )}
+          {fan && (!live || t >= 12.5) && (
+            <Note key="fan" x={PAD + 40} y={HEAD + gridH + 40} color="#1971C2" rotate={-1.2}>
+              “{items.find(i => i.id === fan.id)!.title.replace(/^.*：/, '')}”发给了 {fan.rs.length} 个人，理由各不同：<br />
+              {fan.rs.map(r => `${personById(r.person).name}（${r.reasons.map(k => REASON_SHORT[k]).join('、')}）`).join(' · ')}
+            </Note>
+          )}
           {lockItem && (!live || t >= 13.2) && (
             <Note key="lock" x={PAD + 2} y={HEAD + gridH + 92} color="#C2255C" rotate={1}>
               <span className="inline-flex items-center gap-1"><Kb name="lock" size={18} /> {lockItem.title.slice(0, 8)}… 原文只有 {lockN} 个人看得到</span>
@@ -175,15 +184,15 @@ function Note({ x, y, color, rotate = 0, children }: { x: number; y: number; col
 }
 
 function depText(m: Meeting, itemId: string) {
-  if (m.id === 'd11') return '他依赖的订单接口变了'
   const it = m.items.find(i => i.id === itemId)!
   return `他依赖的「${it.topic}」变了`
 }
 
-/** 列的顺序：主持人、管理者在前，按收到条数排，不打扰的人在最后 */
+/** 列的顺序：发布者在前，再按职级、收到条数排，不打扰的人在最后 */
+const RANK_W = { exec: 0, head: 1, lead: 2, staff: 3, guest: 4 }
 function orderPeople(m: Meeting): PersonId[] {
-  if (m.id === 'd11') return RUN_PEOPLE
+  if (m.id === RUN_ID) return RUN_PEOPLE
   const count = (pid: PersonId) => m.routes.filter(r => r.person === pid).length
-  const rest = m.related.filter(p => p !== m.host).sort((a, b) => (b === 'linzong' ? 1 : 0) - (a === 'linzong' ? 1 : 0) || count(b) - count(a))
-  return [m.host, ...rest]
+  const rest = m.related.filter(p => p !== m.publisher).sort((a, b) => (count(a) ? 0 : 1) - (count(b) ? 0 : 1) || RANK_W[personById(a).rank] - RANK_W[personById(b).rank] || count(b) - count(a))
+  return [m.publisher, ...rest]
 }

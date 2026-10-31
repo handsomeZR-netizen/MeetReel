@@ -4,7 +4,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { MorphIcon } from 'morphicons/react'
 import { Check, Circle } from 'lucide'
 import { BellOff, Lock, MessageCircleQuestion, Play, UserX } from 'lucide-react'
-import { ITEM_TYPES, REASON_SHORT, personById, type PersonId } from '@/data/model'
+import { ITEM_TYPES, RANKS, REASON_SHORT, personById, type PersonId } from '@/data/model'
 import { meetingById } from '@/data/meetings'
 import { briefFor, mmss, quoteSpan, recipientsOf, visibility } from '@/data/derive'
 import { goSource } from '@/lib/router'
@@ -27,14 +27,14 @@ export function FeishuCard({ meeting, pid, className }: { meeting: string; pid: 
     <div className={cn('fs', className)}>
       <div className="fs-head">
         <span>会映 · 会议简报</span>
-        <small>{m.title} · {cnDate(m.date)}</small>
+        <small>{m.title} · {cnDate(m.date)} · {personById(m.publisher).name} 发布</small>
       </div>
       <div className="fs-body">
         <div className="flex items-center gap-2.5">
           <Face p={p} size={36} muted={quiet} />
           <div className="leading-tight">
             <b className="text-[15px]">{p.name}</b>
-            <div className="text-[12px] text-[#646A73]">{b.host ? '主持人版' : p.role}{quiet ? '' : ` · 约 ${b.readSeconds} 秒读完`}</div>
+            <div className="text-[12px] text-[#646A73]">{b.host ? '发布者版' : `${RANKS[p.rank].level} ${RANKS[p.rank].label} · ${p.role}`}{quiet ? '' : ` · 约 ${b.readSeconds} 秒读完`}</div>
           </div>
         </div>
         <p className="my-3 text-[15px] leading-relaxed font-semibold text-[#1F2329]">{b.headline}</p>
@@ -83,7 +83,7 @@ export function FeishuCard({ meeting, pid, className }: { meeting: string; pid: 
                   <button className={cn('pri', ok && 'on')} onClick={() => actions.confirm(iid, pid)}>
                     <MorphIcon icon={ok ? Check : Circle} size={13} strokeWidth={2.4} /> {ok ? '已确认' : it.owner ? '确认' : '我来负责'}
                   </button>
-                  <button onClick={() => setActed(s => ({ ...s, [iid]: 'no' }))}><UserX size={13} /> {acted[iid] === 'no' ? '已告知主持人' : '不是我'}</button>
+                  <button onClick={() => setActed(s => ({ ...s, [iid]: 'no' }))}><UserX size={13} /> {acted[iid] === 'no' ? '已告知发布者' : '不是我'}</button>
                   <button onClick={() => setActed(s => ({ ...s, [iid]: 'ask' }))}><MessageCircleQuestion size={13} /> 追问</button>
                 </div>
               )}
@@ -100,10 +100,10 @@ export function FeishuCard({ meeting, pid, className }: { meeting: string; pid: 
                   >
                     {asked[iid] ? (
                       <div className="mt-2 rounded-lg bg-[#F0F5FF] px-3 py-2 text-[12.5px] text-[#1F2329]">
-                        已转给问答官：“{asked[iid]}”。会上没说到的，会转问决策人，回答会回到这里。
+                        已转给问答官：“{asked[iid]}”。会上没说到的，会转问发布者，回答会回到这里。
                       </div>
                     ) : (
-                      <input name="q" autoFocus placeholder="例如：新券规则什么时候对用户公告？回车发送" className="mt-2 w-full rounded-lg border border-[#C9D8FF] bg-[#FBFCFF] px-3 py-2 text-[13px] outline-none" />
+                      <input name="q" autoFocus placeholder="例如：这个数字的出处是什么？回车发送" className="mt-2 w-full rounded-lg border border-[#C9D8FF] bg-[#FBFCFF] px-3 py-2 text-[13px] outline-none" />
                     )}
                   </motion.form>
                 )}

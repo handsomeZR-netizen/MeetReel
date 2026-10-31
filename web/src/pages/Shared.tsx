@@ -1,15 +1,16 @@
-// 共享给我：收件人视角。可以切换身份，看每个人收到的那一份（权限闸实时生效）。
+// 发给我的 · 简报详情：收到者视角（从“我的会议”点进来）。可以切换身份，看每个人收到的那一份（权限闸实时生效）。
 import { useMemo } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Lock, Play, ShieldCheck } from 'lucide-react'
-import { ME, PEOPLE, REASONS, personById, projectById, type PersonId } from '@/data/model'
+import { ME, RANKS, REASONS, STAFF, personById, projectById, type PersonId } from '@/data/model'
 import { meetingById } from '@/data/meetings'
 import { inboxOf, mmss, quoteSpan, visibility } from '@/data/derive'
 import { go, goSource, useRoute } from '@/lib/router'
 import { useStore } from '@/lib/store'
 import { cn, cnDate } from '@/lib/utils'
 import { TopBar } from '@/components/shell/TopBar'
-import { Empty, Face, Kb, TypePill } from '@/components/common/bits'
+import { Empty, Face, Kb, RankTag, TypePill } from '@/components/common/bits'
+import { NOTE_COLORS } from '@/components/sketch/Briefs'
 import { FeishuCard } from '@/components/common/FeishuCard'
 
 export function Shared() {
@@ -27,18 +28,18 @@ export function Shared() {
 
   return (
     <>
-      <TopBar crumbs={[{ label: '共享给我' }, ...(as !== ME ? [{ label: `以 ${me.name} 的身份` }] : [])]} />
+      <TopBar crumbs={[{ label: '我的会议', to: as === ME ? '/' : `/?as=${as}` }, { label: as === ME ? '发给我的' : `发给${me.name}的` }, ...(cur ? [{ label: cur.meeting.title }] : [])]} />
       <div className="flex-none border-b px-6 py-3.5">
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0">
-            <h1 className="text-[20px] font-semibold tracking-tight">{as === ME ? '我收到的简报' : `${me.name} 收到的简报`}</h1>
-            <p className="text-ink-3 text-[13px]">每份简报只含和这个人有关的条目，写明为什么发给他；原话一点就回到录像。</p>
+            <h1 className="flex items-center gap-2 text-[20px] font-semibold tracking-tight">{as === ME ? '发给我的简报' : `发给${me.name}的简报`}<RankTag p={me} /></h1>
+            <p className="text-ink-3 text-[13px]">收到者视角：每份只含和 {as === ME ? '你' : me.name} 有关的条目，写明为什么发过来；原话一点就回到录像。</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
             <span className="text-ink-3 inline-flex items-center gap-1 text-[12.5px]"><ShieldCheck size={14} /> 切换身份预览</span>
             <div className="flex flex-wrap gap-1 rounded-full bg-[#F2F3F5] p-1">
-              {PEOPLE.map(p => (
-                <button key={p.id} onClick={() => go('/shared', { as: p.id })} className={cn('relative rounded-full p-0.5 transition-transform hover:-translate-y-px')} title={`${p.name} · ${p.role}`}>
+              {STAFF.map(p => (
+                <button key={p.id} onClick={() => go('/shared', { as: p.id })} className={cn('relative rounded-full p-0.5 transition-transform hover:-translate-y-px')} title={`${p.name} · ${RANKS[p.rank].level} ${RANKS[p.rank].label} · ${p.role}`}>
                   {as === p.id && <motion.span layoutId="as-ring" className="absolute inset-0 rounded-full shadow-[0_0_0_2px_#17171A]" />}
                   <Face p={p} size={26} />
                 </button>
@@ -51,21 +52,28 @@ export function Shared() {
       <div className="grid min-h-0 flex-1 grid-cols-[360px_minmax(0,1fr)] max-lg:grid-cols-1">
         <div className="min-h-0 overflow-y-auto border-r p-3">
           {!inbox.length && <Empty icon="coffee" title="还没有收到简报" sub="这个人最近的会都没有必读内容，不打扰。" />}
-          <div className="flex flex-col gap-2">
-            {inbox.map(({ meeting: m, brief: b }) => {
+          <div className="flex flex-col gap-3 pt-2">
+            {inbox.map(({ meeting: m, brief: b }, i) => {
               const p = projectById(m.project)
               const on = cur?.meeting.id === m.id
               const quiet = !b.host && !b.entries.length
+              const pub = personById(m.publisher)
               return (
-                <button key={m.id} onClick={() => pick({ b: m.id })} className={cn('kb-tile w-full rounded-2xl border bg-white p-3.5 text-left', on && 'border-ink shadow-[0_8px_24px_-16px_rgba(0,0,0,.4)]')}>
+                <motion.button
+                  key={m.id}
+                  onClick={() => pick({ b: m.id })}
+                  className={cn('sk-todo w-full text-left', on && 'outline-ink outline-2 outline-offset-2')}
+                  style={{ background: NOTE_COLORS[(i + 2) % NOTE_COLORS.length], rotate: on ? '0deg' : `${i % 2 ? 0.7 : -0.7}deg` }}
+                  whileHover={{ rotate: '0deg', y: -2 }}
+                >
                   <div className="flex items-center gap-2">
                     <span className="size-2 rounded-full" style={{ background: p.color }} />
-                    <b className="min-w-0 flex-1 truncate text-[14px] font-semibold">{m.title}</b>
-                    <span className="text-ink-3 flex-none text-[12px]">{cnDate(m.date)}</span>
+                    <b className="min-w-0 flex-1 truncate text-[16px]">{m.title}</b>
+                    <span className="flex-none text-[12px] opacity-60">{cnDate(m.date)}</span>
                   </div>
-                  <div className="text-ink-3 mt-1 text-[12px]">{personById(m.host).name} 主持 · {b.host ? '主持人版' : quiet ? '不打扰' : `${b.entries.length} 条 · 约 ${b.readSeconds} 秒`}</div>
-                  <p className="text-ink-2 mt-1.5 line-clamp-2 text-[13px] leading-relaxed">{b.headline}</p>
-                </button>
+                  <div className="mt-0.5 text-[12.5px] opacity-60">{pub.name} 发布（{RANKS[pub.rank].label}） · {quiet ? '不打扰' : `${b.entries.length} 条 · 约 ${b.readSeconds} 秒`}</div>
+                  <p className="mt-1 line-clamp-3 text-[14px] leading-relaxed">{b.headline}</p>
+                </motion.button>
               )
             })}
           </div>
@@ -76,7 +84,7 @@ export function Shared() {
             {cur && (
               <motion.div key={cur.meeting.id + as} className="mx-auto grid max-w-[1000px] gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1fr)_280px]" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 <div>
-                  <div className="text-ink-3 mb-2 text-[12.5px]">飞书 · 会映会议助手 发来一张卡片</div>
+                  <div className="text-ink-3 mb-2 text-[12.5px]">飞书 · 会映会议助手 代 {personById(cur.meeting.publisher).name} 发来一张卡片</div>
                   <FeishuCard meeting={cur.meeting.id} pid={as} />
                 </div>
                 <aside className="flex flex-col gap-4">
@@ -95,7 +103,7 @@ export function Shared() {
 /** 这份简报里每条的原话，按录像时间排，点一下回到那一秒 */
 function SourceTimeline({ meetingId, pid }: { meetingId: string; pid: PersonId }) {
   const m = meetingById(meetingId)!
-  const ids = m.host === pid ? m.items.map(i => i.id) : m.routes.filter(r => r.person === pid).map(r => r.item)
+  const ids = m.publisher === pid ? m.items.map(i => i.id) : m.routes.filter(r => r.person === pid).map(r => r.item)
   const items = [...new Set(ids)].map(id => m.items.find(i => i.id === id)!).sort((a, b) => quoteSpan(a).t0 - quoteSpan(b).t0)
   return (
     <div className="rounded-2xl border bg-white p-4">
@@ -133,7 +141,7 @@ function WhyBox({ meetingId, pid }: { meetingId: string; pid: PersonId }) {
       <div className="flex items-center gap-2"><Kb name="route" size={20} /><b className="text-[14px]">为什么是这几条</b></div>
       <p className="text-ink-2 mt-2 leading-relaxed">路由官对照 {p.name} 的关注档案：负责 {p.profile.owns.join('、') || '—'}；依赖 {p.profile.dependsOn.join('、') || '—'}；订阅 {p.profile.interests.join('、') || '—'}。</p>
       <div className="mt-2 flex flex-wrap gap-1">
-        {m.host === pid ? <span className="rounded-full bg-[#E0E7FF] px-2 py-0.5 text-[12px] text-[#3730A3]">主持人：看全部</span>
+        {m.publisher === pid ? <span className="rounded-full bg-[#E0E7FF] px-2 py-0.5 text-[12px] text-[#3730A3]">发布者：看全部</span>
           : reasons.length ? reasons.map(r => <span key={r} className={cn('rounded-full px-2 py-0.5 text-[12px]', r === 'R4' ? 'bg-ink text-white' : 'bg-white text-ink-2 border')}>{r} {REASONS[r]}</span>)
           : <span className="text-ink-3">没有命中，不打扰</span>}
       </div>
