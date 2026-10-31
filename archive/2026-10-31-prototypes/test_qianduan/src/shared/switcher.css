@@ -1,0 +1,55 @@
+/* 风格切换器：各风格页共用，类名带 mr-sw 前缀，不受各页样式影响 */
+.mr-sw {
+  position: fixed; right: 16px; bottom: 16px; z-index: 9999;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+  font: 500 13px/1.2 "Inter Variable", "Inter", -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei UI", sans-serif;
+  color: #F4F4F5;
+  -webkit-font-smoothing: antialiased;
+}
+.mr-sw * { box-sizing: border-box; }
+.mr-sw-bar {
+  display: flex; align-items: center; gap: 2px; padding: 4px;
+  border-radius: 999px;
+  background: rgba(24, 24, 27, .78);
+  backdrop-filter: blur(16px) saturate(1.6);
+  -webkit-backdrop-filter: blur(16px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, .45), inset 0 1px 0 rgba(255, 255, 255, .08);
+  opacity: .72; transition: opacity .2s;
+}
+.mr-sw:hover .mr-sw-bar { opacity: 1; }
+.mr-sw-bar button {
+  all: unset; cursor: pointer;
+  display: grid; place-items: center; width: 28px; height: 28px; border-radius: 50%;
+  color: #D4D4D8;
+}
+.mr-sw-bar button:hover { background: rgba(255, 255, 255, .1); color: #fff; }
+.mr-sw-cur { display: inline-flex; align-items: center; gap: 7px; padding: 0 6px; white-space: nowrap; }
+.mr-sw-cur i { width: 12px; height: 12px; border-radius: 4px; box-shadow: 0 0 0 1px rgba(255, 255, 255, .25); }
+.mr-sw-cur em { font-style: normal; color: #A1A1AA; font-size: 11.5px; font-variant-numeric: tabular-nums; }
+.mr-sw-panel {
+  width: 236px; padding: 6px; border-radius: 16px;
+  transform-origin: bottom right;
+  background: rgba(24, 24, 27, .86);
+  backdrop-filter: blur(20px) saturate(1.6);
+  -webkit-backdrop-filter: blur(20px) saturate(1.6);
+  border: 1px solid rgba(255, 255, 255, .12);
+  box-shadow: 0 24px 60px -16px rgba(0, 0, 0, .55);
+}
+.mr-sw-panel a { all: unset; cursor: pointer; display: flex; align-items: center; gap: 10px; padding: 8px; border-radius: 10px; }
+.mr-sw-panel a:hover { background: rgba(255, 255, 255, .08); }
+.mr-sw-home { color: #A1A1AA; font-size: 12.5px; margin-bottom: 2px; }
+.mr-sw-home kbd { margin-left: auto; }
+.mr-sw-row.on { background: rgba(255, 255, 255, .1); }
+.mr-sw-sw { display: flex; }
+.mr-sw-sw i { width: 10px; height: 22px; }
+.mr-sw-sw i:first-child { border-radius: 5px 0 0 5px; }
+.mr-sw-sw i:last-child { border-radius: 0 5px 5px 0; }
+.mr-sw-name { display: flex; flex-direction: column; gap: 2px; flex: 1; }
+.mr-sw-name b { font-weight: 600; font-size: 13px; }
+.mr-sw-name small { font-size: 11px; color: #A1A1AA; }
+.mr-sw kbd {
+  font: 500 10.5px/1 "JetBrains Mono Variable", Consolas, monospace;
+  padding: 3px 5px; border-radius: 5px; color: #A1A1AA;
+  background: rgba(255, 255, 255, .08); border: 1px solid rgba(255, 255, 255, .1);
+}
