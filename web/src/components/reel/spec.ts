@@ -13,10 +13,10 @@ import briefsJson from '../../../../data/cases/xiaomi-safety/briefs.json'
 export type ReelStyle = 'apple' | 'sketch' | 'pop' | 'iso'
 
 export const REEL_STYLES: { id: ReelStyle; label: string; hint: string }[] = [
-  { id: 'apple', label: 'Apple 发布会', hint: '大字、黑底、慢推，适合高管' },
-  { id: 'sketch', label: '手绘便利贴', hint: '纸面、手写、圈画，适合组长' },
-  { id: 'pop', label: '波普漫画', hint: '网点、对白框、拟声字，适合成员' },
-  { id: 'iso', label: '3D 等距', hint: '方块沉下去、浮上来，适合路演' },
+  { id: 'apple', label: 'Apple 发布会', hint: '黑底、彩色光环、大字居中，适合高管' },
+  { id: 'sketch', label: '手绘便利贴', hint: '手账本、钢笔字、荧光笔划重点，适合组长' },
+  { id: 'pop', label: '波普漫画', hint: '网点月亮、旁白框、拟声字，适合成员' },
+  { id: 'iso', label: '3D 等距', hint: '暮色浮岛，有关的长成发光柱，适合路演' },
 ]
 
 /** 默认风格按职级给，用户可以切 */

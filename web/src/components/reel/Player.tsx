@@ -1,5 +1,7 @@
 // 播放器：同一份分镜按风格换皮；左下角一枚小标签写“谁的片子 · 什么风格”，底下是按五幕分段的进度条。
 import { useRef } from 'react'
+import '@fontsource-variable/noto-sans-sc'
+import '@fontsource/zcool-kuaile'
 import { Pause, Play, RotateCcw } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ACT, ACT_LABEL, DURATION, REEL_STYLES, tc, type ActName, type ReelSpec, type ReelStyle } from './spec'

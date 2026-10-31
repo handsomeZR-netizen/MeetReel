@@ -31,6 +31,40 @@ export const rnd = (seed: number) => { const x = Math.sin(seed * 9301 + 49297) *
 /** 数字从 from 走到 to */
 export const count = (t: number, a: number, b: number, from: number, to: number) => Math.round(lerp(from, to, ease.inOut(prog(t, a, b))))
 
+// ---------------- 字体与质感 ----------------
+
+export const FONT = {
+  sans: '"Inter Variable", "Noto Sans SC Variable", "PingFang SC", "Microsoft YaHei UI", sans-serif',
+  hand: '"LXGW WenKai", "KaiTi", "STKaiti", serif',
+  comic: '"ZCOOL KuaiLe", "Noto Sans SC Variable", "Microsoft YaHei UI", sans-serif',
+  mono: '"JetBrains Mono Variable", "JetBrains Mono", Consolas, monospace',
+}
+
+export const avatarSrc = (id: string) => `${import.meta.env.BASE_URL}assets/generated/${id}.${id === 'jiangwan' ? 'png' : 'webp'}`
+
+const NOISE = `url("data:image/svg+xml;utf8,${encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' width='180' height='180'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 .5  0 0 0 0 .5  0 0 0 0 .5  0 0 0 1.1 -.2'/></filter><rect width='100%' height='100%' filter='url(#n)'/></svg>")}")`
+
+/** 胶片颗粒：每秒换 12 次位置 */
+export function Grain({ t, opacity = 0.08, blend = 'overlay' }: { t: number; opacity?: number; blend?: CSSProperties['mixBlendMode'] }) {
+  const f = Math.floor(t * 12)
+  return <div style={{ position: 'absolute', inset: 0, backgroundImage: NOISE, backgroundPosition: `${Math.floor(rnd(f) * 180)}px ${Math.floor(rnd(f + 7) * 180)}px`, opacity, mixBlendMode: blend, pointerEvents: 'none' }} />
+}
+
+/** 纸面纹理：不动的颗粒 */
+export const PaperGrain = ({ opacity = 0.25 }: { opacity?: number }) => (
+  <div style={{ position: 'absolute', inset: 0, backgroundImage: NOISE, opacity, mixBlendMode: 'multiply', pointerEvents: 'none' }} />
+)
+
+export const Vignette = ({ strength = 0.55, color = '0 0 0' }: { strength?: number; color?: string }) => (
+  <div style={{ position: 'absolute', inset: 0, background: `radial-gradient(ellipse 75% 70% at 50% 48%, transparent 55%, rgb(${color} / ${strength}) 100%)`, pointerEvents: 'none' }} />
+)
+
+/** 从左往右“写出来”：p = 0 看不见，p = 1 写完 */
+export const writeIn = (p: number): CSSProperties => ({ clipPath: `inset(-20% ${(1 - clamp(p)) * 100}% -20% -2%)` })
+
+/** 进场：从下方浮起 + 去模糊 */
+export const rise = (p: number, dy = 24, blur = 10): CSSProperties => ({ opacity: clamp(p), transform: `translateY(${lerp(dy, 0, p)}px)`, filter: p < 1 ? `blur(${lerp(blur, 0, p)}px)` : undefined })
+
 /** 一层：绝对定位 + 透明度为 0 时不画 */
 export function Layer({ o = 1, style, children, className }: { o?: number; style?: CSSProperties; children?: ReactNode; className?: string }) {
   if (o <= 0.001) return null
