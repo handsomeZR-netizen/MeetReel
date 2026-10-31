@@ -1,6 +1,98 @@
 @import "tailwindcss" source(".");
 @import "tw-animate-css";
 
+/* Frosted surfaces: plum backing, cool glass, white edge and a soft contact shadow.
+   Applied only to named containers; document/table interiors retain solid surfaces. */
+.glass-workspace {
+  background: radial-gradient(ellipse at 6% 98%, #d8d0d7 0%, transparent 42%),
+    radial-gradient(ellipse at 85% 0%, #dbe1e6 0%, transparent 52%), #eeebf0;
+}
+.glass-workspace-pane {
+  background: linear-gradient(145deg, rgb(255 255 255 / 76%), rgb(246 244 248 / 86%));
+  border-color: rgb(255 255 255 / 85%);
+  box-shadow: inset 0 1px 0 #fff, 0 12px 40px -22px rgb(56 37 52 / 25%);
+}
+.glass-sidebar { background: rgb(245 242 247 / 35%); }
+.glass-topbar {
+  position: relative;
+  z-index: 10;
+  background: rgb(255 255 255 / 66%);
+  border-bottom-color: rgb(104 85 101 / 9%);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+}
+.glass-panel {
+  background: linear-gradient(135deg, rgb(255 255 255 / 92%), rgb(248 246 250 / 68%));
+  border-color: rgb(255 255 255 / 95%);
+  box-shadow: inset 0 1px 0 #fff, inset 0 -1px 0 rgb(111 91 107 / 5%),
+    0 4px 8px -5px rgb(62 43 57 / 10%), 0 18px 35px -24px rgb(62 43 57 / 22%);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+.glass-inquiry {
+  position: relative;
+  isolation: isolate;
+  background: linear-gradient(115deg, rgb(249 245 249 / 91%), rgb(235 240 244 / 85%));
+  border-color: #fff;
+  box-shadow: inset 0 1px 1px #fff, 0 16px 30px -24px #5f3e5460;
+}
+.glass-inquiry::before {
+  content: '';
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 3% 0%, #5f3e542b, transparent 55%),
+    radial-gradient(ellipse at 97% 100%, #fff9, transparent 65%);
+}
+.glass-inquiry h1 { color: #49303f; letter-spacing: -.035em; }
+.glass-inquiry > div:first-child > span { color: #5f3e54; }
+.glass-inquiry form {
+  background: rgb(255 255 255 / 83%);
+  border: 1px solid #fff;
+  box-shadow: inset 0 1px 2px #fff, 0 8px 20px -15px #5f3e5480;
+}
+.glass-inquiry .kb-tile {
+  background: rgb(255 255 255 / 56%);
+  border-color: rgb(255 255 255 / 90%);
+  color: #594554;
+}
+.glass-evolve { align-self: start; background: linear-gradient(145deg, #fefdfef0, #e6e3ece0); }
+.glass-metrics { padding: 10px 0 4px; gap: 0; align-items: center; }
+.glass-metrics > div {
+  position: relative;
+  padding: 15px 12px;
+  background: linear-gradient(135deg, #ffffffd9, #ded6dfe0);
+  border: 1px solid #ffffffb8;
+  border-radius: 18px;
+  box-shadow: inset 0 1px 0 #fff9, 0 12px 24px -20px #5f3e5480;
+}
+.glass-metrics > div:nth-child(2) {
+  z-index: 1;
+  margin: -7px -5px;
+  padding-top: 23px;
+  padding-bottom: 23px;
+  color: #fff;
+  background: linear-gradient(115deg, #5f3e54, #8c7689 75%, #b1a2b2);
+  border-color: #ffffff8c;
+  box-shadow: inset 1px 1px 0 #ffffff5c, 0 14px 26px -18px #392032aa;
+}
+.glass-metrics > div:nth-child(2) .text-ink-3,
+.glass-metrics > div:nth-child(2) .text-emerald-600 { color: #f3eaf2; }
+.glass-metrics > div:nth-child(2) .h-1 > div { background: #f1e5ef; }
+.glass-panel .text-ink-3, .glass-inquiry .text-ink-3 { color: #756c79; }
+@supports not (backdrop-filter: blur(1px)) {
+  .glass-panel, .glass-topbar { background-color: #faf8fb; }
+}
+@media (prefers-reduced-transparency: reduce) {
+  .glass-panel, .glass-topbar, .glass-workspace-pane { background: #faf8fb; backdrop-filter: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .kb-tile { transition: none !important; }
+  .kb-tile:hover { rotate: none !important; }
+}
+
 /* ---------------- 主题：shadcn 变量 + 会映品牌蓝 ---------------- */
 :root {
   --radius: 0.625rem;

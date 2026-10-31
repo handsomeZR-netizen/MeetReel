@@ -46,7 +46,7 @@ export function Sidebar({ collapsed, onCollapse, onSearch }: { collapsed: boolea
 
   return (
     <motion.aside
-      className="bg-sidebar relative flex h-full flex-none flex-col overflow-hidden"
+      className="glass-sidebar relative flex h-full flex-none flex-col overflow-hidden"
       animate={{ width: collapsed ? 68 : 252 }}
       transition={{ type: 'spring', stiffness: 380, damping: 40 }}
     >

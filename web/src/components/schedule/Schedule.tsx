@@ -205,7 +205,7 @@ type DayMap = Map<string, { meetings: MeetingEntry[]; todos: TodoEntry[] }>
 
 function WeekGrid({ days, byDay, status }: { days: string[]; byDay: DayMap; status: (id: string) => TodoStatus }) {
   return (
-    <div className="grid grid-cols-7 overflow-hidden rounded-2xl border bg-white">
+    <div className="glass-panel grid grid-cols-7 overflow-hidden rounded-2xl border">
       {days.map((d, i) => {
         const v = byDay.get(d)
         const today = d === TODAY
@@ -227,7 +227,7 @@ function WeekGrid({ days, byDay, status }: { days: string[]; byDay: DayMap; stat
 
 function MonthGrid({ days, month, byDay, status, onPick }: { days: string[]; month: string; byDay: DayMap; status: (id: string) => TodoStatus; onPick: (d: string) => void }) {
   return (
-    <div className="overflow-hidden rounded-2xl border bg-white">
+    <div className="glass-panel overflow-hidden rounded-2xl border">
       <div className="grid grid-cols-7 border-b bg-[#FAFAFB] text-center text-[11.5px]">
         {WEEK_HEAD.map(w => <span key={w} className="text-ink-3 py-1.5">周{w}</span>)}
       </div>

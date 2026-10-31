@@ -45,9 +45,9 @@ export function App() {
 
   return (
     <TooltipProvider>
-      <div className="bg-sidebar flex h-svh overflow-hidden">
+      <div className="glass-workspace flex h-svh overflow-hidden">
         <Sidebar collapsed={collapsed} onCollapse={setCollapsed} onSearch={() => setCmd(true)} />
-        <main className="bg-background relative m-2 ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border shadow-[0_1px_3px_rgba(16,24,40,.04)]">
+        <main className="glass-workspace-pane relative m-2 ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={key}

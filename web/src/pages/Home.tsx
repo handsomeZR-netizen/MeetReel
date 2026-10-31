@@ -379,7 +379,7 @@ function AllMeetings() {
         {projects.map(p => {
           const ms = MEETINGS.filter(m => m.project === p.id).sort((a, b) => b.date.localeCompare(a.date))
           return (
-            <div key={p.id} className="rounded-2xl border bg-white">
+            <div key={p.id} className="glass-panel rounded-2xl border">
               <div className="flex items-center gap-2.5 border-b px-4 py-3">
                 <span style={{ color: p.color }}><Kb name={p.icon} size={26} /></span>
                 <div className="min-w-0 flex-1">

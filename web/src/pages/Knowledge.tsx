@@ -70,7 +70,7 @@ export function Knowledge() {
       <TopBar crumbs={[{ label: '会议知识库' }]} />
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-[1280px] flex-col gap-6 px-6 py-6">
-          <div className="rounded-3xl border bg-gradient-to-b from-[#F4F7FF] to-white px-6 pt-6 pb-5">
+          <div className="glass-inquiry rounded-3xl border px-6 pt-6 pb-5">
             <div className="flex items-center gap-3">
               <span className="text-primary"><Kb name="brain" size={40} /></span>
               <div>
@@ -165,7 +165,7 @@ function Library({ files }: { files: { f: MeetingFile; m: (typeof MEETINGS)[numb
   const docs = files.filter(x => x.f.kind !== 'img')
   const imgs = files.filter(x => x.f.kind === 'img')
   return (
-    <section className="min-w-0 rounded-2xl border bg-white p-4">
+    <section className="glass-panel min-w-0 rounded-2xl border p-4">
       <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">资料</h2><span className="text-ink-3 text-[12.5px]">会议附件和会后整理的文档，入库后和账本一起检索</span></div>
       <div className="grid grid-cols-3 gap-2">
         {imgs.map(({ f }) => (
@@ -255,7 +255,7 @@ function Evolve() {
   const fresh = dots.filter(p => p.day === day).length
 
   return (
-    <section className="flex min-w-0 flex-col rounded-2xl border bg-white p-4">
+    <section className="glass-panel glass-evolve flex min-w-0 flex-col rounded-2xl border p-4">
       <div className="flex items-center gap-2.5">
         <span className="grid size-9 flex-none place-items-center rounded-xl bg-[#EEF0FF] text-[#4F46E5]"><Kb name="brain" size={22} /></span>
         <div className="min-w-0 leading-tight">
@@ -315,7 +315,7 @@ function Evolve() {
         <span className="text-ink-3 absolute top-2 left-3 text-[11px]">知识库向量空间{fresh ? ` · 今天新增 ${fresh} 块` : ''}</span>
       </div>
 
-      <div className="mt-3.5 grid grid-cols-3 gap-2">
+      <div className="glass-metrics mt-3.5 grid grid-cols-3 gap-2">
         <Metric label="向量块" value={d.chunks.toLocaleString()} delta={prev ? `+${d.chunks - prev.chunks}` : ''} />
         <Metric label="路由命中率" value={`${d.hit}%`} delta={prev ? `+${d.hit - prev.hit}` : ''} bar={d.hit} />
         <Metric label="本周回流" value={`${FEEDBACK_TOTAL[day]} 条`} />

@@ -13,7 +13,7 @@ export interface Crumb { label: string; to?: string }
 /** 每页顶栏：面包屑 + 页面动作 + 回流提醒。搜索只在侧栏（Ctrl K），这里不再重复 */
 export function TopBar({ crumbs, children }: { crumbs: Crumb[]; children?: ReactNode }) {
   return (
-    <header className="flex h-14 flex-none items-center gap-3 border-b px-5">
+    <header className="glass-topbar flex h-14 flex-none items-center gap-3 border-b px-5">
       <nav className="text-ink-3 flex min-w-0 items-center gap-1.5 text-sm">
         {crumbs.map((c, i) => (
           <Fragment key={i}>
