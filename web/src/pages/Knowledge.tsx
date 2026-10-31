@@ -4,7 +4,7 @@ import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { MorphIcon } from 'morphicons/react'
 import { ArrowUp } from 'lucide'
-import { ExternalLink, Lock, Pause, Play, Search, Sparkles } from 'lucide-react'
+import { ExternalLink, FileText, ImageOff, Lock, Pause, Play, Repeat2, Search, Sparkles, Video } from 'lucide-react'
 import { ITEM_TYPES, ME, PROJECTS, personById, projectById, type ItemType, type ProjectId } from '@/data/model'
 import { ALL_ITEMS, MEETINGS, type Item } from '@/data/meetings'
 import { itemTime, visibility } from '@/data/derive'
@@ -154,6 +154,13 @@ export function Knowledge() {
 
 // ---------------- 资料：PDF、Word、Markdown、截图 ----------------
 
+/** 截图：加载失败时给一个安静的占位，不露出裂图和文件名 */
+function Shot({ src, name }: { src?: string; name: string }) {
+  const [bad, setBad] = useState(!src)
+  if (bad) return <span className="text-ink-4 grid size-full place-items-center"><ImageOff size={22} /></span>
+  return <img src={src} alt={name} onError={() => setBad(true)} className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />
+}
+
 function Library({ files }: { files: { f: MeetingFile; m: (typeof MEETINGS)[number] }[] }) {
   const docs = files.filter(x => x.f.kind !== 'img')
   const imgs = files.filter(x => x.f.kind === 'img')
@@ -162,8 +169,8 @@ function Library({ files }: { files: { f: MeetingFile; m: (typeof MEETINGS)[numb
       <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">资料</h2><span className="text-ink-3 text-[12.5px]">会议附件和会后整理的文档，入库后和账本一起检索</span></div>
       <div className="grid grid-cols-3 gap-2">
         {imgs.map(({ f }) => (
-          <a key={f.name} href={f.url} target="_blank" rel="noreferrer" className="group relative block aspect-[4/5] overflow-hidden rounded-xl bg-black">
-            <img src={f.url} alt={f.name} className="size-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105" />
+          <a key={f.name} href={f.url} target="_blank" rel="noreferrer" className="group relative block aspect-[4/5] overflow-hidden rounded-xl bg-[#F1F2F5]">
+            <Shot src={f.url} name={f.name} />
             <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2 pt-6 pb-1.5 text-[11.5px] text-white">{f.name.replace(/^直播截图_/, '').replace(/\.jpg$/, '').replace('_', ' ')}</span>
           </a>
         ))}
@@ -217,17 +224,27 @@ const DAYS: Day[] = [
 /** 稳定的伪随机，保证每次渲染点的位置一样 */
 const rnd = (seed: number) => { const x = Math.sin(seed * 9301 + 49297) * 233280; return x - Math.floor(x) }
 
-const W = 520, H = 250
+const W = 520, H = 190
+
+const SRC = {
+  meet: { label: '会议', icon: Video, cls: 'bg-blue-50 text-blue-700' },
+  doc: { label: '资料', icon: FileText, cls: 'bg-slate-100 text-slate-600' },
+  fb: { label: '回流', icon: Repeat2, cls: 'bg-emerald-50 text-emerald-700' },
+} as const
+
+const LOOP = ['分发', '回流', '评测打分', '改写档案', '下一场更准']
+const FEEDBACK_TOTAL = [0, 3, 5, 8, 13]
 
 function Evolve() {
   const [day, setDay] = useState(0)
   const [auto, setAuto] = useState(true)
   useEffect(() => {
     if (!auto) return
-    const id = setInterval(() => setDay(d => (d + 1) % DAYS.length), 3600)
+    const id = setInterval(() => setDay(d => (d + 1) % DAYS.length), 4200)
     return () => clearInterval(id)
   }, [auto])
   const d = DAYS[day]
+  const prev = day ? DAYS[day - 1] : null
   // 所有点：到今天为止累计
   const dots = useMemo(() => DAYS.flatMap((dd, di) => dd.add.flatMap((n, ci) => Array.from({ length: n }, (_, k) => {
     const c = CLUSTERS[ci]
@@ -235,94 +252,103 @@ function Evolve() {
     const r = 0.03 + rnd(di * 77 + ci * 13 + k * 3) * 0.07
     return { id: `${di}-${ci}-${k}`, day: di, color: c.color, x: (c.x + Math.cos(a) * r * 1.15) * W, y: (c.y + Math.sin(a) * r * 1.7) * H }
   }))), [])
+  const fresh = dots.filter(p => p.day === day).length
 
   return (
-    <section className="flex min-w-0 flex-col overflow-hidden rounded-2xl border bg-[#0E1016] text-white">
-      <div className="flex items-center gap-2 px-4 pt-3.5">
-        <span className="text-[#8FB0FF]"><Kb name="brain" size={22} /></span>
-        <span className="min-w-0 leading-tight">
-          <b className="block text-[14.5px]">每天自进化（RSI）</b>
-          <span className="block truncate text-[12px] text-white/50">新会议和资料切块进向量库；确认、退回、追问反过来改写档案和规则</span>
-        </span>
-        <button className="ml-auto grid size-7 flex-none place-items-center rounded-lg text-white/70 hover:bg-white/10" onClick={() => setAuto(a => !a)} aria-label={auto ? '暂停' : '播放'}>{auto ? <Pause size={14} /> : <Play size={14} />}</button>
+    <section className="flex min-w-0 flex-col rounded-2xl border bg-white p-4">
+      <div className="flex items-center gap-2.5">
+        <span className="grid size-9 flex-none place-items-center rounded-xl bg-[#EEF0FF] text-[#4F46E5]"><Kb name="brain" size={22} /></span>
+        <div className="min-w-0 leading-tight">
+          <h2 className="text-[16px] font-semibold">每天自进化</h2>
+          <p className="text-ink-3 truncate text-[12.5px]">新会议和资料入库，确认、退回、追问反过来改写档案和规则</p>
+        </div>
+        <button className="text-ink-2 ml-auto grid size-8 flex-none place-items-center rounded-lg border hover:bg-black/[.03]" onClick={() => setAuto(a => !a)} aria-label={auto ? '暂停' : '播放'}>{auto ? <Pause size={14} /> : <Play size={14} />}</button>
       </div>
 
-      <div className="mt-2 flex gap-1 px-4">
+      <div className="mt-3.5 grid grid-cols-5 gap-1.5">
         {DAYS.map((x, i) => (
-          <button key={x.date} onClick={() => { setDay(i); setAuto(false) }} className={cn('relative flex-1 rounded-lg px-2 py-1 text-left text-[11.5px] transition-colors', i === day ? 'bg-white/12 text-white' : 'text-white/45 hover:text-white/80')}>
-            <b className="font-mono">{x.date}</b> {x.label}
-            {i === day && auto && <motion.i key={day} className="absolute bottom-0 left-2 h-[2px] rounded-full bg-[#8FB0FF]" initial={{ width: 0 }} animate={{ width: 'calc(100% - 16px)' }} transition={{ duration: 3.6, ease: 'linear' }} />}
+          <button key={x.date} onClick={() => { setDay(i); setAuto(false) }} className={cn('relative overflow-hidden rounded-lg border px-2 py-1.5 text-left transition-colors', i === day ? 'border-ink bg-ink text-white' : i < day ? 'text-ink-2 bg-white hover:bg-black/[.03]' : 'text-ink-4 border-dashed bg-white hover:bg-black/[.03]')}>
+            <b className="block font-mono text-[12.5px] leading-tight">{x.date}</b>
+            <span className={cn('text-[11px]', i === day ? 'text-white/65' : 'text-ink-3')}>{x.label}</span>
+            {i === day && auto && <motion.i key={day} className="absolute inset-x-0 bottom-0 h-[2px] origin-left bg-[#8FB0FF]" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 4.2, ease: 'linear' }} />}
           </button>
         ))}
       </div>
 
-      <div className="relative mx-4 mt-2" style={{ height: H }}>
-        {/* 今日新增：从左边飞入 */}
-        <div className="absolute top-2 left-0 z-10 flex w-[150px] flex-col gap-1.5">
-          <AnimatePresence mode="popLayout">
-            {d.sources.map((s, i) => (
-              <motion.span
-                key={d.date + i}
-                className={cn('rounded-lg border px-2 py-1 text-[11px] leading-snug backdrop-blur', s.kind === 'meet' ? 'border-[#8FB0FF]/40 bg-[#2F64F2]/25' : s.kind === 'doc' ? 'border-white/20 bg-white/10' : 'border-emerald-300/40 bg-emerald-500/20')}
-                initial={{ opacity: 0, x: -30 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: 80, scale: 0.6 }}
-                transition={{ delay: i * 0.25, type: 'spring', stiffness: 260, damping: 24 }}
-              >
-                {s.kind === 'meet' ? '会议 ' : s.kind === 'doc' ? '资料 ' : '回流 '}{s.text}
-              </motion.span>
-            ))}
+      <div className="mt-3.5">
+        <div className="text-ink-3 mb-1.5 text-[12px]">{d.date} 喂进来的</div>
+        <div className="flex flex-col gap-1">
+          <AnimatePresence mode="popLayout" initial={false}>
+            {d.sources.map((s, i) => {
+              const k = SRC[s.kind]
+              return (
+                <motion.div key={d.date + i} layout className="flex items-center gap-2 text-[13px]" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: i * 0.08 }}>
+                  <span className={cn('inline-flex h-5 flex-none items-center gap-1 rounded-md px-1.5 text-[11px]', k.cls)}><k.icon size={11} />{k.label}</span>
+                  <span className="min-w-0 flex-1 truncate">{s.text}</span>
+                </motion.div>
+              )
+            })}
           </AnimatePresence>
         </div>
-        <svg className="absolute inset-0" width="100%" height="100%" viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none">
-          {CLUSTERS.map(c => <ellipse key={c.name} cx={c.x * W} cy={c.y * H} rx={44} ry={44} fill={c.color} opacity={0.09} />)}
-          <path d={`M150,${H / 2} C 190,${H / 2} 190,${H / 2} 215,${H / 2}`} stroke="rgba(255,255,255,.18)" strokeDasharray="3 4" fill="none" />
+      </div>
+
+      <div className="relative mt-3.5 overflow-hidden rounded-xl border bg-[#F7F8FB]" style={{ aspectRatio: `${W} / ${H}` }}>
+        <svg className="absolute inset-0 size-full" viewBox={`0 0 ${W} ${H}`}>
+          {CLUSTERS.map(c => <circle key={c.name} cx={c.x * W} cy={c.y * H} r={46} fill={c.color} opacity={0.1} />)}
           {dots.map(p => {
             if (p.day > day) return null
-            const fresh = p.day === day
+            const isNew = p.day === day
             return (
               <motion.circle
                 key={p.id}
-                r={fresh ? 3.6 : 2.6}
+                r={isNew ? 3.8 : 2.8}
                 fill={p.color}
-                initial={fresh ? { cx: 150, cy: 40 + rnd(p.x) * 60, opacity: 0 } : false}
-                animate={{ cx: p.x, cy: p.y, opacity: fresh ? 1 : 0.55 }}
-                transition={{ duration: 1.1, delay: fresh ? 0.6 + rnd(p.y) * 0.9 : 0, ease: [0.2, 0.7, 0.2, 1] }}
-                style={fresh ? { filter: `drop-shadow(0 0 4px ${p.color})` } : undefined}
+                initial={isNew ? { cx: 16, cy: 14, opacity: 0 } : false}
+                animate={{ cx: p.x, cy: p.y, opacity: isNew ? 1 : 0.45 }}
+                transition={{ duration: 1.1, delay: isNew ? 0.2 + rnd(p.y) * 0.9 : 0, ease: [0.2, 0.7, 0.2, 1] }}
+                style={isNew ? { filter: `drop-shadow(0 0 3px ${p.color})` } : undefined}
               />
             )
           })}
         </svg>
-        {CLUSTERS.map(c => <span key={c.name} className="pointer-events-none absolute -translate-x-1/2 text-[10.5px] whitespace-nowrap text-white/55" style={{ left: `${c.x * 100}%`, top: `calc(${c.y * 100}% + 34px)` }}>{c.name}</span>)}
+        {CLUSTERS.map(c => <span key={c.name} className="text-ink-3 pointer-events-none absolute -translate-x-1/2 text-[11px] font-medium whitespace-nowrap" style={{ left: `${c.x * 100}%`, top: `calc(${c.y * 100}% + 30px)` }}>{c.name}</span>)}
+        <span className="text-ink-3 absolute top-2 left-3 text-[11px]">知识库向量空间{fresh ? ` · 今天新增 ${fresh} 块` : ''}</span>
       </div>
 
-      <div className="mt-1 grid grid-cols-3 gap-px border-t border-white/10 bg-white/10">
-        <Metric label="向量块" value={d.chunks.toLocaleString()} delta={day ? `+${d.chunks - DAYS[day - 1].chunks}` : ''} />
-        <Metric label="路由命中率（评测集）" value={`${d.hit}%`} delta={day ? `+${d.hit - DAYS[day - 1].hit}` : ''} bar={d.hit} />
-        <Metric label="本周累计回流" value={`${[0, 3, 5, 8, 13][day]} 条`} delta="确认 · 退回 · 追问" />
+      <div className="mt-3.5 grid grid-cols-3 gap-2">
+        <Metric label="向量块" value={d.chunks.toLocaleString()} delta={prev ? `+${d.chunks - prev.chunks}` : ''} />
+        <Metric label="路由命中率" value={`${d.hit}%`} delta={prev ? `+${d.hit - prev.hit}` : ''} bar={d.hit} />
+        <Metric label="本周回流" value={`${FEEDBACK_TOTAL[day]} 条`} />
       </div>
-      <AnimatePresence mode="wait">
-        <motion.div key={d.date} className="flex items-start gap-2 border-t border-white/10 px-4 py-2.5 text-[12.5px]" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-          <span className="mt-[3px] rounded bg-emerald-400/20 px-1.5 text-[10.5px] text-emerald-300">学到</span>
-          <span className="text-white/85">{d.learned}</span>
+
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div key={d.date} className="mt-3 flex items-start gap-2.5 rounded-xl border border-emerald-200 bg-emerald-50/70 px-3 py-2.5" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
+          <span className="mt-0.5 flex-none rounded-md bg-emerald-600 px-1.5 text-[11px] leading-[18px] text-white">学到</span>
+          <span className="text-[13.5px] leading-snug text-emerald-950">{d.learned}</span>
         </motion.div>
       </AnimatePresence>
-      <div className="flex flex-wrap items-center gap-1.5 border-t border-white/10 px-4 py-2.5 text-[11px] text-white/55">
-        {['分发', '回流（确认 / 不是我 / 追问）', '对照评测集打分', '改写档案和规则', '下一场更准'].map((s, i, a) => (
-          <span key={s} className="flex items-center gap-1.5"><span className={cn('rounded-full border border-white/15 px-2 py-0.5', i === day % a.length && 'border-[#8FB0FF] text-white')}>{s}</span>{i < a.length - 1 && <span>→</span>}</span>
+
+      <ol className="text-ink-3 mt-3 flex items-center gap-1 text-[11.5px]">
+        {LOOP.map((s, i) => (
+          <li key={s} className="flex items-center gap-1">
+            <span className={cn('rounded-md px-1.5 py-0.5', i === LOOP.length - 1 ? 'bg-ink font-medium text-white' : 'bg-black/[.04]')}>{s}</span>
+            {i < LOOP.length - 1 && <span className="text-ink-4">›</span>}
+          </li>
         ))}
-      </div>
+      </ol>
     </section>
   )
 }
 
 function Metric({ label, value, delta, bar }: { label: string; value: string; delta?: string; bar?: number }) {
   return (
-    <div className="bg-[#0E1016] px-4 py-2.5">
-      <div className="text-[11px] text-white/50">{label}</div>
+    <div className="rounded-xl bg-[#F7F8FB] px-3 py-2">
+      <div className="text-ink-3 text-[11.5px]">{label}</div>
       <div className="flex items-baseline gap-1.5">
-        <motion.b key={value} className="text-[19px] font-semibold tabular-nums" initial={{ y: -6, opacity: 0.3 }} animate={{ y: 0, opacity: 1 }}>{value}</motion.b>
-        {delta && <span className="text-[11px] text-emerald-300">{delta}</span>}
+        <motion.b key={value} className="text-[20px] font-semibold tabular-nums" initial={{ y: -6, opacity: 0.3 }} animate={{ y: 0, opacity: 1 }}>{value}</motion.b>
+        {delta && <span className="text-[11.5px] text-emerald-600">{delta}</span>}
       </div>
-      {bar != null && <div className="mt-1 h-1 overflow-hidden rounded-full bg-white/10"><motion.div className="h-full rounded-full bg-[#8FB0FF]" animate={{ width: `${bar}%` }} transition={{ duration: 0.8 }} /></div>}
+      {bar != null && <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/[.07]"><motion.div className="h-full rounded-full bg-[#4F46E5]" animate={{ width: `${bar}%` }} transition={{ duration: 0.8 }} /></div>}
     </div>
   )
 }
