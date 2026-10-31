@@ -4,7 +4,8 @@ import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { MorphIcon } from 'morphicons/react'
 import { Check } from 'lucide'
-import { AtSign, BellOff, CalendarDays, CheckCircle2, ChevronRight, Clock3, Eye, FileText, Image as ImageIcon, MapPin, Paperclip, Send, Sparkles, Video } from 'lucide-react'
+import { AtSign, BellOff, CalendarDays, CheckCircle2, ChevronRight, Clock3, Eye, FileText, MapPin, Paperclip, Send, Sparkles, Video } from 'lucide-react'
+import { FileIcon } from '@/components/common/FileIcon'
 import { REASONS, personById, type PersonId } from '@/data/model'
 import { RUN_ID } from '@/data/run'
 import { MEETINGS } from '@/data/meetings'
@@ -387,10 +388,10 @@ function Files({ m }: { m: Meeting }) {
       <H icon="document" title={`相关文件（${files.length}）`} small />
       <div className="mt-1 flex flex-col gap-1">
         {files.map(f => (
-          <a key={f.name} href={f.url} target="_blank" rel="noreferrer" className={cn('flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 hover:bg-black/[.03]', !f.url && 'pointer-events-none')}>
+          <a key={f.name} href={f.previewUrl ?? f.url} target="_blank" rel="noreferrer" className={cn('group flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 hover:bg-black/[.03]', !f.url && 'pointer-events-none')}>
             {f.kind === 'img' && f.url
               ? <img src={f.url} alt="" className="size-9 flex-none rounded-lg object-cover" />
-              : <span className="grid size-9 flex-none place-items-center rounded-lg text-[10.5px] font-bold text-white" style={{ background: KIND[f.kind].bg }}>{f.kind === 'img' ? <ImageIcon size={15} /> : KIND[f.kind].label}</span>}
+              : <FileIcon kind={f.kind} />}
             <div className="min-w-0 flex-1">
               <div className="truncate text-[13px] font-medium">{f.name}</div>
               <div className="text-ink-3 text-[11.5px]">{personById(f.owner).name} · {f.date}</div>

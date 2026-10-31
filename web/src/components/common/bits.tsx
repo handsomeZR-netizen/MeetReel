@@ -33,7 +33,7 @@ export function Face({ p, size = 28, muted, className, ring, title }: { p: Perso
       }}
       title={title ?? `${person.name} · ${person.role}`}
     >
-      {person.short}
+      {person.id === 'jiangwan' ? <img src={`${import.meta.env.BASE_URL}assets/generated/jiangwan.png`} alt={person.name} className="size-full rounded-[inherit] object-cover" style={{ filter: muted ? 'grayscale(1)' : undefined }} /> : person.short}
     </span>
   )
 }

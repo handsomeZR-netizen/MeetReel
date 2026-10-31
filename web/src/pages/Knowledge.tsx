@@ -15,7 +15,7 @@ import { cn, cnDate } from '@/lib/utils'
 import { TopBar } from '@/components/shell/TopBar'
 import { Empty, Face, Kb, SourceChip, TypePill } from '@/components/common/bits'
 import { rich, richLen, useStream } from '@/components/common/stream'
-import { KIND } from '@/components/meeting/PersonBrief'
+import { FileIcon } from '@/components/common/FileIcon'
 
 const QA: { q: string; a: string }[] = [
   { q: '竞品的一票否决和我们差在哪？', a: '差在**评审机制**。小米：所有环节业务评估后还要单独过安委会评估 [[xm_09]]，安全有**一票否决权** [[xm_10]]。我们：10/28 安全周会上宋岚说安委会只做事后通报，**评审里没有否决权** [[sf_01]]，她准备在下月经营会上提方案，让安全评审变成一道关 [[sf_02]]。' },
@@ -177,8 +177,8 @@ function Library({ files }: { files: { f: MeetingFile; m: (typeof MEETINGS)[numb
       </div>
       <div className="mt-3 flex flex-col">
         {docs.map(({ f, m }) => (
-          <a key={m.id + f.name} href={f.url} target="_blank" rel="noreferrer" className={cn('group flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 hover:bg-black/[.03]', !f.url && 'pointer-events-none')}>
-            <span className="grid size-8 flex-none place-items-center rounded-lg text-[10px] font-bold text-white" style={{ background: KIND[f.kind].bg }}>{KIND[f.kind].label}</span>
+          <a key={m.id + f.name} href={f.previewUrl ?? f.url} target="_blank" rel="noreferrer" className={cn('group flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 hover:bg-black/[.03]', !f.url && 'pointer-events-none')}>
+            <FileIcon kind={f.kind} />
             <span className="min-w-0 flex-1">
               <span className="block truncate text-[13px] font-medium">{f.name}</span>
               <span className="text-ink-3 block truncate text-[11.5px]">{m.title.replace(/ · .*/, '')} · {personById(f.owner).name} · {f.date} · {f.size}</span>

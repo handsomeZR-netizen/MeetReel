@@ -1,5 +1,6 @@
-// 智能分发：对话式的智能体界面（左）+ 实时画布（右：编排时间轴 → 账本流向 → 路由矩阵 → 每人简报）。
-// 投递前停下来等主持人确认（人在回路），确认后才发飞书。
+// 新建会映（原“新建会议”和“智能分发”合一）：对话式的智能体界面（左）+ 实时画布（右）。
+// 上传 → 会映先看一遍录像，一问一答确认会议信息、项目、收到者和发送前复核 → 8 个智能体编排
+// （编排时间轴 → 账本流向 → 路由矩阵 → 每人简报）。投递前停下来等发布者确认（人在回路），确认后才发飞书。
 import { useEffect, useLayoutEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { MorphIcon } from 'morphicons/react'
@@ -28,6 +29,7 @@ import { AgentTimeline } from '@/components/dispatch/AgentTimeline'
 import { RoutingBoard } from '@/components/dispatch/RoutingBoard'
 import { Matrix } from '@/components/sketch/Matrix'
 import { BriefPaper, StickyNotes } from '@/components/sketch/Briefs'
+import { Intake, QUESTIONS, answerQ, initialIntake, type Answers, type IntakeState } from '@/components/dispatch/Intake'
 
 type CanvasTab = 'run' | 'flow' | 'matrix' | 'briefs'
 type Msg = { id: number; q: string; a: string; kind?: 'assign' }
@@ -50,8 +52,11 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
   const already = useStore(s => s.dispatched[RUN_ID])
   const models = useStore(s => s.models)
   const [approved, setApproved] = useState(already)
+  // 问答里选了“直接发出”：不停在发送前
+  const [auto, setAuto] = useState(false)
   const clock = useClock(T_END, { t: already ? T_END : 0, stopAt: approved ? null : GATE_AT })
-  const [stage, setStage] = useState<'welcome' | 'run'>(already ? 'run' : 'welcome')
+  const [stage, setStage] = useState<'welcome' | 'intake' | 'run'>(already ? 'run' : 'welcome')
+  const [intake, setIntake] = useState<IntakeState | null>(null)
   const [attached, setAttached] = useState(attachedAtStart || autorun)
   const [instant] = useState(already)
   const [canvas, setCanvas] = useState(true)
@@ -66,9 +71,10 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
   const done = running && t >= T_END
   const gated = running && !approved && t >= GATE_AT - 0.001
 
-  const start = () => {
+  const start = (review = true) => {
     setStage('run')
-    setApproved(false)
+    setApproved(!review)
+    setAuto(!review)
     setExtra([])
     clock.pause()
     clock.seek(0)
@@ -80,11 +86,14 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
     clock.pause()
     clock.seek(0)
     setStage('welcome')
+    setIntake(null)
     setAttached(false)
     setExtra([])
     setPerson(null)
-    go('/dispatch')
+    go('/new')
   }
+  const setIntakeFn = useMemo(() => (f: (s: IntakeState) => IntakeState) => setIntake(s => (s ? f(s) : s)), [])
+  const intakeDone = (a: Answers) => start(a.review)
   const approve = () => {
     setApproved(true)
     setTimeout(() => clock.play(), 50)
@@ -117,9 +126,17 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
     actions.assign('xm_18', 'linxia')
     setExtra(x => [...x, { id: Date.now(), q: '好，交给林夏核实', a: '已指派给你组里的**林夏**（L4 竞品研究专员）。她会收到一张带原话的卡片 [[xm_18]]，点“我来负责”后，这条在账本里就有了负责人；核实结果会回到你的发布者版。', kind: 'assign' }])
   }
+  const asking = stage === 'intake' && intake?.phase === 'asking'
   const send = () => {
-    if (!running) {
-      if (attached) start()
+    if (stage === 'welcome') {
+      // 交给会映：先看录像、问几件事，再编排
+      if (attached) { setStage('intake'); setIntake(initialIntake()) }
+      return
+    }
+    if (stage === 'intake') {
+      // 回车 = 用推荐答案回答正在问的这一问
+      if (asking && intake && !intake.editing) answerQ(setIntakeFn, QUESTIONS[intake.step])
+      setDraft('')
       return
     }
     if (draft.trim() && !generating) ask(draft.trim())
@@ -133,16 +150,26 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
 
   // 新内容出现时，若停在底部附近就跟着滚
   const scroller = useRef<HTMLDivElement>(null)
+  const thread = useRef<HTMLDivElement>(null)
   const stick = useRef(true)
+  const lastTop = useRef(0)
   useLayoutEffect(() => {
     const el = scroller.current
     if (el && stick.current) el.scrollTop = el.scrollHeight
   })
+  // 问答、流式输出在子组件里长高，不一定触发这里重渲染，所以盯着对话本身的高度
+  useEffect(() => {
+    const el = scroller.current
+    const body = thread.current
+    if (!el || !body) return
+    const ro = new ResizeObserver(() => { if (stick.current) el.scrollTop = el.scrollHeight })
+    ro.observe(body)
+    return () => ro.disconnect()
+  }, [stage])
 
   return (
     <>
-      <TopBar crumbs={[{ label: '智能分发', to: '/dispatch' }, ...(running || attached ? [{ label: RUN_MEETING.title }] : [])]}>
-        <ModelPicker models={models} />
+      <TopBar crumbs={[{ label: '新建会映', to: '/new' }, ...(stage !== 'welcome' || attached ? [{ label: RUN_MEETING.title }] : [])]}>
         {running && (
           <button className="text-ink-2 grid size-8 place-items-center rounded-lg hover:bg-black/5" onClick={() => setCanvas(c => !c)} aria-label="画布" title={canvas ? '收起画布' : '打开画布'}>
             {canvas ? <PanelRightClose size={17} /> : <PanelRightOpen size={17} />}
@@ -156,21 +183,28 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
           <div className="relative flex min-h-0 flex-col">
             <div
               ref={scroller}
-              className={cn('min-h-0 flex-1 overflow-y-auto', !running && 'flex items-end justify-center')}
+              className={cn('min-h-0 flex-1 overflow-y-auto', stage === 'welcome' && 'flex items-end justify-center')}
               onScroll={e => {
+                // 只有往上翻才松开；程序滚到底的那次事件可能晚到，那时内容又长了，不能当成用户离开了底部
                 const el = e.currentTarget
-                stick.current = el.scrollHeight - el.scrollTop - el.clientHeight < 80
+                const gap = el.scrollHeight - el.scrollTop - el.clientHeight
+                if (el.scrollTop < lastTop.current - 1) stick.current = gap < 80
+                else if (gap < 80) stick.current = true
+                lastTop.current = el.scrollTop
               }}
             >
-              {running ? (
-                <div className="mx-auto max-w-[760px] px-6 pt-4 pb-10">
+              {stage !== 'welcome' ? (
+                <div ref={thread} className="mx-auto max-w-[760px] px-6 pt-4 pb-10">
                   <UserMessage />
-                  <Answer
-                    t={t} models={models} instant={instant} gated={gated} approved={approved}
-                    onApprove={approve} onMatrix={() => { setCanvas(true); setFollow(false); setCtab('matrix') }}
-                    onOpen={openBrief} onCanvas={() => { setCanvas(true); setFollow(true) }}
-                    onAsk={ask} onAssign={assign} showFollow={answerDone && !extra.length}
-                  />
+                  {intake && <Intake s={intake} set={setIntakeFn} onDone={intakeDone} locked={running} />}
+                  {running && (
+                    <Answer
+                      t={t} models={models} instant={instant} gated={gated} approved={approved} auto={auto}
+                      onApprove={approve} onMatrix={() => { setCanvas(true); setFollow(false); setCtab('matrix') }}
+                      onOpen={openBrief} onCanvas={() => { setCanvas(true); setFollow(true) }}
+                      onAsk={ask} onAssign={assign} showFollow={answerDone && !extra.length}
+                    />
+                  )}
                   {extra.map((msg, i) => (
                     <div key={msg.id}>
                       <motion.div className="mt-4 mb-6 flex justify-end" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
@@ -185,18 +219,23 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
               )}
             </div>
 
-            <motion.div layout className={cn('relative mx-auto w-full max-w-[808px] flex-none px-6 pb-3', !running && 'mb-[24vh]')} transition={{ type: 'spring', stiffness: 260, damping: 32 }}>
-              {running && <div className="pointer-events-none absolute inset-x-0 -top-7 h-7 bg-gradient-to-b from-transparent to-white" />}
+            <motion.div layout className={cn('relative mx-auto w-full max-w-[808px] flex-none px-6 pb-3', stage === 'welcome' && 'mb-[24vh]')} transition={{ type: 'spring', stiffness: 260, damping: 32 }}>
+              {stage !== 'welcome' && <div className="pointer-events-none absolute inset-x-0 -top-7 h-7 bg-gradient-to-b from-transparent to-white" />}
               <Composer
-                attached={attached && !running}
+                models={models}
+                attached={attached && stage === 'welcome'}
                 onDetach={() => setAttached(false)}
                 onAttach={() => setAttached(true)}
                 draft={draft}
                 onDraft={setDraft}
                 onSend={send}
-                generating={generating}
-                canSend={running ? !!draft.trim() : attached}
-                placeholder={running ? '继续追问，例如：和我们自己的安委会比，差在哪？' : attached ? '' : '把会议录像、录音或文本交给会映'}
+                generating={generating || (stage === 'intake' && intake?.phase === 'reading')}
+                canSend={running ? !!draft.trim() : stage === 'intake' ? asking && !intake?.editing : attached}
+                placeholder={
+                  running ? '继续追问，例如：和我们自己的安委会比，差在哪？'
+                    : stage === 'intake' ? (asking ? '回车 = 按推荐回答这一问；要改就在上面的卡片里改' : '会映正在看录像…')
+                    : attached ? '' : '把会议录像、录音或飞书妙记交给会映'
+                }
               />
               <p className="text-ink-3 mt-2 text-center text-[12px]">会映会出错，重要事项请点原话回到录像核实。</p>
             </motion.div>
@@ -239,7 +278,7 @@ function AlreadySent({ id }: { id: string }) {
   const m = meetingById(id)!
   return (
     <>
-      <TopBar crumbs={[{ label: '智能分发', to: '/dispatch' }, { label: m.title }]} />
+      <TopBar crumbs={[{ label: '新建会映', to: '/new' }, { label: m.title }]} />
       <div className="grid flex-1 place-items-center">
         <div className="text-center">
           <span className="text-ink-3 kb-icon-in inline-block"><Kb name="mailbox" size={64} /></span>
@@ -255,7 +294,7 @@ function AlreadySent({ id }: { id: string }) {
   )
 }
 
-// ---------------- 顶栏：模型选择 ----------------
+// ---------------- 输入框里的模型选择（在语音键旁边） ----------------
 
 function ModelPicker({ models }: { models: ModelId[] }) {
   const [open, setOpen] = useState(false)
@@ -267,18 +306,19 @@ function ModelPicker({ models }: { models: ModelId[] }) {
     window.addEventListener('click', close)
     return () => window.removeEventListener('click', close)
   }, [open])
+  // 下拉框贴着整个输入框的右边往上弹，窄栏里也不会被裁掉
   return (
-    <div className="relative">
-      <button className="flex h-8 items-center gap-1.5 rounded-lg px-2 text-[13.5px] font-semibold hover:bg-black/5" onClick={e => { e.stopPropagation(); setOpen(o => !o) }}>
-        <span className="flex items-center">{used.slice(0, 5).map((id, i) => <span key={id} className="grid size-[19px] place-items-center rounded-full bg-white ring-2 ring-white" style={{ marginLeft: i ? -5 : 0 }}><ModelIcon icon={id} size={14} /></span>)}</span>
-        {multi ? `多模型协同 · ${used.length}` : MODELS.find(m => m.id === models[0])!.label}
+    <div>
+      <button className={cn('text-ink-2 hover:text-ink flex h-9 items-center gap-1.5 rounded-full pr-2 pl-2.5 text-[13px] font-medium transition-colors hover:bg-black/5', open && 'text-ink bg-black/5')} onClick={e => { e.stopPropagation(); setOpen(o => !o) }} title="选择模型">
+        <span className="flex items-center">{used.slice(0, 5).map((id, i) => <span key={id} className="grid size-[18px] place-items-center rounded-full bg-white ring-2 ring-white" style={{ marginLeft: i ? -5 : 0 }}><ModelIcon icon={id} size={13} /></span>)}</span>
+        <span className="whitespace-nowrap @max-[600px]:hidden">{multi ? `多模型协同 · ${used.length}` : MODELS.find(m => m.id === models[0])!.label}</span>
         <motion.span className="text-ink-3 inline-grid" animate={{ rotate: open ? 180 : 0 }}><MorphIcon icon={ChevronDown} size={14} strokeWidth={2} /></motion.span>
       </button>
       <AnimatePresence>
         {open && (
           <motion.div
-            className="absolute top-10 right-0 z-30 w-[400px] origin-top-right rounded-2xl border bg-white p-2 shadow-[0_12px_40px_-8px_rgba(0,0,0,.18)]"
-            initial={{ opacity: 0, y: -6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: -4, scale: 0.98 }}
+            className="absolute right-2 bottom-[calc(100%+8px)] z-30 w-[min(400px,calc(100%-16px))] origin-bottom-right rounded-2xl border bg-white p-2 text-left shadow-[0_12px_40px_-8px_rgba(0,0,0,.18)]"
+            initial={{ opacity: 0, y: 6, scale: 0.97 }} animate={{ opacity: 1, y: 0, scale: 1 }} exit={{ opacity: 0, y: 4, scale: 0.98 }}
             transition={{ duration: 0.16 }}
             onClick={e => e.stopPropagation()}
           >
@@ -323,7 +363,7 @@ function Welcome({ attached, onAttach }: { attached: boolean; onAttach: () => vo
     <motion.div className="w-full max-w-[760px] px-6 pb-6 text-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
       <motion.span className="text-ink kb-icon-in mb-3 inline-block" initial={{ rotate: -8 }} animate={{ rotate: 0 }}><Kb name="paperPlane" size={56} /></motion.span>
       <motion.h1 className="text-[30px] font-semibold tracking-tight" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.05 }}>开完会了？交给我按人分发。</motion.h1>
-      <p className="text-ink-3 mt-2 text-[14.5px]">8 个智能体抽账本、按人路由、逐人改写；发出去之前，先给你看一眼。</p>
+      <p className="text-ink-3 mt-2 text-[14.5px]">我先看一遍录像，问你几件事；再让 8 个智能体按人分发。发出去之前，先给你看一眼。</p>
       <motion.div className="mt-6 flex flex-wrap justify-center gap-2" initial="h" animate="s" variants={{ s: { transition: { staggerChildren: 0.06, delayChildren: 0.2 } } }}>
         {pending.map(m => (
           <motion.button
@@ -336,9 +376,9 @@ function Welcome({ attached, onAttach }: { attached: boolean; onAttach: () => vo
           </motion.button>
         ))}
         {[{ icon: Mic, label: '上传会议录音' }, { icon: Paperclip, label: '导入飞书妙记' }].map(({ icon: I, label }) => (
-          <motion.a key={label} href={href('/new')} variants={{ h: { opacity: 0, y: 8 }, s: { opacity: 1, y: 0 } }} className="kb-tile text-ink-2 inline-flex h-10 items-center gap-2 rounded-full border px-4 text-[14px]">
+          <motion.button key={label} onClick={onAttach} variants={{ h: { opacity: 0, y: 8 }, s: { opacity: 1, y: 0 } }} className="kb-tile text-ink-2 inline-flex h-10 items-center gap-2 rounded-full border px-4 text-[14px]">
             <I size={16} /> {label}
-          </motion.a>
+          </motion.button>
         ))}
       </motion.div>
     </motion.div>
@@ -347,10 +387,10 @@ function Welcome({ attached, onAttach }: { attached: boolean; onAttach: () => vo
 
 // ---------------- 输入框 ----------------
 
-function Composer(props: { attached: boolean; onDetach: () => void; onAttach: () => void; draft: string; onDraft: (v: string) => void; onSend: () => void; generating: boolean; canSend: boolean; placeholder: string }) {
-  const { attached, onDetach, onAttach, draft, onDraft, onSend, generating, canSend, placeholder } = props
+function Composer(props: { models: ModelId[]; attached: boolean; onDetach: () => void; onAttach: () => void; draft: string; onDraft: (v: string) => void; onSend: () => void; generating: boolean; canSend: boolean; placeholder: string }) {
+  const { models, attached, onDetach, onAttach, draft, onDraft, onSend, generating, canSend, placeholder } = props
   return (
-    <div className="rounded-[28px] bg-white p-2.5 shadow-[0_0_0_1px_rgba(0,0,0,.08),0_6px_20px_-6px_rgba(0,0,0,.1)] transition-shadow focus-within:shadow-[0_0_0_1px_rgba(0,0,0,.14),0_8px_24px_-6px_rgba(0,0,0,.14)]">
+    <div className="@container relative rounded-[28px] bg-white p-2.5 shadow-[0_0_0_1px_rgba(0,0,0,.08),0_6px_20px_-6px_rgba(0,0,0,.1)] transition-shadow focus-within:shadow-[0_0_0_1px_rgba(0,0,0,.14),0_8px_24px_-6px_rgba(0,0,0,.14)]">
       <AnimatePresence>
         {attached && (
           <motion.div className="overflow-hidden px-1.5 pt-1" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
@@ -374,6 +414,7 @@ function Composer(props: { attached: boolean; onDetach: () => void; onAttach: ()
           }}
           className="placeholder:text-ink-3 max-h-40 flex-1 resize-none border-0 bg-transparent px-1 py-1.5 text-[15px] leading-6 outline-none"
         />
+        <ModelPicker models={models} />
         <button className="text-ink-2 grid size-9 place-items-center rounded-full hover:bg-black/5" aria-label="语音"><Mic size={18} /></button>
         <button className={cn('grid size-9 place-items-center rounded-full text-white transition-[background,transform]', canSend || generating ? 'bg-ink hover:scale-105' : 'bg-[#D7D7D7]')} onClick={onSend} aria-label={generating ? '停止' : '发送'}>
           <MorphIcon icon={generating ? Square : ArrowUp} size={generating ? 14 : 18} strokeWidth={2.4} />
@@ -408,7 +449,7 @@ function UserMessage() {
 // ---------------- 主回答 ----------------
 
 function Answer(p: {
-  t: number; models: ModelId[]; instant: boolean; gated: boolean; approved: boolean
+  t: number; models: ModelId[]; instant: boolean; gated: boolean; approved: boolean; auto: boolean
   onApprove: () => void; onMatrix: () => void; onOpen: (id: PersonId) => void; onCanvas: () => void
   onAsk: (q: string) => void; onAssign: () => void; showFollow: boolean
 }) {
@@ -436,7 +477,7 @@ function Answer(p: {
       <Thinking t={t} models={models} open={open} onToggle={() => setUserOpen(!open)} onCanvas={p.onCanvas} />
       <AnimatePresence>
         {(gated || (approved && t >= GATE_AT && !instant)) && (
-          <Approval key="gate" pending={gated} onApprove={p.onApprove} onMatrix={p.onMatrix} />
+          <Approval key="gate" pending={gated} auto={p.auto} onApprove={p.onApprove} onMatrix={p.onMatrix} />
         )}
       </AnimatePresence>
       <div className="chat-md">
@@ -512,7 +553,7 @@ function Thinking({ t, models, open, onToggle, onCanvas }: { t: number; models: 
 }
 
 /** 投递前的确认卡：像编码助手请求执行命令那样，等主持人点“确认发送” */
-function Approval({ pending, onApprove, onMatrix }: { pending: boolean; onApprove: () => void; onMatrix: () => void }) {
+function Approval({ pending, auto, onApprove, onMatrix }: { pending: boolean; auto: boolean; onApprove: () => void; onMatrix: () => void }) {
   const recips = RUN_PEOPLE.filter(pid => !isQuietIn(pid))
   return (
     <motion.div
@@ -544,7 +585,7 @@ function Approval({ pending, onApprove, onMatrix }: { pending: boolean; onApprov
       ) : (
         <div className="text-ink-2 flex items-center gap-2 px-4 py-2.5 text-[13.5px]">
           <span className="grid size-5 place-items-center rounded-full bg-emerald-500 text-white"><CheckIcon size={12} strokeWidth={3} /></span>
-          {personById(ME).name} 已确认发送 · 7 份简报
+          {auto ? '按你的设置直接发出' : `${personById(ME).name} 已确认发送`} · 7 份简报
         </div>
       )}
     </motion.div>

@@ -35,6 +35,12 @@ interface State {
   /** 选用的模型：多选 = 多模型协同（默认），单选 = 全部智能体用同一个 */
   models: ModelId[]
   projects: Project[]
+  /** 退出登录后显示登录页（演示用，不清别的状态） */
+  signedIn: boolean
+  /** 画像里订阅的话题（个人中心里可增删） */
+  interests: string[]
+  /** 推送渠道开关 */
+  channels: Record<string, boolean>
 }
 
 let seq = 100
@@ -49,6 +55,9 @@ const initial = (): State => ({
   due: {},
   models: DEFAULT_MODELS,
   projects: [],
+  signedIn: true,
+  interests: personById(ME).profile.interests,
+  channels: { 飞书卡片: true, H5: true, 每日汇总: false, '90 秒视频': false },
   events: [
     { id: 1, when: '今天 09:10', meeting: 'retail_weekly', person: 'hanzong', kind: 'read', text: '看完了门店销售周会的简报' },
     { id: 2, when: '昨天 17:30', meeting: 'own_monthly', item: 'ow_06', person: 'dengkai', kind: 'ask', text: '话术卡里竞品的说法，能先给门店看一版吗？' },
@@ -99,6 +108,11 @@ export const actions = {
   setModels: (models: ModelId[]) => set({ models: models.length ? models : DEFAULT_MODELS }),
 
   addProject: (p: Project) => set(s => ({ projects: [...s.projects, p] })),
+
+  signOut: () => set({ signedIn: false }),
+  signIn: () => set({ signedIn: true }),
+  toggleInterest: (t: string) => set(s => ({ interests: s.interests.includes(t) ? s.interests.filter(x => x !== t) : [...s.interests, t] })),
+  toggleChannel: (c: string) => set(s => ({ channels: { ...s.channels, [c]: !s.channels[c] } })),
 
   /** 投递完成：标记已分发，并模拟几条陆续回流的阅读和追问 */
   dispatch(meeting: string) {

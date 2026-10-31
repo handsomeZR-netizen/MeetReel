@@ -3,7 +3,9 @@ import { AnimatePresence, motion } from 'motion/react'
 import { useRoute } from '@/lib/router'
 import { setSearchOpener } from '@/lib/ui'
 import { TooltipProvider } from '@/components/ui/misc'
-import { Sidebar } from '@/components/shell/Sidebar'
+import { useStore } from '@/lib/store'
+import { BRAND, Sidebar } from '@/components/shell/Sidebar'
+import { SignedOut } from '@/components/shell/Account'
 import { CommandMenu } from '@/components/shell/CommandMenu'
 import { Home } from '@/pages/Home'
 import { MeetingPage } from '@/pages/Meeting'
@@ -11,12 +13,12 @@ import { Dispatch } from '@/pages/Dispatch'
 import { Shared } from '@/pages/Shared'
 import { Knowledge } from '@/pages/Knowledge'
 import { Templates } from '@/pages/Templates'
-import { NewMeeting } from '@/pages/NewMeeting'
 
 export function App() {
   const route = useRoute()
   const [collapsed, setCollapsed] = useState(false)
   const [cmd, setCmd] = useState(false)
+  const signedIn = useStore(s => s.signedIn)
 
   useEffect(() => {
     setSearchOpener(() => setCmd(true))
@@ -31,14 +33,14 @@ export function App() {
   }, [])
 
   const [p0, p1] = route.path
-  const key = `${p0 ?? 'home'}/${p1 ?? ''}`
+  // 新建会映和分发是同一个对话页：/new 是空白的新对话，/dispatch/:id 是某场会的分发
+  const key = p0 === 'new' || p0 === 'dispatch' ? `new/${p1 ?? ''}` : `${p0 ?? 'home'}/${p1 ?? ''}`
   const page =
     p0 === 'm' && p1 ? <MeetingPage id={p1} />
-      : p0 === 'dispatch' ? <Dispatch id={p1} />
+      : p0 === 'dispatch' || p0 === 'new' ? <Dispatch id={p1} />
       : p0 === 'shared' ? <Shared />
       : p0 === 'kb' ? <Knowledge />
       : p0 === 'templates' ? <Templates />
-      : p0 === 'new' ? <NewMeeting />
       : <Home />
 
   return (
@@ -61,6 +63,7 @@ export function App() {
         </main>
       </div>
       <CommandMenu open={cmd} onOpenChange={setCmd} />
+      <AnimatePresence>{!signedIn && <SignedOut logo={BRAND.full} />}</AnimatePresence>
     </TooltipProvider>
   )
 }

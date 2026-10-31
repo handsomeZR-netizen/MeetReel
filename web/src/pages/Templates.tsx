@@ -196,7 +196,7 @@ function TemplateView() {
             <span className="text-ink-3 ml-auto flex flex-wrap items-center gap-1.5 text-[12px]">权限
               {(Object.keys(SENSITIVITY) as Sensitivity[]).map(s => <span key={s} className={cn('rounded-md px-1.5 py-0.5', s === 'public' ? 'bg-emerald-50 text-emerald-700' : s === 'internal' ? 'bg-muted text-ink-2' : s === 'restricted' ? 'bg-rose-50 text-rose-700' : 'bg-ink text-white')} title={SENSITIVITY[s].desc}>{SENSITIVITY[s].label}</span>)}
             </span>
-            <Button size="sm" onClick={() => go('/new')}>用这个模板新建会议 <ArrowRight /></Button>
+            <Button size="sm" onClick={() => go('/new')}>用这个模板新建会映 <ArrowRight /></Button>
           </div>
         </motion.div>
       </AnimatePresence>

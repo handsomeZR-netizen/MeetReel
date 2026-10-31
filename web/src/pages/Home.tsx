@@ -3,7 +3,7 @@
 // 发布者和收到者是同一个人的两面，身份切换在右上角。
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowRight, CheckCircle2, ChevronDown, Clock3, MessageCircleQuestion, Play, SquarePen, UserCheck, Waypoints } from 'lucide-react'
+import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Clapperboard, Clock3, MessageCircleQuestion, Play, SquarePen, UserCheck, Waypoints } from 'lucide-react'
 import { ME, PROJECTS, RANKS, STAFF, personById, projectById, type PersonId, type Rank } from '@/data/model'
 import { MEETINGS, itemById, type Meeting } from '@/data/meetings'
 import { inboxOf, isQuiet, outboxOf } from '@/data/derive'
@@ -38,7 +38,7 @@ export function Home() {
   return (
     <>
       <TopBar crumbs={[{ label: '我的日程', to: '/' }, ...(as !== ME ? [{ label: `以 ${me.name} 的身份预览` }] : [])]}>
-        <Button size="sm" onClick={() => go('/new')}><SquarePen /> 新建会议</Button>
+        <Button size="sm" onClick={() => go('/new')}><SquarePen /> 新建会映</Button>
       </TopBar>
       <div className="min-h-0 flex-1 overflow-y-auto">
         <div className="mx-auto flex max-w-[1240px] flex-col gap-7 px-6 py-6">
@@ -242,19 +242,39 @@ function PublishedCard({ m }: { m: Meeting }) {
 // ---------------- 日程 / 会议 切换 ----------------
 
 function ViewTabs({ as, view }: { as: PersonId; view: 'cal' | 'meet' }) {
-  const tabs = [{ k: 'cal', label: '日程', hint: '会议和待办放在一张日历上' }, { k: 'meet', label: '会议', hint: '我发布的、发给我的、全部会议' }] as const
+  const dispatched = useStore(s => s.dispatched)
+  const waiting = outboxOf(as).filter(m => !dispatched[m.id]).length
+  const tabs = [
+    { k: 'cal', label: '日程', icon: CalendarDays, hint: '会议和待办放在一张日历上' },
+    { k: 'meet', label: '会议', icon: Clapperboard, hint: '我发布的、发给我的、全部会议' },
+  ] as const
   return (
-    <nav className="-mt-3 flex gap-1 border-b">
-      {tabs.map(t => (
-        <a
-          key={t.k}
-          href={href('/', { as: as === ME ? undefined : as, v: t.k === 'cal' ? undefined : t.k })}
-          title={t.hint}
-          className={cn('-mb-px border-b-2 px-3 py-2 text-[14px] transition-colors', view === t.k ? 'border-ink font-semibold' : 'text-ink-3 hover:text-ink border-transparent')}
-        >
-          {t.label}
-        </a>
-      ))}
+    <nav className="-mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
+      <div className="flex rounded-[14px] bg-[#EEF0F4] p-1 shadow-[inset_0_1px_2px_rgba(16,24,40,.06)]">
+        {tabs.map(t => {
+          const on = view === t.k
+          const I = t.icon
+          return (
+            <a
+              key={t.k}
+              href={href('/', { as: as === ME ? undefined : as, v: t.k === 'cal' ? undefined : t.k })}
+              className={cn('relative flex h-10 items-center gap-2 rounded-[11px] pr-4 pl-3.5 text-[14.5px] transition-colors', on ? 'text-ink font-semibold' : 'text-ink-3 hover:text-ink-2')}
+            >
+              {on && <motion.span layoutId="home-view" className="absolute inset-0 rounded-[11px] bg-white shadow-[0_1px_2px_rgba(16,24,40,.08),0_6px_16px_-6px_rgba(16,24,40,.18)]" transition={{ type: 'spring', stiffness: 520, damping: 38 }} />}
+              <I size={17} strokeWidth={on ? 2.2 : 1.9} className={cn('relative', on && 'text-primary')} />
+              <span className="relative">{t.label}</span>
+              {t.k === 'meet' && waiting > 0 && (
+                <span className="relative grid h-[18px] min-w-[18px] place-items-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-white" title={`${waiting} 场等你分发`}>{waiting}</span>
+              )}
+            </a>
+          )
+        })}
+      </div>
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.span key={view} className="text-ink-3 text-[13px]" initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
+          {tabs.find(t => t.k === view)!.hint}
+        </motion.span>
+      </AnimatePresence>
     </nav>
   )
 }

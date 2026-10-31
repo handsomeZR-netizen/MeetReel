@@ -1,10 +1,11 @@
 // 会议的附加信息：地点、类型、相关文件、简报的阅读回执（mock）。
 // 主案例的资料是真文件（data/cases/xiaomi-safety/kb/），知识库和成员简报里都能直接打开。
 import type { PersonId } from './model'
+import fileManifest from './file-manifest.json'
 
 export type FileKind = 'doc' | 'pdf' | 'xls' | 'ppt' | 'md' | 'img'
 
-export interface MeetingFile { name: string; kind: FileKind; owner: PersonId; date: string; size: string; url?: string }
+export interface MeetingFile { name: string; kind: FileKind; owner: PersonId; date: string; size: string; url?: string; previewUrl?: string }
 
 export interface MeetingExtra {
   place: string
@@ -59,4 +60,16 @@ export const EXTRAS: Record<string, MeetingExtra> = {
     ],
     readAt: { jiangwan: '10/28 15:31', weiran: '10/28 15:22', xunuo: '10/28 16:05', hanzong: '10/28 18:40', tangchuan: '10/28 15:25' },
   },
+}
+
+// 本地真实附件及浏览器阅读页使用同一份文件清单，大小来自实际导出文件。
+for (const meeting of Object.values(EXTRAS)) {
+  for (const file of meeting.files) {
+    const entry = fileManifest[file.name as keyof typeof fileManifest]
+    if (entry && file.kind !== 'img') {
+      file.url = `${import.meta.env.BASE_URL}files/${encodeURIComponent(file.name)}`
+      file.previewUrl = `${file.url}.html`
+      file.size = entry.size
+    }
+  }
 }

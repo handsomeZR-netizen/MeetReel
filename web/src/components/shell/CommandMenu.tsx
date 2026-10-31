@@ -1,4 +1,4 @@
-import { CalendarCheck, FileText, LayoutTemplate, Library, SquarePen, Waypoints } from 'lucide-react'
+import { CalendarCheck, FileText, LayoutTemplate, Library, SquarePen } from 'lucide-react'
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from '@/components/ui/command'
 import { ALL_ITEMS, MEETINGS } from '@/data/meetings'
 import { RANKS, STAFF, personById, projectById } from '@/data/model'
@@ -10,8 +10,7 @@ import { Face, TypePill } from '@/components/common/bits'
 
 const PAGES = [
   { label: '我的日程', icon: CalendarCheck, to: '/' },
-  { label: '新建会议', icon: SquarePen, to: '/new' },
-  { label: '智能分发', icon: Waypoints, to: '/dispatch' },
+  { label: '新建会映', icon: SquarePen, to: '/new' },
   { label: '会议知识库', icon: Library, to: '/kb' },
   { label: '模板中心', icon: LayoutTemplate, to: '/templates' },
 ]
