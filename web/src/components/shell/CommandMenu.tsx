@@ -9,7 +9,7 @@ import { cnDate } from '@/lib/utils'
 import { Face, TypePill } from '@/components/common/bits'
 
 const PAGES = [
-  { label: '我的会议', icon: CalendarCheck, to: '/' },
+  { label: '我的日程', icon: CalendarCheck, to: '/' },
   { label: '新建会议', icon: SquarePen, to: '/new' },
   { label: '智能分发', icon: Waypoints, to: '/dispatch' },
   { label: '会议知识库', icon: Library, to: '/kb' },

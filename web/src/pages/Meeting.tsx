@@ -118,7 +118,7 @@ function MeetingView({ m }: { m: Meeting }) {
 
   return (
     <>
-      <TopBar crumbs={[{ label: '我的会议', to: '/' }, { label: project.name, to: `/?project=${project.id}` }, { label: m.title }]}>
+      <TopBar crumbs={[{ label: '我的会议', to: '/?v=meet' }, { label: project.name, to: `/?v=meet&project=${project.id}` }, { label: m.title }]}>
         <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard?.writeText(location.href); setCopied(true); setTimeout(() => setCopied(false), 1400) }}>
           <Link2 /> {copied ? '已复制链接' : '分享'}
         </Button>

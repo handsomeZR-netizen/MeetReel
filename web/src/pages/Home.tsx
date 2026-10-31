@@ -1,6 +1,6 @@
-// 我的会议：发布者和收到者是同一个人的两面。
-// 上：我发布的（我上传、我确认后才发出去）；中：发给我的（别人发布、路由给我的简报）；右：待我处理。
-// 下：全部会议按项目归档，项目标明 Leader。共享给我已经并进来，身份切换在右上角。
+// 我的日程：会议和待办放在同一张日历上（默认），右边是收件箱和未排期。
+// 切到“会议”：我发布的（我上传、我确认后才发出去）、发给我的（别人发布、路由给我的简报）、全部会议按项目归档。
+// 发布者和收到者是同一个人的两面，身份切换在右上角。
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowRight, CheckCircle2, ChevronDown, Clock3, MessageCircleQuestion, Play, SquarePen, UserCheck, Waypoints } from 'lucide-react'
@@ -15,6 +15,7 @@ import { Button } from '@/components/ui/button'
 import { TopBar } from '@/components/shell/TopBar'
 import { Face, FaceStack, Kb, LeaderTag, RankTag, SourceChip } from '@/components/common/bits'
 import { BriefPaper, NOTE_COLORS, Sticky, StickyNotes } from '@/components/sketch/Briefs'
+import { Schedule } from '@/components/schedule/Schedule'
 
 const TODAY = '2026-10-31'
 const hello = () => {
@@ -25,6 +26,7 @@ const hello = () => {
 export function Home() {
   const route = useRoute()
   const as = (route.query.get('as') as PersonId | null) ?? ME
+  const view = route.query.get('v') === 'meet' ? 'meet' : 'cal'
   const me = personById(as)
   const dispatched = useStore(s => s.dispatched)
   const outbox = outboxOf(as)
@@ -35,7 +37,7 @@ export function Home() {
 
   return (
     <>
-      <TopBar crumbs={[{ label: '我的会议', to: '/' }, ...(as !== ME ? [{ label: `以 ${me.name} 的身份预览` }] : [])]}>
+      <TopBar crumbs={[{ label: '我的日程', to: '/' }, ...(as !== ME ? [{ label: `以 ${me.name} 的身份预览` }] : [])]}>
         <Button size="sm" onClick={() => go('/new')}><SquarePen /> 新建会议</Button>
       </TopBar>
       <div className="min-h-0 flex-1 overflow-y-auto">
@@ -52,7 +54,12 @@ export function Home() {
             <ViewAs as={as} />
           </header>
 
-          <div className="grid gap-7 xl:grid-cols-[minmax(0,1fr)_340px]">
+          <ViewTabs as={as} view={view} />
+
+          {view === 'cal' ? (
+            <Schedule as={as} side={<ToDo as={as} />} />
+          ) : (
+          <>
             <div className="flex min-w-0 flex-col gap-7">
               <section>
                 <SectionHead role="发布者" title="我发布的" sub="你上传、你确认之后，会映才按人发出去" />
@@ -91,10 +98,9 @@ export function Home() {
               </section>
             </div>
 
-            <ToDo as={as} />
-          </div>
-
-          <AllMeetings />
+            <AllMeetings />
+          </>
+          )}
         </div>
       </div>
     </>
@@ -233,7 +239,27 @@ function PublishedCard({ m }: { m: Meeting }) {
   )
 }
 
-// ---------------- 待我处理：一张张小便利贴 ----------------
+// ---------------- 日程 / 会议 切换 ----------------
+
+function ViewTabs({ as, view }: { as: PersonId; view: 'cal' | 'meet' }) {
+  const tabs = [{ k: 'cal', label: '日程', hint: '会议和待办放在一张日历上' }, { k: 'meet', label: '会议', hint: '我发布的、发给我的、全部会议' }] as const
+  return (
+    <nav className="-mt-3 flex gap-1 border-b">
+      {tabs.map(t => (
+        <a
+          key={t.k}
+          href={href('/', { as: as === ME ? undefined : as, v: t.k === 'cal' ? undefined : t.k })}
+          title={t.hint}
+          className={cn('-mb-px border-b-2 px-3 py-2 text-[14px] transition-colors', view === t.k ? 'border-ink font-semibold' : 'text-ink-3 hover:text-ink border-transparent')}
+        >
+          {t.label}
+        </a>
+      ))}
+    </nav>
+  )
+}
+
+// ---------------- 收件箱：需要我先表态的事，一张张小便利贴 ----------------
 
 interface Todo { key: string; tone: number; kind: string; icon: ReactNode; title: string; sub?: string; item?: string; act?: ReactNode }
 
@@ -265,11 +291,12 @@ function ToDo({ as }: { as: PersonId }) {
     rows.push({ key: 'verify2', tone: 3, kind: confirmed.xm_18 ? '已接手' : '已指派', icon: <UserCheck size={14} />, title: `林夏${confirmed.xm_18 ? '确认负责' : '待确认'}：核实“行业首个”的出处`, item: 'xm_18' })
   }
   for (const m of MEETINGS) {
-    for (const it of m.items.filter(i => i.type === 'action' && (owners[i.id] ?? i.owner) === as && dispatched[m.id] && !done[i.id])) {
+    // 确认过的待办已经上了日历，收件箱里只留还没表态的
+    for (const it of m.items.filter(i => i.type === 'action' && (owners[i.id] ?? i.owner) === as && dispatched[m.id] && !done[i.id] && !confirmed[i.id])) {
       rows.push({
-        key: it.id, tone: confirmed[it.id] ? 0 : 1, kind: confirmed[it.id] ? '我的待办' : '待我确认', icon: <Clock3 size={14} />,
+        key: it.id, tone: 1, kind: '待我确认', icon: <Clock3 size={14} />,
         title: it.title, sub: `${it.due ? `${it.due} 截止 · ` : it.flags?.includes('缺截止') ? '还没定截止 · ' : ''}${m.title}`, item: it.id,
-        act: confirmed[it.id] ? undefined : <button className="sk-mini-btn" onClick={() => actions.confirm(it.id, as)}>我来负责</button>,
+        act: <button className="sk-mini-btn" onClick={() => actions.confirm(it.id, as)}>我来负责</button>,
       })
     }
   }
@@ -282,7 +309,7 @@ function ToDo({ as }: { as: PersonId }) {
 
   return (
     <aside className="min-w-0">
-      <SectionHead title="待我处理" sub={`${rows.length} 件`} />
+      <SectionHead title="收件箱" sub={`${rows.length} 件 · 需要你先表态`} />
       <div className="flex flex-col gap-3">
         <AnimatePresence initial={false}>
           {rows.map((r, i) => (
@@ -304,7 +331,7 @@ function ToDo({ as }: { as: PersonId }) {
             </motion.div>
           ))}
         </AnimatePresence>
-        {!rows.length && <div className="text-ink-3 rounded-2xl border border-dashed px-4 py-5 text-[13px]">没有待处理的事。</div>}
+        {!rows.length && <div className="text-ink-3 rounded-2xl border border-dashed px-4 py-5 text-[13px]">收件箱清空了。</div>}
       </div>
     </aside>
   )

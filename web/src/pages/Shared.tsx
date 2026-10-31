@@ -28,7 +28,7 @@ export function Shared() {
 
   return (
     <>
-      <TopBar crumbs={[{ label: '我的会议', to: as === ME ? '/' : `/?as=${as}` }, { label: as === ME ? '发给我的' : `发给${me.name}的` }, ...(cur ? [{ label: cur.meeting.title }] : [])]} />
+      <TopBar crumbs={[{ label: '我的会议', to: as === ME ? '/?v=meet' : `/?as=${as}&v=meet` }, { label: as === ME ? '发给我的' : `发给${me.name}的` }, ...(cur ? [{ label: cur.meeting.title }] : [])]} />
       <div className="flex-none border-b px-6 py-3.5">
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0">

@@ -5,6 +5,7 @@ import { useRef, useSyncExternalStore } from 'react'
 import { DEFAULT_MODELS, ME, personById, type ModelId, type PersonId, type Project } from '@/data/model'
 import { MEETINGS, itemById } from '@/data/meetings'
 import { RUN_ID } from '@/data/run'
+import type { TodoStatus } from '@/data/schedule'
 
 export type FeedKind = 'confirm' | 'ask' | 'assign' | 'not_me' | 'answer' | 'sent' | 'read'
 
@@ -26,6 +27,10 @@ interface State {
   answered: Record<string, boolean>
   /** 已完成的待办 */
   done: Record<string, boolean>
+  /** 进行中的待办 */
+  doing: Record<string, boolean>
+  /** 在日历上排期的截止日（缺截止的待办接受建议或手动排上去） */
+  due: Record<string, string>
   events: FeedEvent[]
   /** 选用的模型：多选 = 多模型协同（默认），单选 = 全部智能体用同一个 */
   models: ModelId[]
@@ -40,6 +45,8 @@ const initial = (): State => ({
   owners: {},
   answered: {},
   done: {},
+  doing: {},
+  due: {},
   models: DEFAULT_MODELS,
   projects: [],
   events: [
@@ -113,6 +120,19 @@ export const actions = {
     set(s => ({ confirmed: { ...s.confirmed, [item]: person } }))
     push({ meeting: itemById(item).meeting, item, person, kind: 'confirm' })
   },
+
+  /** 改待办状态：直接开始或完成一条还没确认的，等于先确认负责 */
+  setStatus(item: string, status: TodoStatus) {
+    const owner = state.owners[item] ?? itemById(item).owner
+    if (status !== 'triage' && owner && !state.confirmed[item]) actions.confirm(item, owner)
+    set(s => ({
+      doing: { ...s.doing, [item]: status === 'doing' },
+      done: { ...s.done, [item]: status === 'done' },
+    }))
+  },
+
+  /** 排期：把待办放到日历的某一天 */
+  schedule: (item: string, date: string) => set(s => ({ due: { ...s.due, [item]: date } })),
 
   /** 发布者指派负责人；被指派的人稍后确认 */
   assign(item: string, person: PersonId) {

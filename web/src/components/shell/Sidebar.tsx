@@ -13,7 +13,7 @@ import { Logo } from '@/components/common/bits'
 const NAV = [
   { key: 'new', label: '新建会议', icon: SquarePen, to: '/new' },
   { key: 'search', label: '搜索会议', icon: Search, to: null, kbd: 'Ctrl K' },
-  { key: 'home', label: '我的会议', icon: CalendarCheck, to: '/' },
+  { key: 'home', label: '我的日程', icon: CalendarCheck, to: '/' },
   { key: 'dispatch', label: '智能分发', icon: Waypoints, to: '/dispatch' },
   { key: 'kb', label: '会议知识库', icon: Library, to: '/kb' },
   { key: 'templates', label: '模板中心', icon: LayoutTemplate, to: '/templates' },
