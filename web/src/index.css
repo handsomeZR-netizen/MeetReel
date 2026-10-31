@@ -282,6 +282,82 @@
 }
 .vx-label i { width: 5px; height: 5px; border-radius: 1.5px; background: var(--c); box-shadow: 0 0 6px var(--c); }
 
+/* Top bar: “自进化中” — a dark pill, a flowing dot-matrix behind the right half, a Koboyo icon tile on the far right */
+.evo-pill {
+  position: relative; isolation: isolate; overflow: hidden;
+  display: flex; align-items: center; gap: 10px;
+  width: 168px; height: 38px; padding: 0 5px 0 14px; border-radius: 13px;
+  color: #F4EFF6;
+  background: radial-gradient(130% 160% at 0% 0%, #3B3441 0%, transparent 58%), linear-gradient(180deg, #2A2530, #161319);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 14%), inset 0 0 0 1px rgb(255 255 255 / 4%), 0 0 0 1px #0C0A0E,
+    0 1px 2px rgb(0 0 0 / 25%), 0 8px 18px -10px rgb(40 18 38 / 70%);
+  transition: transform .2s, box-shadow .2s;
+}
+.evo-pill:hover, .evo-pill[aria-expanded='true'] {
+  transform: translateY(-1px);
+  box-shadow: inset 0 1px 0 rgb(255 255 255 / 16%), inset 0 0 0 1px rgb(255 255 255 / 5%), 0 0 0 1px #0C0A0E,
+    0 1px 2px rgb(0 0 0 / 25%), 0 12px 24px -10px rgb(70 30 64 / 70%);
+}
+.evo-pill:focus-visible { outline: 2px solid #9b829a; outline-offset: 2px; }
+.evo-pixels {
+  position: absolute; top: 0; right: 0; bottom: 0; z-index: -1; width: 112px; height: 100%;
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 50%); mask-image: linear-gradient(90deg, transparent, #000 50%);
+}
+.evo-pill-label { font-size: 13.5px; font-weight: 600; letter-spacing: .04em; white-space: nowrap; text-shadow: 0 1px 6px rgb(22 19 25 / 90%); }
+.evo-pill-icon {
+  display: grid; place-items: center; flex: none; margin-left: auto; width: 29px; height: 29px; border-radius: 9px;
+  color: #4A2F42; background: linear-gradient(180deg, #FAF4F8, #DCCAD8);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(0 0 0 / 40%), 0 4px 10px -3px rgb(0 0 0 / 65%);
+}
+/* Dropdown trigger (Pop): raised glass; turns onyx when a value is picked */
+.pop-trigger {
+  display: inline-flex; align-items: center; height: 34px; max-width: 240px; padding-right: 4px; border-radius: 12px;
+  font-size: 13px; color: var(--ink-2); background: linear-gradient(180deg, #fff, #F8F6F9);
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(95 62 84 / 8%), 0 1px 2px rgb(40 24 36 / 6%), 0 6px 12px -10px rgb(40 24 36 / 30%);
+  transition: color .15s, box-shadow .15s, transform .15s;
+}
+.pop-trigger:hover { color: var(--ink); transform: translateY(-1px); }
+.pop-trigger.open { box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(95 62 84 / 24%), 0 6px 14px -10px rgb(40 24 36 / 40%); }
+.pop-trigger.on { color: #fff; background: linear-gradient(180deg, #34303A, var(--onyx)); box-shadow: inset 0 1px 0 rgb(255 255 255 / 16%), 0 0 0 1px #0B0A0C, 0 6px 12px -8px rgb(24 22 26 / 50%); }
+.kb-row { transition: background-color .15s; }
+.kb-row:hover { background: rgb(255 255 255 / 75%); }
+.kb-row:hover .kb-row-go { opacity: 1; transform: none; }
+.kb-row-go { opacity: 0; transform: translateX(-3px); transition: opacity .15s, transform .15s; }
+/* 每人 30 秒: delivery map (meeting → people) and the beat cards under the player */
+.reel-flow-v { background: repeating-linear-gradient(180deg, var(--plum) 0 7px, #C9B4C6 7px 12px); background-size: 2px 12px; animation: reel-flow-v .7s linear infinite; }
+@keyframes reel-flow-v { to { background-position: 0 12px; } }
+.reel-flow-h { background: repeating-linear-gradient(90deg, var(--plum) 0 7px, #C9B4C6 7px 12px); background-size: 12px 2px; animation: reel-flow-h .7s linear infinite; }
+@keyframes reel-flow-h { to { background-position: 12px 0; } }
+.reel-branch-quiet { background: repeating-linear-gradient(90deg, rgb(95 62 84 / 16%) 0 3px, transparent 3px 6px); }
+.reel-node { transition: background-color .15s, box-shadow .2s, transform .2s; }
+.reel-node:hover { background: rgb(255 255 255 / 80%); }
+.reel-node.on { background: linear-gradient(180deg, #fff, #F8F6F9); box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(95 62 84 / 18%), 0 8px 18px -12px rgb(40 24 36 / 45%); }
+.reel-node.quiet b { color: var(--ink-3); font-weight: 500; }
+.reel-beat {
+  color: var(--ink);
+  background: linear-gradient(180deg, rgb(255 255 255 / 94%), rgb(249 247 250 / 80%));
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 .5px rgb(95 62 84 / 9%), 0 1px 2px rgb(40 24 36 / 5%), 0 12px 24px -20px rgb(40 24 36 / 35%);
+  transition: transform .25s, box-shadow .25s, background .25s, color .25s;
+}
+.reel-beat:hover { transform: translateY(-2px); }
+.reel-beat .reel-why { color: var(--ink-3); }
+.reel-beat.on {
+  color: #fff;
+  background: linear-gradient(140deg, #4A2F42, #6B5066 60%, #8C7689);
+  box-shadow: inset 1px 1px 0 rgb(255 255 255 / 26%), 0 0 0 1px #3A2434, 0 16px 30px -16px rgb(57 32 50 / 75%);
+  transform: translateY(-3px);
+}
+.reel-beat.on .reel-why { color: rgb(255 255 255 / 72%); }
+.reel-beat.on .type-pill { background: rgb(255 255 255 / 92%); }
+@media (prefers-reduced-motion: reduce) {
+  .reel-flow-v, .reel-flow-h { animation: none; }
+}
+/* hover bridge across the gap between the pill and its panel */
+.evo-pop::before { content: ''; position: absolute; left: 0; right: 0; top: -12px; height: 12px; }
+@media (prefers-reduced-motion: reduce) {
+  .evo-pill { transition: none; }
+}
+
 @supports not (backdrop-filter: blur(1px)) {
   .glass-panel, .glass-topbar { background-color: #faf8fb; }
 }
@@ -682,3 +758,35 @@
   box-shadow: inset 0 1px 0 #fff, 0 0 0 1.5px var(--plum), 0 2px 4px rgb(40 24 36 / 6%), 0 18px 32px -20px rgb(57 32 50 / 55%);
 }
 .sg-switch [data-slot='switch-thumb'] { background: #fff; box-shadow: 0 1px 2px rgb(24 22 26 / 30%), inset 0 -1px 0 rgb(95 62 84 / 8%); }
+
+/* 组织与角色: a live org graph — dotted canvas, glass nodes, SVG links with flowing particles */
+.org-stage { background-image: radial-gradient(rgb(95 62 84 / 10%) 1px, transparent 1.3px); background-size: 16px 16px; }
+.org-node {
+  position: relative; display: flex; align-items: center; gap: 9px; padding: 8px 10px 8px 8px; border-radius: 16px; text-align: left;
+  background: linear-gradient(180deg, rgb(255 255 255 / 97%), rgb(249 247 250 / 94%));
+  box-shadow: inset 0 1px 0 #fff, 0 0 0 .5px rgb(95 62 84 / 12%), 0 1px 2px rgb(40 24 36 / 6%), 0 10px 20px -16px rgb(40 24 36 / 45%);
+  transition: opacity .25s, filter .25s, box-shadow .2s, background .2s, color .2s;
+}
+.org-node:hover { box-shadow: inset 0 1px 0 #fff, 0 0 0 1px rgb(95 62 84 / 24%), 0 12px 22px -14px rgb(40 24 36 / 45%); }
+.org-node:focus-visible { outline: 2px solid #9b829a; outline-offset: 2px; }
+.org-node.near { box-shadow: inset 0 1px 0 #fff, 0 0 0 1.5px color-mix(in srgb, var(--c) 45%, transparent), 0 12px 22px -14px rgb(40 24 36 / 45%); }
+.org-node.dim { opacity: .38; filter: saturate(.4); }
+.org-node.focus {
+  color: #fff; background: linear-gradient(140deg, #4A2F42, #6B5066 60%, #8C7689);
+  box-shadow: inset 1px 1px 0 rgb(255 255 255 / 26%), 0 0 0 1px #3A2434, 0 0 0 5px rgb(95 62 84 / 12%), 0 16px 30px -16px rgb(57 32 50 / 75%);
+}
+.org-node.focus .text-ink-3 { color: rgb(255 255 255 / 70%); }
+.org-badge {
+  display: inline-flex; align-items: center; height: 17px; padding: 0 6px; border-radius: 999px;
+  font: 600 10.5px/1 var(--mono-font); color: #fff; white-space: nowrap;
+  box-shadow: 0 0 0 2px #fff, 0 3px 8px -3px rgb(0 0 0 / 40%);
+}
+.org-dep-label {
+  position: absolute; z-index: 5; translate: -50% -50%; display: inline-flex; align-items: center; gap: 3px; white-space: nowrap; pointer-events: none;
+  padding: 2px 7px; border-radius: 999px; font-size: 11px; color: #BE123C; background: #FFF1F3;
+  box-shadow: inset 0 0 0 1px rgb(225 29 72 / 20%), 0 4px 10px -6px rgb(190 18 60 / 45%);
+  transition: opacity .25s;
+}
+@media (prefers-reduced-motion: reduce) {
+  .org-node { transition: none; }
+}

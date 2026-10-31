@@ -12,7 +12,7 @@ import { MeetingPage } from '@/pages/Meeting'
 import { Dispatch } from '@/pages/Dispatch'
 import { Shared } from '@/pages/Shared'
 import { Knowledge } from '@/pages/Knowledge'
-import { Templates } from '@/pages/Templates'
+import { Org } from '@/pages/Org'
 import { ReelFrameOnly, Reels } from '@/pages/Reels'
 
 export function App() {
@@ -41,7 +41,7 @@ export function App() {
       : p0 === 'dispatch' || p0 === 'new' ? <Dispatch id={p1} />
       : p0 === 'shared' ? <Shared />
       : p0 === 'kb' ? <Knowledge />
-      : p0 === 'templates' ? <Templates />
+      : p0 === 'org' || p0 === 'templates' ? <Org />
       : p0 === 'reel' ? <Reels />
       : <Home />
 
@@ -51,7 +51,7 @@ export function App() {
   return (
     <TooltipProvider>
       <div className="glass-workspace flex h-svh overflow-hidden">
-        <Sidebar collapsed={collapsed} onCollapse={setCollapsed} onSearch={() => setCmd(true)} />
+        <Sidebar collapsed={collapsed} onCollapse={setCollapsed} />
         <main className="glass-workspace-pane relative m-2 ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div

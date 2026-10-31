@@ -1,4 +1,4 @@
-import { CalendarCheck, FileText, LayoutTemplate, Library, SquarePen } from 'lucide-react'
+import { CalendarCheck, FileText, Library, Network, SquarePen, SquarePlay } from 'lucide-react'
 import { CommandDialog, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList, CommandSeparator, CommandShortcut } from '@/components/ui/command'
 import { ALL_ITEMS, MEETINGS } from '@/data/meetings'
 import { RANKS, STAFF, personById, projectById } from '@/data/model'
@@ -11,8 +11,9 @@ import { Face, TypePill } from '@/components/common/bits'
 const PAGES = [
   { label: '与我有关', icon: CalendarCheck, to: '/' },
   { label: '新建会映', icon: SquarePen, to: '/new' },
+  { label: '每人 30 秒', icon: SquarePlay, to: '/reel' },
   { label: '会议知识库', icon: Library, to: '/kb' },
-  { label: '模板中心', icon: LayoutTemplate, to: '/templates' },
+  { label: '组织与角色', icon: Network, to: '/org' },
 ]
 
 export function CommandMenu({ open, onOpenChange }: { open: boolean; onOpenChange: (v: boolean) => void }) {

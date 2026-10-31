@@ -6,7 +6,7 @@ import { AnimatePresence, LayoutGroup, motion } from 'motion/react'
 import { MorphIcon } from 'morphicons/react'
 import { ArrowUp, Check, ChevronDown, Copy, Square } from 'lucide'
 import {
-  ArrowLeft, BellOff, Check as CheckIcon, FileVideo, Mic, MessageCircleQuestion, PanelRightClose, PanelRightOpen, Paperclip, PenLine,
+  ArrowLeft, BellOff, Check as CheckIcon, FileVideo, Mic, MessageCircleQuestion, PanelRightClose, PanelRightOpen, Link as LinkIcon, PenLine,
   Plus, RotateCcw, ShieldCheck, SquarePen, ThumbsDown, ThumbsUp, UserCheck, X,
 } from 'lucide-react'
 import { DEFAULT_MODELS, ME, MODELS, REASONS, personById, type ModelId, type PersonId } from '@/data/model'
@@ -30,6 +30,7 @@ import { RoutingBoard } from '@/components/dispatch/RoutingBoard'
 import { Matrix } from '@/components/sketch/Matrix'
 import { BriefPaper, StickyNotes } from '@/components/sketch/Briefs'
 import { Intake, QUESTIONS, answerQ, initialIntake, type Answers, type IntakeState } from '@/components/dispatch/Intake'
+import { Modal } from '@/components/common/Pop'
 import { DotLoader } from '@/components/common/DotMatrix'
 
 type CanvasTab = 'run' | 'flow' | 'matrix' | 'briefs'
@@ -59,6 +60,9 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
   const [stage, setStage] = useState<'welcome' | 'intake' | 'run'>(already ? 'run' : 'welcome')
   const [intake, setIntake] = useState<IntakeState | null>(null)
   const [attached, setAttached] = useState(attachedAtStart || autorun)
+  const [sourceLink, setSourceLink] = useState('')
+  const attach = (link = '') => { setSourceLink(link); setAttached(true) }
+  const detach = () => { setAttached(false); setSourceLink('') }
   const [instant] = useState(already)
   const [canvas, setCanvas] = useState(true)
   const [ctab, setCtab] = useState<CanvasTab>(already ? 'briefs' : 'run')
@@ -88,7 +92,7 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
     clock.seek(0)
     setStage('welcome')
     setIntake(null)
-    setAttached(false)
+    detach()
     setExtra([])
     setPerson(null)
     go('/new')
@@ -196,7 +200,7 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
             >
               {stage !== 'welcome' ? (
                 <div ref={thread} className="mx-auto max-w-[760px] px-6 pt-4 pb-10">
-                  <UserMessage />
+                  <UserMessage sourceLink={sourceLink} />
                   {intake && <Intake s={intake} set={setIntakeFn} onDone={intakeDone} locked={running} />}
                   {running && (
                     <Answer
@@ -216,7 +220,7 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
                   ))}
                 </div>
               ) : (
-                <Welcome attached={attached} onAttach={() => setAttached(true)} />
+                <Welcome attached={attached} onAttach={attach} />
               )}
             </div>
 
@@ -225,8 +229,9 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
               <Composer
                 models={models}
                 attached={attached && stage === 'welcome'}
-                onDetach={() => setAttached(false)}
-                onAttach={() => setAttached(true)}
+                onDetach={detach}
+                onAttach={() => attach()}
+                sourceLink={sourceLink}
                 draft={draft}
                 onDraft={setDraft}
                 onSend={send}
@@ -235,7 +240,7 @@ function DispatchView({ attachedAtStart, autorun }: { attachedAtStart: boolean; 
                 placeholder={
                   running ? '继续追问，例如：和我们自己的安委会比，差在哪？'
                     : stage === 'intake' ? (asking ? '回车 = 按推荐回答这一问；要改就在上面的卡片里改' : '会映正在看录像…')
-                    : attached ? '' : '把会议录像、录音或飞书妙记交给会映'
+                    : attached ? '' : '把会议录像、录音或会议链接交给会映'
                 }
               />
               <p className="text-ink-3 mt-2 text-center text-[12px]">会映会出错，重要事项请点原话回到录像核实。</p>
@@ -357,7 +362,19 @@ function ModelPicker({ models }: { models: ModelId[] }) {
 
 // ---------------- 欢迎页 ----------------
 
-function Welcome({ attached, onAttach }: { attached: boolean; onAttach: () => void }) {
+function Welcome({ attached, onAttach }: { attached: boolean; onAttach: (link?: string) => void }) {
+  const [linkOpen, setLinkOpen] = useState(false)
+  const [link, setLink] = useState('')
+  const [error, setError] = useState('')
+  const importLink = () => {
+    try {
+      const url = new URL(link.trim())
+      if (!['http:', 'https:'].includes(url.protocol)) throw new Error()
+      onAttach(url.href)
+      setLinkOpen(false)
+      setError('')
+    } catch { setError('请输入完整的会议链接，以 https:// 或 http:// 开头。') }
+  }
   const dispatched = useStore(s => s.dispatched)
   const pending = MEETINGS.filter(m => !dispatched[m.id])
   return (
@@ -370,32 +387,49 @@ function Welcome({ attached, onAttach }: { attached: boolean; onAttach: () => vo
           <motion.button
             key={m.id}
             variants={{ h: { opacity: 0, y: 8 }, s: { opacity: 1, y: 0 } }}
-            onClick={onAttach}
+            onClick={() => onAttach()}
             className={cn('kb-tile inline-flex h-10 items-center gap-2 rounded-full border px-4 text-[14px]', attached ? 'border-ink bg-white' : 'border-ink shadow-[0_0_0_3px_rgba(0,0,0,.05)]')}
           >
             <FileVideo size={16} /> {m.title}<span className="rounded-md bg-amber-100 px-1.5 text-[11.5px] text-amber-700">待分发</span>
           </motion.button>
         ))}
-        {[{ icon: Mic, label: '上传会议录音' }, { icon: Paperclip, label: '导入飞书妙记' }].map(({ icon: I, label }) => (
-          <motion.button key={label} onClick={onAttach} variants={{ h: { opacity: 0, y: 8 }, s: { opacity: 1, y: 0 } }} className="kb-tile text-ink-2 inline-flex h-10 items-center gap-2 rounded-full border px-4 text-[14px]">
+        {[{ icon: Mic, label: '上传会议录音', action: () => onAttach() }, { icon: LinkIcon, label: '导入会议链接', action: () => { setError(''); setLinkOpen(true) } }].map(({ icon: I, label, action }) => (
+          <motion.button key={label} onClick={action} variants={{ h: { opacity: 0, y: 8 }, s: { opacity: 1, y: 0 } }} className="kb-tile text-ink-2 inline-flex h-10 items-center gap-2 rounded-full border px-4 text-[14px]">
             <I size={16} /> {label}
           </motion.button>
         ))}
       </motion.div>
+      <Modal open={linkOpen} onClose={() => setLinkOpen(false)} label="导入会议链接" className="pc-sheet w-[min(460px,calc(100vw-32px))] rounded-[24px] p-6 text-left">
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-semibold">导入会议链接</h2>
+          <button onClick={() => setLinkOpen(false)} aria-label="关闭" className="grid size-8 place-items-center rounded-full hover:bg-black/5"><X size={18} /></button>
+        </div>
+        <p className="text-ink-3 mt-2 text-sm">粘贴会议录像或妙记链接，交给会映按人整理。</p>
+        <form className="mt-5" onSubmit={e => { e.preventDefault(); importLink() }}>
+          <label htmlFor="meeting-link" className="mb-2 block text-sm font-medium">会议链接</label>
+          <input id="meeting-link" type="text" inputMode="url" autoComplete="off" value={link} onChange={e => { setLink(e.target.value); setError('') }} placeholder="https://…" aria-invalid={!!error} aria-describedby={error ? 'meeting-link-error' : 'meeting-link-hint'} className="w-full rounded-xl border bg-white/80 px-3 py-2.5 text-sm outline-none focus:border-[var(--plum)]" />
+          {error && <p id="meeting-link-error" role="alert" className="mt-2 text-sm text-red-600">{error}</p>}
+          <p id="meeting-link-hint" className="text-ink-3 mt-3 text-xs leading-relaxed">演示模式：导入后使用雷军的小米汽车安全专场直播案例，不读取链接内容。</p>
+          <div className="mt-5 flex items-center justify-between gap-3">
+            <button type="button" className="text-ink-2 text-sm underline underline-offset-4" onClick={() => { setLink('https://meeting.example.com/xiaomi-safety'); setError('') }}>填入示例链接</button>
+            <button type="submit" disabled={!link.trim()} className="bg-ink rounded-full px-5 py-2.5 text-sm text-white disabled:opacity-40">导入会议</button>
+          </div>
+        </form>
+      </Modal>
     </motion.div>
   )
 }
 
 // ---------------- 输入框 ----------------
 
-function Composer(props: { models: ModelId[]; attached: boolean; onDetach: () => void; onAttach: () => void; draft: string; onDraft: (v: string) => void; onSend: () => void; generating: boolean; canSend: boolean; placeholder: string }) {
+function Composer(props: { sourceLink?: string; models: ModelId[]; attached: boolean; onDetach: () => void; onAttach: () => void; draft: string; onDraft: (v: string) => void; onSend: () => void; generating: boolean; canSend: boolean; placeholder: string }) {
   const { models, attached, onDetach, onAttach, draft, onDraft, onSend, generating, canSend, placeholder } = props
   return (
     <div className="@container relative rounded-[28px] bg-white p-2.5 shadow-[0_0_0_1px_rgba(0,0,0,.08),0_6px_20px_-6px_rgba(0,0,0,.1)] transition-shadow focus-within:shadow-[0_0_0_1px_rgba(0,0,0,.14),0_8px_24px_-6px_rgba(0,0,0,.14)]">
       <AnimatePresence>
         {attached && (
           <motion.div className="overflow-hidden px-1.5 pt-1" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}>
-            <FileChip onRemove={onDetach} />
+            <FileChip onRemove={onDetach} sourceLink={props.sourceLink} />
             <div className="px-1.5 pt-2.5 pb-1.5 text-left text-[15px]">把这场会按人分发：每人只收和自己有关的，附原话和理由。</div>
           </motion.div>
         )}
@@ -425,23 +459,24 @@ function Composer(props: { models: ModelId[]; attached: boolean; onDetach: () =>
   )
 }
 
-function FileChip({ onRemove, sent }: { onRemove?: () => void; sent?: boolean }) {
+function FileChip({ onRemove, sent, sourceLink }: { onRemove?: () => void; sent?: boolean; sourceLink?: string }) {
   return (
     <div className={cn('relative inline-flex items-center gap-2.5 rounded-2xl border bg-white py-2 pl-2 text-left', sent ? 'pr-4' : 'pr-9')}>
       <img src={XM.video!.poster} alt="" className="h-11 w-[25px] flex-none rounded-[6px] object-cover" draggable={false} />
       <div className="leading-tight">
-        <b className="block text-[13.5px] font-semibold">小米汽车安全专场直播.mp4</b>
-        <small className="text-ink-3 text-[12px]">直播录像 · 09:49 · {XM.segments.length} 段发言 · 8 位收到者{sent ? '' : ' · 关注档案已加载'}</small>
+        <b className="block text-[13.5px] font-semibold">{sourceLink ? '小米汽车安全专场直播 · 会议链接' : '小米汽车安全专场直播.mp4'}</b>
+        <small className="text-ink-3 text-[12px]">{sourceLink ? '链接导入（演示）' : '直播录像'} · 09:49 · {XM.segments.length} 段发言 · 8 位收到者{sent ? '' : ' · 关注档案已加载'}</small>
+        {sourceLink && <span className="text-ink-3 mt-1 block max-w-[320px] truncate text-[11px]" title={sourceLink}>{sourceLink}</span>}
       </div>
       {onRemove && <button className="bg-ink absolute top-1.5 right-1.5 grid size-5 place-items-center rounded-full text-white" onClick={onRemove} aria-label="移除"><X size={12} /></button>}
     </div>
   )
 }
 
-function UserMessage() {
+function UserMessage({ sourceLink }: { sourceLink?: string }) {
   return (
     <motion.div className="mt-4 mb-6 flex flex-col items-end gap-2" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ type: 'spring', stiffness: 300, damping: 30 }}>
-      <FileChip sent />
+      <FileChip sent sourceLink={sourceLink} />
       <div className="max-w-[75%] rounded-[22px] bg-[#F4F4F4] px-[18px] py-2.5 text-[15px] leading-relaxed">把这场会按人分发：每人只收和自己有关的，附原话和理由。</div>
     </motion.div>
   )

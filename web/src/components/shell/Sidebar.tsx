@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import {
-  CalendarCheck, ChevronLeft, ChevronRight, LayoutTemplate, Library, PanelLeftClose, PanelLeftOpen, Search, SquarePen,
+  CalendarCheck, ChevronLeft, ChevronRight, Library, Network, PanelLeftClose, PanelLeftOpen, SquarePen, SquarePlay,
 } from 'lucide-react'
 import { MEETINGS } from '@/data/meetings'
 import { ME, personById } from '@/data/model'
@@ -10,13 +10,14 @@ import { cn, cnDate } from '@/lib/utils'
 import { Logo } from '@/components/common/bits'
 import { AccountMenu } from './Account'
 
-// 新建会议和智能分发合成一个入口：上传 → 会映问你几件事 → 多智能体按人分发
+// 新建会议和智能分发合成一个入口：上传 → 会映问你几件事 → 多智能体按人分发。
+// 每人 30 秒：一场会剪成每个人自己的 30 秒，直接放在侧栏里
 const NAV = [
   { key: 'new', label: '新建会映', icon: SquarePen, to: '/new' },
-  { key: 'search', label: '搜索会议', icon: Search, to: null, kbd: 'Ctrl K' },
   { key: 'home', label: '与我有关', icon: CalendarCheck, to: '/' },
+  { key: 'reel', label: '每人 30 秒', icon: SquarePlay, to: '/reel' },
   { key: 'kb', label: '会议知识库', icon: Library, to: '/kb' },
-  { key: 'templates', label: '模板中心', icon: LayoutTemplate, to: '/templates' },
+  { key: 'org', label: '组织与角色', icon: Network, to: '/org' },
 ] as const
 
 // 品牌 Logo：scripts/transparent_logo.py 生成到 assets/brand/ 之后自动换上，没有时用内置的 M 标
@@ -31,10 +32,11 @@ function activeKey(path: string[]) {
   // 共享给我已并进“我的会议”（发给我的）
   if (!p0 || p0 === 'm' || p0 === 'shared') return 'home'
   if (p0 === 'dispatch') return 'new'
+  if (p0 === 'templates') return 'org'
   return p0
 }
 
-export function Sidebar({ collapsed, onCollapse, onSearch }: { collapsed: boolean; onCollapse: (v: boolean) => void; onSearch: () => void }) {
+export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: (v: boolean) => void }) {
   const { path } = useRoute()
   const nav = useNav()
   const dispatched = useStore(s => s.dispatched)
@@ -85,18 +87,13 @@ export function Sidebar({ collapsed, onCollapse, onSearch }: { collapsed: boolea
                 {active && <motion.span layoutId="nav-pill" className="bg-sidebar-accent absolute inset-0 rounded-xl" transition={{ type: 'spring', stiffness: 500, damping: 40 }} />}
                 <span className={cn('relative grid flex-none place-items-center', active ? 'text-primary' : 'text-[#4E5969]')}><I size={19} strokeWidth={active ? 2.2 : 1.8} /></span>
                 {!collapsed && <span className={cn('relative flex-1 truncate text-[14.5px]', active ? 'text-ink font-semibold' : 'text-[#1F2329]')}>{n.label}</span>}
-                {!collapsed && 'kbd' in n && <kbd className="text-ink-4 relative font-sans text-[11px]">{n.kbd}</kbd>}
                 {badge != null && (
                   <span className={cn('relative grid h-[18px] min-w-[18px] place-items-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-white', collapsed && 'absolute top-1 right-1 h-4 min-w-4 text-[10px]')} title={`${badge} 场等你分发`}>{badge}</span>
                 )}
               </>
             )
             const cls = cn('relative flex h-11 items-center gap-3 rounded-xl px-3 text-left transition-colors hover:bg-black/[.035]', collapsed && 'justify-center px-0')
-            return n.to == null ? (
-              <button key={n.key} className={cls} onClick={onSearch} title={n.label}>{inner}</button>
-            ) : (
-              <a key={n.key} href={href(n.to)} className={cls} title={n.label}>{inner}</a>
-            )
+            return <a key={n.key} href={href(n.to)} className={cls} title={n.label}>{inner}</a>
           })}
         </nav>
 

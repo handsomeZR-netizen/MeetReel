@@ -1,22 +1,24 @@
 // 会议知识库：所有会议的账本、逐字稿和资料（PDF / Word / Markdown / 截图）汇在一起，可以问、可以筛；
-// 每个回答和条目都能回到原话那一秒。右边的动画是知识库每天的自进化：新会议和资料切块入库，回流的确认、退回改写关注档案和路由规则。
-import { useEffect, useMemo, useRef, useState, type CSSProperties } from 'react'
+// 每个回答和条目都能回到原话那一秒。账本按会议折叠，筛选收进下拉，点一条弹出详情（原话、负责人、发给了谁）。
+// 每天的自进化挪到了顶栏右上角的“自进化中”。
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { MorphIcon } from 'morphicons/react'
 import { ArrowUp } from 'lucide'
-import { ExternalLink, FileText, ImageOff, Lock, Pause, Play, Repeat2, Search, Video } from 'lucide-react'
-import { ITEM_TYPES, ME, PROJECTS, personById, projectById, type ItemType, type ProjectId } from '@/data/model'
-import { ALL_ITEMS, MEETINGS, type Item } from '@/data/meetings'
-import { itemTime, visibility } from '@/data/derive'
+import { ChevronDown, ChevronRight, ExternalLink, ImageOff, Lock, Play, Search, X } from 'lucide-react'
+import { ITEM_TYPES, ME, PROJECTS, personById, projectById, type ItemType, type PersonId, type ProjectId } from '@/data/model'
+import { ALL_ITEMS, MEETINGS, meetingById, type Item, type Meeting } from '@/data/meetings'
+import { itemTime, mmss, quoteSpan, visibility } from '@/data/derive'
 import { EXTRAS, type MeetingFile } from '@/data/extras'
-import { useRoute } from '@/lib/router'
+import { goSource, href, useRoute } from '@/lib/router'
 import { useStore } from '@/lib/store'
 import { cn, cnDate } from '@/lib/utils'
 import { TopBar } from '@/components/shell/TopBar'
-import { Empty, Face, Kb, SourceChip, TypePill } from '@/components/common/bits'
+import { Empty, Face, Kb, RankTag, TypePill } from '@/components/common/bits'
 import { rich, richLen, useStream } from '@/components/common/stream'
 import { FileIcon } from '@/components/common/FileIcon'
-import { DotLoader, DotText, easeOut, hash, square, useDotCanvas } from '@/components/common/DotMatrix'
+import { DotLoader, DotText } from '@/components/common/DotMatrix'
+import { Modal, ModalClose, Pop, PopRow } from '@/components/common/Pop'
 
 const QA: { q: string; a: string }[] = [
   { q: '竞品的一票否决和我们差在哪？', a: '差在**评审机制**。小米：所有环节业务评估后还要单独过安委会评估 [[xm_09]]，安全有**一票否决权** [[xm_10]]。我们：10/28 安全周会上宋岚说安委会只做事后通报，**评审里没有否决权** [[sf_01]]，她准备在下月经营会上提方案，让安全评审变成一道关 [[sf_02]]。' },
@@ -27,15 +29,23 @@ const QA: { q: string; a: string }[] = [
 
 type Answer = { id: number; q: string; a: string }
 
+const BY_DATE = [...MEETINGS].sort((a, b) => (b.date + b.time).localeCompare(a.date + a.time))
+const TOPICS = (() => {
+  const c = new Map<string, number>()
+  ALL_ITEMS.forEach(i => c.set(i.topic, (c.get(i.topic) ?? 0) + 1))
+  return [...c.entries()].sort((a, b) => b[1] - a[1])
+})()
+
 export function Knowledge() {
   const route = useRoute()
-  const confirmed = useStore(s => s.confirmed)
-  const owners = useStore(s => s.owners)
   const [draft, setDraft] = useState('')
   const [answers, setAnswers] = useState<Answer[]>([])
   const [type, setType] = useState<ItemType | null>(null)
   const [project, setProject] = useState<ProjectId | null>(null)
+  const [topic, setTopic] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  const [open, setOpen] = useState<Set<string>>(() => new Set([BY_DATE[0].id]))
+  const [detail, setDetail] = useState<Item | null>(null)
   const [docked, setDocked] = useState(false)
   const scroller = useRef<HTMLDivElement>(null)
   const heroForm = useRef<HTMLFormElement>(null)
@@ -78,19 +88,23 @@ export function Knowledge() {
     }
   }, [route.raw]) // eslint-disable-line react-hooks/exhaustive-deps
 
+  const q = query.trim()
+  const filtering = !!(type || project || topic || q)
   const items = useMemo(() => ALL_ITEMS.filter(it =>
     (!type || it.type === type) &&
-    (!project || MEETINGS.find(m => m.id === it.meeting)!.project === project) &&
-    (!query.trim() || `${it.title}${it.quote}${it.topic}${it.detail ?? ''}`.includes(query.trim())),
-  ), [type, project, query])
-  const groups = MEETINGS.map(m => ({ m, items: items.filter(i => i.meeting === m.id).sort((a, b) => itemTime(a) - itemTime(b)) })).filter(g => g.items.length)
-  const topics = useMemo(() => {
-    const c = new Map<string, number>()
-    ALL_ITEMS.forEach(i => c.set(i.topic, (c.get(i.topic) ?? 0) + 1))
-    return [...c.entries()].sort((a, b) => b[1] - a[1])
-  }, [])
+    (!project || meetingById(it.meeting)!.project === project) &&
+    (!topic || it.topic === topic) &&
+    (!q || `${it.title}${it.quote}${it.topic}${it.detail ?? ''}`.includes(q)),
+  ), [type, project, topic, q])
+  const groups = BY_DATE.map(m => ({ m, list: items.filter(i => i.meeting === m.id).sort((a, b) => itemTime(a) - itemTime(b)) })).filter(g => g.list.length)
+  // 一筛选就把命中的会议都展开；清掉筛选回到只开最近一场
+  useEffect(() => {
+    setOpen(new Set(filtering ? groups.map(g => g.m.id) : [BY_DATE[0].id]))
+  }, [type, project, topic, q]) // eslint-disable-line react-hooks/exhaustive-deps
+  const toggle = (id: string) => setOpen(s => { const n = new Set(s); if (n.has(id)) n.delete(id); else n.add(id); return n })
+  const allOpen = groups.length > 0 && groups.every(g => open.has(g.m.id))
   const files = MEETINGS.flatMap(m => EXTRAS[m.id].files.map(f => ({ f, m })))
-  const restricted = ALL_ITEMS.filter(i => i.sensitivity === 'restricted' && visibility(i, ME) === 'full')
+  const clear = () => { setType(null); setProject(null); setTopic(null); setQuery('') }
 
   return (
     <>
@@ -125,403 +139,353 @@ export function Knowledge() {
             </AnimatePresence>
           </div>
 
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_560px]">
-            <Library files={files} />
-            <Evolve />
-          </div>
-
-          <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_280px]">
-            <div className="min-w-0">
-              <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">账本</h2><span className="text-ink-3 text-[12.5px]">所有会议的条目，按权限显示</span></div>
+          <div className="grid items-start gap-6 xl:grid-cols-[minmax(0,1fr)_300px]">
+            <section className="min-w-0">
+              <div className="mb-3 flex flex-wrap items-baseline gap-2">
+                <h2 className="text-[16px] font-semibold">账本</h2>
+                <span className="text-ink-3 text-[12.5px]">所有会议的条目，点一条看原话和发给了谁</span>
+                <Access />
+              </div>
               <div className="flex flex-wrap items-center gap-2">
                 <div className="relative">
-                  <Search size={14} className="text-ink-3 absolute top-1/2 left-2.5 -translate-y-1/2" />
-                  <input value={query} onChange={e => setQuery(e.target.value)} placeholder="筛选条目或原话" className="focus:border-ring h-8 w-56 rounded-lg border bg-white pr-2 pl-8 text-[13px] outline-none" />
+                  <Search size={14} className="text-ink-3 absolute top-1/2 left-3 -translate-y-1/2" />
+                  <input value={query} onChange={e => setQuery(e.target.value)} placeholder="筛选条目或原话" className="h-[34px] w-56 rounded-xl border border-white bg-white/70 pr-2 pl-8 text-[13px] shadow-[0_0_0_1px_rgb(95_62_84/8%)] outline-none focus:bg-white focus:shadow-[0_0_0_1px_rgb(95_62_84/26%)]" />
                 </div>
-                <Chip on={!type} onClick={() => setType(null)}>全部类型</Chip>
-                {(Object.keys(ITEM_TYPES) as ItemType[]).map(k => (
-                  <Chip key={k} on={type === k} onClick={() => setType(t => (t === k ? null : k))}><i className="size-1.5 rounded-full" style={{ background: ITEM_TYPES[k].color }} />{ITEM_TYPES[k].label}</Chip>
-                ))}
-              </div>
-              <div className="mt-2 flex flex-wrap gap-2">
-                <Chip on={!project} onClick={() => setProject(null)}>全部项目</Chip>
-                {PROJECTS.map(p => <Chip key={p.id} on={project === p.id} onClick={() => setProject(x => (x === p.id ? null : p.id))}><i className="size-1.5 rounded-full" style={{ background: p.color }} />{p.name}</Chip>)}
+                <Pop
+                  active={!!type}
+                  onClear={() => setType(null)}
+                  label={type ? <><i className="size-2 flex-none rounded-full" style={{ background: ITEM_TYPES[type].color }} />{ITEM_TYPES[type].label}</> : '类型'}
+                  width={200}
+                >
+                  {close => (
+                    <>
+                      <PopRow on={!type} count={ALL_ITEMS.length} onClick={() => { setType(null); close() }}>全部类型</PopRow>
+                      {(Object.keys(ITEM_TYPES) as ItemType[]).map(k => (
+                        <PopRow key={k} on={type === k} count={ALL_ITEMS.filter(i => i.type === k).length} onClick={() => { setType(k); close() }}>
+                          <i className="size-2 flex-none rounded-full" style={{ background: ITEM_TYPES[k].color }} />{ITEM_TYPES[k].label}
+                        </PopRow>
+                      ))}
+                    </>
+                  )}
+                </Pop>
+                <Pop
+                  active={!!project}
+                  onClear={() => setProject(null)}
+                  label={project ? <><i className="size-2 flex-none rounded-full" style={{ background: projectById(project).color }} />{projectById(project).name}</> : '项目'}
+                  width={230}
+                >
+                  {close => (
+                    <>
+                      <PopRow on={!project} count={MEETINGS.length + ' 场'} onClick={() => { setProject(null); close() }}>全部项目</PopRow>
+                      {PROJECTS.map(p => (
+                        <PopRow key={p.id} on={project === p.id} count={MEETINGS.filter(m => m.project === p.id).length + ' 场'} onClick={() => { setProject(p.id); close() }}>
+                          <span className="flex-none" style={{ color: p.color }}><Kb name={p.icon} size={18} /></span>{p.name}
+                        </PopRow>
+                      ))}
+                    </>
+                  )}
+                </Pop>
+                <Pop active={!!topic} onClear={() => setTopic(null)} label={topic ? `# ${topic}` : '话题'} width={340}>
+                  {close => (
+                    <div className="p-2">
+                      <div className="text-ink-3 mb-2 flex items-center gap-1.5 text-[12px]"><Kb name="signpost" size={16} />按话题看，越大的讲得越多</div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {TOPICS.map(([tp, n]) => (
+                          <button key={tp} onClick={() => { setTopic(tp); close() }} className={cn('kb-tile rounded-full border px-2.5 py-0.5', topic === tp ? 'sg-onyx border-transparent' : 'bg-white/70')} style={{ fontSize: 11.5 + n * 0.8 }}>
+                            {tp} <span className={topic === tp ? 'text-white/60' : 'text-ink-4'}>{n}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </Pop>
+                {filtering && <button className="text-ink-3 hover:text-ink inline-flex h-[34px] items-center gap-1 px-1.5 text-[12.5px]" onClick={clear}><X size={13} />清除筛选</button>}
+                <span className="ml-auto flex items-center gap-3">
+                  <span className="text-ink-3 text-[12.5px] tabular-nums">{items.length} 条 · {groups.length} 场会</span>
+                  {groups.length > 1 && (
+                    <button className="text-ink-2 hover:text-ink inline-flex items-center gap-1 text-[12.5px]" onClick={() => setOpen(new Set(allOpen ? [] : groups.map(g => g.m.id)))}>
+                      <ChevronDown size={14} className={cn('transition-transform', allOpen && 'rotate-180')} />{allOpen ? '全部收起' : '全部展开'}
+                    </button>
+                  )}
+                </span>
               </div>
 
-              <div className="mt-4 flex flex-col gap-5">
+              <div className="mt-4 flex flex-col gap-3">
                 {!groups.length && <Empty icon="magnifyingGlass" title="没有匹配的条目" sub="换个关键词，或者清掉筛选。" />}
-                {groups.map(({ m, items: list }) => (
-                  <section key={m.id}>
-                    <div className="mb-2 flex items-center gap-2">
-                      <span className="size-2 rounded-full" style={{ background: projectById(m.project).color }} />
-                      <a href={`#/m/${m.id}`} className="text-[14.5px] font-semibold hover:underline">{m.title}</a>
-                      <span className="text-ink-3 text-[12.5px]">{projectById(m.project).name} · {cnDate(m.date)} · {personById(m.publisher).name} 发布</span>
-                    </div>
-                    <div className="sg-card overflow-hidden rounded-2xl">
-                      {list.map(it => <KbRow key={it.id} it={it} ok={!!confirmed[it.id]} owner={owners[it.id] ?? it.owner} />)}
-                    </div>
-                  </section>
-                ))}
+                {groups.map(({ m, list }) => <LedgerGroup key={m.id} m={m} list={list} open={open.has(m.id)} onToggle={() => toggle(m.id)} onPick={setDetail} />)}
               </div>
-            </div>
+            </section>
 
-            <aside className="flex flex-col gap-4">
-              <div className="sg-card rounded-2xl p-4">
-                <div className="flex items-center gap-2"><Kb name="signpost" size={22} /><b className="text-[14px]">话题</b></div>
-                <div className="mt-3 flex flex-wrap gap-1.5">
-                  {topics.map(([tp, n]) => (
-                    <button key={tp} onClick={() => setQuery(tp)} className="kb-tile rounded-full border px-2.5 py-0.5" style={{ fontSize: 11.5 + n * 0.8 }}>{tp} <span className="text-ink-4">{n}</span></button>
-                  ))}
-                </div>
-              </div>
-              <div className="sg-well rounded-2xl p-4 text-[12.5px] leading-relaxed">
-                <div className="flex items-center gap-2"><Lock size={14} /><b className="text-[13.5px]">权限</b></div>
-                <p className="text-ink-2 mt-1.5">知识库按你的权限显示：受限条目对名单外的人只显示脱敏版。你现在是 <b>{personById(ME).name}</b>，在 {restricted.length} 条受限条目的名单里{restricted.length ? `（${restricted.map(i => i.title.slice(0, 10)).join('、')}…）` : ''}。</p>
-              </div>
-            </aside>
+            <Library files={files} />
           </div>
         </div>
       </div>
+      <Modal open={!!detail} onClose={() => setDetail(null)} label="条目详情" className="pc-sheet w-[min(580px,calc(100vw-32px))] rounded-[26px] p-5">
+        {detail && <ItemDetail it={detail} onTopic={tp => { setDetail(null); setTopic(tp) }} />}
+      </Modal>
     </>
   )
 }
 
-// ---------------- 资料：PDF、Word、Markdown、截图 ----------------
-
-/** 截图：加载失败时给一个安静的占位，不露出裂图和文件名 */
-function Shot({ src, name }: { src?: string; name: string }) {
-  const [bad, setBad] = useState(!src)
-  if (bad) return <span className="text-ink-4 grid size-full place-items-center"><ImageOff size={22} /></span>
-  return <img src={src} alt={name} onError={() => setBad(true)} className="size-full object-cover transition-transform duration-500 group-hover:scale-105" />
-}
-
-function Library({ files }: { files: { f: MeetingFile; m: (typeof MEETINGS)[number] }[] }) {
-  const docs = files.filter(x => x.f.kind !== 'img')
-  const imgs = files.filter(x => x.f.kind === 'img')
+/** 权限说明：收进账本标题旁边的一个小按钮 */
+function Access() {
+  const restricted = ALL_ITEMS.filter(i => i.sensitivity === 'restricted' && visibility(i, ME) === 'full')
   return (
-    <section className="glass-panel min-w-0 rounded-2xl border p-4">
-      <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">资料</h2><span className="text-ink-3 text-[12.5px]">会议附件和会后整理的文档，入库后和账本一起检索</span></div>
-      <div className="grid grid-cols-3 gap-2">
-        {imgs.map(({ f }) => (
-          <a key={f.name} href={f.url} target="_blank" rel="noreferrer" className="group relative block aspect-[4/5] overflow-hidden rounded-xl bg-[#F1F2F5]">
-            <Shot src={f.url} name={f.name} />
-            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-2 pt-6 pb-1.5 text-[11.5px] text-white">{f.name.replace(/^直播截图_/, '').replace(/\.jpg$/, '').replace('_', ' ')}</span>
-          </a>
-        ))}
-      </div>
-      <div className="mt-3 flex flex-col">
-        {docs.map(({ f, m }) => (
-          <a key={m.id + f.name} href={f.previewUrl ?? f.url} target="_blank" rel="noreferrer" className={cn('group flex items-center gap-2.5 rounded-xl px-1.5 py-1.5 hover:bg-black/[.03]', !f.url && 'pointer-events-none')}>
-            <FileIcon kind={f.kind} />
-            <span className="min-w-0 flex-1">
-              <span className="block truncate text-[13px] font-medium">{f.name}</span>
-              <span className="text-ink-3 block truncate text-[11.5px]">{m.title.replace(/ · .*/, '')} · {personById(f.owner).name} · {f.date} · {f.size}</span>
-            </span>
-            {f.url ? <ExternalLink size={13} className="text-ink-4 group-hover:text-ink flex-none" /> : <span className="text-ink-4 flex-none text-[11px]">仅索引</span>}
-          </a>
-        ))}
-      </div>
-    </section>
+    <Pop label={<><Lock size={12} />按权限显示</>} width={300} triggerClassName="h-7 rounded-full text-[12px]" title="知识库怎么按权限显示">
+      {() => (
+        <div className="p-2.5 text-[12.5px] leading-relaxed">
+          <p className="text-ink-2">受限条目对名单外的人只显示脱敏版。你现在是 <b>{personById(ME).name}</b>，在 {restricted.length} 条受限条目的名单里：</p>
+          <ul className="mt-2 flex flex-col gap-1">
+            {restricted.map(i => <li key={i.id} className="sg-well flex items-center gap-1.5 rounded-lg px-2 py-1"><Lock size={11} className="flex-none text-rose-600" /><span className="truncate">{i.title}</span></li>)}
+          </ul>
+        </div>
+      )}
+    </Pop>
   )
 }
 
-// ---------------- 每日自进化（RSI）：新资料切块入库 + 回流改写档案和规则 ----------------
+// ---------------- 账本：一场会一块，点开才展开 ----------------
 
-// 簇的颜色用在深色屏上，取亮一档
-type Cluster = { name: string; x: number; y: number; color: string }
-const CLUSTERS: Cluster[] = [
-  { name: '安全组织 · 评审', x: 0.33, y: 0.3, color: '#8B93FF' },
-  { name: '开发安全', x: 0.8, y: 0.28, color: '#2DD4BF' },
-  { name: '车主运营', x: 0.36, y: 0.71, color: '#F472B6' },
-  { name: '门店 · 竞品卖点', x: 0.8, y: 0.71, color: '#FBBF24' },
-  { name: '安全理念 · 目标', x: 0.58, y: 0.5, color: '#38BDF8' },
-]
-
-interface Day {
-  date: string
-  label: string
-  sources: { kind: 'meet' | 'doc' | 'fb'; text: string }[]
-  /** 新增向量块按簇分布 */
-  add: number[]
-  chunks: number
-  hit: number
-  learned: string
-}
-
-const DAYS: Day[] = [
-  { date: '10/27', label: '周一', sources: [{ kind: 'doc', text: '历史纪要回填 · 32 份' }], add: [4, 4, 3, 3, 2], chunks: 1180, hit: 84, learned: '冷启动：按部门和职级初始化 10 份关注档案' },
-  { date: '10/28', label: '周二', sources: [{ kind: 'meet', text: '安全周会 · 9 段' }, { kind: 'doc', text: '安委会常设方案.docx' }, { kind: 'fb', text: '魏然、许诺确认待办' }], add: [5, 3, 0, 0, 1], chunks: 1226, hit: 86, learned: '编制和预算类条目默认“受限”' },
-  { date: '10/29', label: '周三', sources: [{ kind: 'meet', text: '车主运营月会 · 7 段' }, { kind: 'doc', text: '评分 × 积分试点方案.docx' }, { kind: 'fb', text: '高远：交付依赖积分方案' }], add: [0, 0, 5, 1, 0], chunks: 1264, hit: 87, learned: '高远的档案新增依赖「车主积分体系」（R4）' },
-  { date: '10/30', label: '周四', sources: [{ kind: 'meet', text: '门店销售周会 · 6 段' }, { kind: 'doc', text: '权益对比表 v3.xlsx' }, { kind: 'fb', text: '江晚订阅「竞品卖点」' }], add: [0, 0, 1, 5, 1], chunks: 1295, hit: 89, learned: '“权益”“表盘”归到「购车权益」话题' },
-  { date: '10/31', label: '周五', sources: [{ kind: 'meet', text: '小米安全专场直播 · 92 段' }, { kind: 'doc', text: 'PDF 纪要 · 对标表 · 拆解 MD · 3 张截图' }, { kind: 'fb', text: '审核官标出 1 处绝对化表述' }], add: [6, 4, 3, 3, 4], chunks: 1459, hit: 92, learned: '外部直播模板：关掉点名规则，绝对化表述一律“待核实”' },
-]
-
-const SRC = {
-  meet: { label: '会议', icon: Video, color: '#5F3E54' },
-  doc: { label: '资料', icon: FileText, color: '#64748B' },
-  fb: { label: '回流', icon: Repeat2, color: '#059669' },
-} as const
-
-const LOOP = ['分发', '回流', '评测打分', '改写档案', '下一场更准']
-const FEEDBACK_TOTAL = [0, 3, 5, 8, 13]
-
-function Evolve() {
-  const [day, setDay] = useState(0)
-  const [auto, setAuto] = useState(true)
-  useEffect(() => {
-    if (!auto) return
-    const id = setInterval(() => setDay(d => (d + 1) % DAYS.length), 4200)
-    return () => clearInterval(id)
-  }, [auto])
-  const d = DAYS[day]
-  const prev = day ? DAYS[day - 1] : null
-
+function LedgerGroup({ m, list, open, onToggle, onPick }: { m: Meeting; list: Item[]; open: boolean; onToggle: () => void; onPick: (it: Item) => void }) {
+  const p = projectById(m.project)
+  const types = (Object.keys(ITEM_TYPES) as ItemType[]).map(k => ({ k, n: list.filter(i => i.type === k).length })).filter(x => x.n)
   return (
-    <section className="glass-panel glass-evolve flex min-w-0 flex-col rounded-[22px] border p-4">
-      <div className="flex items-center gap-2.5">
-        <span className="sg-raised grid size-9 flex-none place-items-center rounded-xl text-[var(--plum)]"><Kb name="brain" size={22} /></span>
-        <div className="min-w-0 leading-tight">
-          <h2 className="text-[16px] font-semibold">每天自进化</h2>
-          <p className="text-ink-3 truncate text-[12.5px]">新会议和资料入库，确认、退回、追问反过来改写档案和规则</p>
-        </div>
-        <button className="sg-raised sg-icon-btn ml-auto size-8 flex-none" onClick={() => setAuto(a => !a)} aria-label={auto ? '暂停' : '播放'}>{auto ? <Pause size={14} /> : <Play size={14} />}</button>
-      </div>
-
-      <div className="sg-well mt-3.5 grid grid-cols-5 gap-1 rounded-2xl p-1">
-        {DAYS.map((x, i) => (
-          <button key={x.date} onClick={() => { setDay(i); setAuto(false) }} className={cn('relative overflow-hidden rounded-xl px-2.5 py-1.5 text-left transition-colors', i === day ? 'text-white' : 'hover:bg-white/60', i > day && 'text-ink-4')}>
-            {i === day && <motion.span layoutId="evolve-day" className="sg-onyx absolute inset-0 rounded-xl" transition={{ type: 'spring', stiffness: 420, damping: 36 }} />}
-            <b className="relative block font-mono text-[12.5px] leading-tight">{x.date}</b>
-            <span className={cn('relative text-[11px]', i === day ? 'text-white/60' : 'text-ink-3')}>{x.label}</span>
-            {i === day && auto && <motion.i key={day} className="absolute inset-x-2.5 bottom-1 h-[2px] origin-left rounded-full bg-[#E9B8DA]" initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: 4.2, ease: 'linear' }} />}
-          </button>
-        ))}
-      </div>
-
-      <div className="mt-3.5">
-        <div className="text-ink-3 mb-2 flex items-center gap-2 text-[12px]">{d.date} 喂进来的<span className="h-px flex-1 bg-[rgb(95_62_84/10%)]" /></div>
-        <div className="flex flex-col gap-1.5">
-          <AnimatePresence mode="popLayout" initial={false}>
-            {d.sources.map((s, i) => {
-              const k = SRC[s.kind]
-              return (
-                <motion.div key={d.date + i} layout className="flex items-center gap-2.5 text-[13px]" initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ delay: i * 0.08 }}>
-                  <span className="sg-raised grid size-6 flex-none place-items-center rounded-lg" style={{ color: k.color }}><k.icon size={12} strokeWidth={2.2} /></span>
-                  <span className="min-w-0 flex-1 truncate">{s.text}</span>
-                  <span className="text-ink-4 flex-none font-mono text-[10.5px]">{k.label}</span>
-                </motion.div>
-              )
-            })}
-          </AnimatePresence>
-        </div>
-      </div>
-
-      <VectorField day={day} />
-
-      <div className="glass-metrics mt-3.5 grid grid-cols-3 gap-2">
-        <Metric label="向量块" value={d.chunks.toLocaleString()} delta={prev ? `+${d.chunks - prev.chunks}` : ''} />
-        <Metric label="路由命中率" value={`${d.hit}%`} delta={prev ? `+${d.hit - prev.hit}` : ''} bar={d.hit} />
-        <Metric label="本周回流" value={`${FEEDBACK_TOTAL[day]} 条`} />
-      </div>
-
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.div key={d.date} className="sg-card mt-3 flex items-start gap-2.5 rounded-2xl px-3 py-2.5" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-          <span className="sg-onyx mt-px inline-flex flex-none items-center gap-1 rounded-full px-2 text-[11px] leading-[20px]"><Kb name="lightbulb" size={11} />学到</span>
-          <span className="text-[13.5px] leading-snug">{d.learned}</span>
-        </motion.div>
+    <section className={cn('sg-card overflow-hidden rounded-[20px] transition-shadow', open && 'shadow-[inset_0_1px_0_#fff,0_0_0_.5px_rgb(95_62_84/12%),0_18px_36px_-24px_rgb(40_24_36/45%)]')}>
+      <button className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-white/60" onClick={onToggle} aria-expanded={open}>
+        <span className="grid size-10 flex-none place-items-center rounded-xl" style={{ background: p.soft, color: p.color }}><Kb name={p.icon} size={24} /></span>
+        <span className="min-w-0 flex-1">
+          <b className="block truncate text-[14.5px]">{m.title}</b>
+          <span className="text-ink-3 block truncate text-[12px]">{p.name} · {cnDate(m.date)} · {m.publisher === ME ? '我' : personById(m.publisher).name} 发布</span>
+        </span>
+        <span className="hidden w-[132px] flex-none sm:block" title={types.map(x => `${ITEM_TYPES[x.k].label} ${x.n}`).join(' · ')}>
+          <span className="flex h-1.5 gap-[2px] overflow-hidden rounded-full">
+            {types.map(x => <i key={x.k} className="h-full" style={{ flex: x.n, background: ITEM_TYPES[x.k].color }} />)}
+          </span>
+          <span className="text-ink-3 mt-1 flex gap-2 text-[11px]">
+            {types.slice(0, 3).map(x => <span key={x.k} className="flex items-center gap-1"><i className="size-1.5 rounded-full" style={{ background: ITEM_TYPES[x.k].color }} />{ITEM_TYPES[x.k].label}{x.n}</span>)}
+          </span>
+        </span>
+        <span className="text-ink-2 w-10 flex-none text-right text-[13px] font-medium tabular-nums">{list.length}<span className="text-ink-3 ml-0.5 text-[11px] font-normal">条</span></span>
+        <span className={cn('grid size-7 flex-none place-items-center rounded-full transition-transform', open ? 'sg-onyx rotate-180' : 'sg-raised text-ink-2')}><ChevronDown size={15} /></span>
+      </button>
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            className="overflow-hidden"
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ duration: 0.26, ease: [0.2, 0.7, 0.2, 1] }}
+          >
+            <div className="border-t border-[rgb(95_62_84/7%)]">
+              {list.map((it, i) => <KbRow key={it.id} it={it} i={i} onPick={() => onPick(it)} />)}
+            </div>
+          </motion.div>
+        )}
       </AnimatePresence>
-
-      <ol className="sg-well mt-3 flex flex-wrap items-center gap-0.5 self-start rounded-full p-1 text-[11.5px]">
-        {LOOP.map((s, i) => (
-          <li key={s} className="flex items-center gap-0.5">
-            <span className={cn('rounded-full px-2 py-0.5', i === LOOP.length - 1 ? 'sg-onyx font-medium' : 'text-ink-2')}>{s}</span>
-            {i < LOOP.length - 1 && <span className="text-ink-4">›</span>}
-          </li>
-        ))}
-      </ol>
     </section>
   )
 }
 
-// ---------------- 向量空间：深色点阵屏 ----------------
-// 每个块落在一格上：从簇中心往外按距离（加一点抖动）排队，先入库的占中间。
-// 当天的新块从左边的入口列飞进来，落位时闪一下，周围的格子跟着染上簇的颜色。
-
-const COLS = 64, ROWS = 24
-const FIELD = (() => {
-  const order = CLUSTERS.map((c, ci) => {
-    const cx = c.x * COLS, cy = c.y * ROWS
-    const list: { x: number; y: number; k: number }[] = []
-    for (let y = 0; y < ROWS; y++) for (let x = 4; x < COLS; x++) {
-      const dd = Math.hypot(x - cx, y - cy)
-      if (dd < 6) list.push({ x, y, k: dd + hash(ci * 1000 + y * COLS + x) * 2.2 })
-    }
-    return list.sort((a, b) => a.k - b.k)
-  })
-  const taken = new Set<number>()
-  const next = CLUSTERS.map(() => 0)
-  let i = 0
-  return DAYS.flatMap((dd, di) => dd.add.flatMap((n, ci) => Array.from({ length: n }, () => {
-    let cell = order[ci][next[ci]++]
-    while (taken.has(cell.y * COLS + cell.x)) cell = order[ci][next[ci]++]
-    taken.add(cell.y * COLS + cell.x)
-    return { i: i++, day: di, ci, x: cell.x, y: cell.y }
-  })))
-})()
-const KERNEL = Array.from({ length: 21 }, (_, d2) => Math.exp(-d2 / 4.5))
-const clamp01 = (v: number) => Math.min(1, Math.max(0, v))
-const FLY = 1.05
-
-function VectorField({ day }: { day: number }) {
-  const fresh = FIELD.filter(p => p.day === day).length
-  const ref = useDotCanvas((ctx, t, w, h) => {
-    const p = Math.min(w / COLS, h / ROWS), s = p * 0.68
-    const ox = (w - p * COLS) / 2, oy = (h - p * ROWS) / 2
-    const at = (x: number, y: number, size = s) => square(ctx, ox + x * p + (p - size) / 2, oy + y * p + (p - size) / 2, size)
-
-    // 底：每一格一个很淡的方点
-    ctx.fillStyle = '#fff'
-    ctx.globalAlpha = 0.05
-    ctx.beginPath()
-    for (let y = 0; y < ROWS; y++) for (let x = 0; x < COLS; x++) at(x, y)
-    ctx.fill()
-
-    // 入场：一道竖光从左扫到右
-    if (t < 1.5) {
-      const bx = (t / 1.5) * (COLS + 8) - 4
-      for (let x = Math.max(0, Math.floor(bx - 2)); x <= Math.min(COLS - 1, Math.ceil(bx + 2)); x++) {
-        ctx.globalAlpha = 0.14 * clamp01(1 - Math.abs(x - bx) / 2)
-        ctx.beginPath()
-        for (let y = 0; y < ROWS; y++) at(x, y)
-        ctx.fill()
-      }
-    }
-
-    const pts = FIELD.filter(q => q.day <= day).map(q => {
-      if (q.day < day) return { q, k: 1, since: 99 }
-      const delay = 0.35 + hash(q.i + 0.1) * 1.1
-      return { q, k: clamp01((t - delay) / FLY), since: t - delay - FLY }
-    })
-
-    // 入口列：还有块在飞时，一道光往下流
-    const busy = pts.some(x => x.k < 1)
-    for (let y = 0; y < ROWS; y++) for (let x = 0; x < 2; x++) {
-      ctx.globalAlpha = busy ? 0.08 + 0.55 * Math.max(0, Math.sin(t * 7 - y * 0.55 - x)) ** 6 : 0.08
-      ctx.beginPath()
-      at(x, y)
-      ctx.fill()
-    }
-
-    // 簇的晕：落位的块把周围的格子染上颜色
-    const halo = CLUSTERS.map(() => new Float32Array(COLS * ROWS))
-    for (const { q, k, since } of pts) {
-      if (k < 1) continue
-      const wgt = easeOut(clamp01(since / 0.6))
-      for (let dy = -4; dy <= 4; dy++) for (let dx = -4; dx <= 4; dx++) {
-        const d2 = dx * dx + dy * dy, x = q.x + dx, y = q.y + dy
-        if (d2 > 20 || x < 0 || y < 0 || x >= COLS || y >= ROWS) continue
-        halo[q.ci][y * COLS + x] += KERNEL[d2] * wgt
-      }
-    }
-    for (let idx = 0; idx < COLS * ROWS; idx++) {
-      let best = 0, bc = -1
-      for (let ci = 0; ci < CLUSTERS.length; ci++) if (halo[ci][idx] > best) { best = halo[ci][idx]; bc = ci }
-      if (best < 0.06) continue
-      ctx.globalAlpha = Math.min(0.34, best * 0.14)
-      ctx.fillStyle = CLUSTERS[bc].color
-      ctx.beginPath()
-      at(idx % COLS, Math.floor(idx / COLS))
-      ctx.fill()
-    }
-
-    // 块本身：已落位的亮着轻轻呼吸；刚落位的闪白；在飞的拖一条尾巴
-    for (const { q, k, since } of pts) {
-      const c = CLUSTERS[q.ci].color
-      if (k >= 1) {
-        const flash = clamp01(1 - since / 0.7)
-        ctx.fillStyle = c
-        if (flash > 0) {
-          ctx.globalAlpha = 0.3 * flash
-          ctx.beginPath(); at(q.x, q.y, s * 2.6); ctx.fill()
-        }
-        ctx.globalAlpha = 0.82 + 0.18 * Math.sin(t * 2.2 + q.i)
-        ctx.beginPath(); at(q.x, q.y); ctx.fill()
-        if (flash > 0) {
-          ctx.fillStyle = '#fff'
-          ctx.globalAlpha = 0.85 * flash
-          ctx.beginPath(); at(q.x, q.y); ctx.fill()
-        }
-        continue
-      }
-      if (k <= 0) continue
-      const sx = 0.5, sy = ROWS * (0.2 + hash(q.i + 0.3) * 0.6), bend = (hash(q.i + 0.7) - 0.5) * 7
-      const pos = (kk: number) => { const e = easeOut(kk); return [sx + (q.x - sx) * e, sy + (q.y - sy) * e + Math.sin(e * Math.PI) * bend] }
-      ctx.fillStyle = c
-      for (let j = 5; j >= 1; j--) {
-        const [x, y] = pos(Math.max(0, k - j * 0.035))
-        ctx.globalAlpha = (1 - j / 6) * 0.5
-        ctx.beginPath(); at(x, y, s * (1 - j * 0.1)); ctx.fill()
-      }
-      const [x, y] = pos(k)
-      ctx.fillStyle = '#fff'
-      ctx.globalAlpha = 0.95
-      ctx.beginPath(); at(x, y); ctx.fill()
-    }
-    ctx.globalAlpha = 1
-  }, [day])
-
-  return (
-    <div className="vx-screen sg-dark mt-3.5 p-2.5">
-      <div className="relative" style={{ aspectRatio: `${COLS} / ${ROWS}` }}>
-        <canvas ref={ref} className="absolute inset-0 size-full" aria-label={`知识库向量空间，${CLUSTERS.length} 个话题簇`} role="img" />
-        {CLUSTERS.map(c => (
-          <span key={c.name} className="vx-label" style={{ left: `${c.x * 100}%`, top: `${((c.y * ROWS + 4.2) / ROWS) * 100}%`, '--c': c.color } as CSSProperties}><i />{c.name}</span>
-        ))}
-      </div>
-      <span className="absolute top-2.5 left-3 flex items-center gap-2 rounded-md bg-black/45 px-2 py-1 font-mono text-[10.5px] text-white/60 backdrop-blur-sm">
-        <DotLoader cols={3} rows={2} dot={2} gap={1} className="text-white/70" />
-        向量空间{fresh ? ` · 今天 +${fresh} 块` : ''}
-      </span>
-    </div>
-  )
-}
-
-function Metric({ label, value, delta, bar }: { label: string; value: string; delta?: string; bar?: number }) {
-  return (
-    <div className="rounded-xl bg-[#F7F8FB] px-3 py-2">
-      <div className="text-ink-3 text-[11.5px]">{label}</div>
-      <div className="flex items-baseline gap-1.5">
-        <motion.b key={value} className="text-[20px] font-semibold tabular-nums" initial={{ y: -6, opacity: 0.3 }} animate={{ y: 0, opacity: 1 }}>{value}</motion.b>
-        {delta && <span className="text-[11.5px] text-emerald-600">{delta}</span>}
-      </div>
-      {bar != null && <div className="mt-1 h-1 overflow-hidden rounded-full bg-black/[.07]"><motion.div className="h-full rounded-full bg-[#4F46E5]" animate={{ width: `${bar}%` }} transition={{ duration: 0.8 }} /></div>}
-    </div>
-  )
-}
-
-// ---------------- 账本行 / 回答 ----------------
-
-function Chip({ on, onClick, children }: { on: boolean; onClick: () => void; children: React.ReactNode }) {
-  return <button onClick={onClick} className={cn('inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] transition-colors', on ? 'sg-onyx border-transparent' : 'text-ink-2 border-white bg-white/70 hover:bg-white')}>{children}</button>
-}
-
-function KbRow({ it, ok, owner }: { it: Item; ok: boolean; owner: Item['owner'] }) {
+function KbRow({ it, i, onPick }: { it: Item; i: number; onPick: () => void }) {
+  const confirmed = useStore(s => s.confirmed)
+  const owners = useStore(s => s.owners)
+  const owner = owners[it.id] ?? it.owner
+  const ok = !!confirmed[it.id]
   const vis = visibility(it, ME)
+  const { t0, seg } = quoteSpan(it)
   return (
-    <div className="flex items-center gap-3 border-b border-[rgb(95_62_84/7%)] px-4 py-3 last:border-0 hover:bg-white/70">
-      <TypePill item={it} />
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5 truncate text-[13.5px] font-medium">{vis === 'redacted' ? it.redacted : it.title}{it.sensitivity === 'restricted' && <Lock size={12} className="text-rose-600" />}{it.flags?.map(f => <span key={f} className="rounded bg-amber-50 px-1 text-[11px] font-normal text-amber-700">{f}</span>)}</div>
-        <SourceChip item={it} className="-ml-0.5 mt-1" />
-      </div>
-      <div className="text-ink-2 flex flex-none items-center gap-3 text-[12.5px]">
+    <motion.div
+      className="kb-row flex cursor-pointer items-center gap-3 border-b border-[rgb(95_62_84/6%)] px-4 py-2.5 last:border-0"
+      initial={{ opacity: 0, y: 4 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: Math.min(i, 12) * 0.018 }}
+      onClick={onPick}
+    >
+      <button className="flex min-w-0 flex-1 items-center gap-3 text-left outline-none focus-visible:underline" aria-haspopup="dialog">
+        <TypePill item={it} />
+        <span className="flex min-w-0 items-center gap-1.5 text-[13.5px] font-medium">
+          <span className="truncate">{vis === 'redacted' ? it.redacted : it.title}</span>
+          {it.sensitivity === 'restricted' && <Lock size={12} className="flex-none text-rose-600" />}
+          {it.flags?.map(f => <span key={f} className="flex-none rounded bg-amber-50 px-1 text-[11px] font-normal text-amber-700">{f}</span>)}
+        </span>
+      </button>
+      <span className="text-ink-2 hidden flex-none items-center gap-3 text-[12.5px] md:flex">
         {owner && <span className="inline-flex items-center gap-1"><Face p={owner} size={18} />{personById(owner).name}</span>}
         {it.due && <span className="tabular-nums">{it.due}</span>}
         {it.type === 'action' && <span className={ok ? 'text-emerald-600' : 'text-ink-3'}>{ok ? '✓ 已确认' : '待确认'}</span>}
+      </span>
+      {vis === 'full' && (
+        <button
+          className="text-ink-3 hover:text-primary flex flex-none items-center gap-1 rounded-full px-1.5 py-0.5 font-mono text-[11.5px] transition-colors hover:bg-[#EEF3FF]"
+          title={`回到录像：${personById(seg.speaker).name} ${mmss(t0)}`}
+          onClick={e => { e.stopPropagation(); goSource(it.meeting, Math.max(0, t0 - 0.4), it.id) }}
+        >
+          <Play size={10} fill="currentColor" />{mmss(t0)}
+        </button>
+      )}
+      <ChevronRight size={15} className="kb-row-go text-ink-3 flex-none" />
+    </motion.div>
+  )
+}
+
+// ---------------- 条目详情弹窗：原话、负责人、发给了谁 ----------------
+
+function ItemDetail({ it, onTopic }: { it: Item; onTopic: (t: string) => void }) {
+  const confirmed = useStore(s => s.confirmed)
+  const owners = useStore(s => s.owners)
+  const m = meetingById(it.meeting)!
+  const p = projectById(m.project)
+  const vis = visibility(it, ME)
+  const { t0, seg } = quoteSpan(it)
+  const speaker = personById(seg.speaker)
+  const owner = owners[it.id] ?? it.owner
+  const ok = confirmed[it.id]
+  const sent = [...new Set(m.routes.filter(r => r.item === it.id).map(r => r.person))].map(pid => ({ pid, reasons: [...new Set(m.routes.filter(r => r.item === it.id && r.person === pid).flatMap(r => r.reasons))] }))
+  const go = () => goSource(it.meeting, Math.max(0, t0 - 0.4), it.id)
+
+  return (
+    <div className="flex flex-col">
+      <div className="flex items-center gap-2">
+        <TypePill item={it} />
+        <a href={href(`/m/${m.id}`)} className="text-ink-3 hover:text-ink flex min-w-0 items-center gap-1.5 text-[12.5px]">
+          <i className="size-1.5 flex-none rounded-full" style={{ background: p.color }} /><span className="truncate">{m.title} · {cnDate(m.date)}</span>
+        </a>
+        <ModalClose className="ml-auto" />
+      </div>
+      <h3 className="mt-3 text-[20px] leading-snug font-semibold tracking-tight">
+        {vis === 'redacted' ? it.redacted : it.title}
+        {it.sensitivity === 'restricted' && <Lock size={15} className="ml-1.5 inline align-[-1px] text-rose-600" />}
+      </h3>
+      {!!it.flags?.length && <div className="mt-1.5 flex gap-1.5">{it.flags.map(f => <span key={f} className="rounded-md bg-amber-50 px-1.5 py-0.5 text-[11.5px] text-amber-700">{f}</span>)}</div>}
+      {it.detail && vis === 'full' && <p className="text-ink-2 mt-2 text-[13.5px] leading-relaxed">{it.detail}</p>}
+
+      {vis === 'full' ? (
+        <div className="sg-dark mt-4 rounded-[20px] p-4">
+          <div className="flex items-center gap-2.5">
+            <Face p={speaker} size={30} />
+            <span className="min-w-0 leading-tight"><b className="block text-[13.5px]">{speaker.name}</b><span className="block truncate text-[11.5px] text-white/50">{speaker.role}</span></span>
+            <span className="ml-auto font-mono text-[12px] text-white/50">{mmss(t0)}</span>
+          </div>
+          <p className="mt-3 text-[16px] leading-relaxed text-white/95">“{it.quote}”</p>
+          <button className="sg-white-btn mt-3.5 inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[12.5px] font-medium" onClick={go}>
+            <Play size={12} fill="currentColor" />回到录像这一秒
+          </button>
+        </div>
+      ) : (
+        <div className="sg-well mt-4 flex items-center gap-2 rounded-2xl px-4 py-3 text-[13px]"><Lock size={14} className="text-rose-600" />原话含受限信息，你看到的是脱敏版</div>
+      )}
+
+      <div className="mt-4 grid grid-cols-3 gap-2 text-[12.5px]">
+        <Fact label="负责人">{owner ? <span className="flex items-center gap-1.5"><Face p={owner} size={20} /><b className="font-medium">{personById(owner).name}</b></span> : <span className="text-ink-3">—</span>}</Fact>
+        <Fact label="截止">{it.due ?? <span className="text-ink-3">—</span>}</Fact>
+        <Fact label="话题"><button className="hover:text-[var(--plum)] hover:underline" onClick={() => onTopic(it.topic)}># {it.topic}</button></Fact>
+      </div>
+      {it.type === 'action' && <p className={cn('mt-2 text-[12.5px]', ok ? 'text-emerald-600' : 'text-ink-3')}>{ok ? `✓ ${personById(ok).name} 已确认负责` : '负责人还没确认'}</p>}
+
+      <div className="mt-4">
+        <div className="text-ink-3 mb-2 flex items-center gap-1.5 text-[12px]"><Kb name="route" size={16} />{sent.length ? `会映把这条发给了 ${sent.length} 个人` : '只在账本里，没有推给任何人'}</div>
+        <div className="flex flex-col gap-1.5">
+          {sent.map(({ pid, reasons }) => <SentRow key={pid} pid={pid} reasons={reasons} />)}
+        </div>
       </div>
     </div>
   )
 }
+
+function Fact({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div className="sg-well rounded-xl px-3 py-2">
+      <div className="text-ink-3 text-[11px]">{label}</div>
+      <div className="mt-0.5 truncate">{children}</div>
+    </div>
+  )
+}
+
+function SentRow({ pid, reasons }: { pid: PersonId; reasons: string[] }) {
+  const p = personById(pid)
+  return (
+    <div className="sg-raised flex items-center gap-2.5 rounded-xl py-1.5 pr-2 pl-1.5">
+      <Face p={p} size={26} />
+      <b className="text-[13px] font-medium">{p.name}</b>
+      <RankTag p={p} />
+      <span className="text-ink-3 min-w-0 truncate text-[12px]">{p.team}</span>
+      <span className="ml-auto flex flex-none gap-1">{reasons.map(r => <span key={r} className={cn('rounded-full px-2 py-px text-[11px]', r === 'R4' ? 'bg-ink text-white' : 'sg-well text-ink-2')}>{REASON_SHORT[r] ?? r}</span>)}</span>
+    </div>
+  )
+}
+
+const REASON_SHORT: Record<string, string> = { R1: '被点名', R2: '角色', R3: '负责', R4: '依赖', R5: '订阅', R6: '管理者' }
+
+// ---------------- 资料：PDF、Word、Markdown、截图 ----------------
+
+/** 截图：加载失败时给一个安静的占位，不露出裂图和文件名 */
+function Shot({ src, name, className }: { src?: string; name: string; className?: string }) {
+  const [bad, setBad] = useState(!src)
+  if (bad) return <span className="text-ink-4 grid size-full place-items-center"><ImageOff size={22} /></span>
+  return <img src={src} alt={name} onError={() => setBad(true)} className={cn('size-full object-cover transition-transform duration-500 group-hover:scale-105', className)} />
+}
+
+const shotLabel = (name: string) => name.replace(/^直播截图_/, '').replace(/\.jpg$/, '').replace('_', ' ')
+
+function Library({ files }: { files: { f: MeetingFile; m: Meeting }[] }) {
+  const docs = files.filter(x => x.f.kind !== 'img')
+  const imgs = files.filter(x => x.f.kind === 'img')
+  const [shot, setShot] = useState<MeetingFile | null>(null)
+  const [more, setMore] = useState(false)
+  const shown = more ? docs : docs.slice(0, 4)
+  return (
+    <aside className="glass-panel min-w-0 rounded-[22px] border p-4 xl:sticky xl:top-2">
+      <div className="flex items-center gap-2"><Kb name="document" size={22} /><h2 className="text-[15px] font-semibold">资料</h2><span className="text-ink-3 text-[12px]">{files.length} 份 · 和账本一起检索</span></div>
+      <div className="mt-3 grid grid-cols-3 gap-1.5">
+        {imgs.map(({ f }) => (
+          <button key={f.name} onClick={() => setShot(f)} className="group relative block aspect-[4/5] overflow-hidden rounded-xl bg-[#F1F2F5]" title={`看大图：${shotLabel(f.name)}`}>
+            <Shot src={f.url} name={f.name} />
+            <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/75 to-transparent px-1.5 pt-5 pb-1 text-left text-[10.5px] leading-tight text-white">{shotLabel(f.name)}</span>
+          </button>
+        ))}
+      </div>
+      <div className="mt-2.5 flex flex-col">
+        <AnimatePresence initial={false}>
+          {shown.map(({ f, m }) => (
+            <motion.a
+              key={m.id + f.name}
+              layout
+              initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }} exit={{ opacity: 0, height: 0 }}
+              href={f.previewUrl ?? f.url} target="_blank" rel="noreferrer"
+              className={cn('group flex items-center gap-2.5 overflow-hidden rounded-xl px-1.5 py-1.5 hover:bg-white/70', !f.url && 'pointer-events-none')}
+            >
+              <FileIcon kind={f.kind} />
+              <span className="min-w-0 flex-1">
+                <span className="block truncate text-[12.5px] font-medium">{f.name}</span>
+                <span className="text-ink-3 block truncate text-[11px]">{m.title.replace(/ · .*/, '')} · {personById(f.owner).name} · {f.size}</span>
+              </span>
+              {f.url ? <ExternalLink size={12} className="text-ink-4 group-hover:text-ink flex-none" /> : <span className="text-ink-4 flex-none text-[10.5px]">仅索引</span>}
+            </motion.a>
+          ))}
+        </AnimatePresence>
+        {docs.length > 4 && (
+          <button className="text-ink-2 hover:text-ink mt-1 inline-flex items-center gap-1 self-start rounded-full px-1.5 py-1 text-[12px]" onClick={() => setMore(v => !v)}>
+            <ChevronDown size={13} className={cn('transition-transform', more && 'rotate-180')} />{more ? '收起' : `还有 ${docs.length - 4} 份`}
+          </button>
+        )}
+      </div>
+      <Modal open={!!shot} onClose={() => setShot(null)} label="截图大图" className="w-[min(560px,calc(100vw-32px))]">
+        {shot && (
+          <figure className="overflow-hidden rounded-[22px] bg-black shadow-2xl">
+            <div className="max-h-[78svh] overflow-hidden"><Shot src={shot.url} name={shot.name} className="h-auto object-contain group-hover:scale-100" /></div>
+            <figcaption className="flex items-center gap-2 px-4 py-3 text-[12.5px] text-white/80">
+              <span className="min-w-0 flex-1 truncate">{shotLabel(shot.name)} · {personById(shot.owner).name} 截于 {shot.date}</span>
+              <ModalClose className="!bg-white/10 !text-white !shadow-none" />
+            </figcaption>
+          </figure>
+        )}
+      </Modal>
+    </aside>
+  )
+}
+
+// ---------------- 回答 ----------------
 
 function AnswerCard({ a, dim }: { a: Answer; dim: boolean }) {
   const [ready, setReady] = useState(false)

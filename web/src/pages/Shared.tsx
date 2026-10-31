@@ -1,10 +1,11 @@
 // 发给我的 · 简报详情：收到者视角（从“我的会议”点进来）。可以切换身份，看每个人收到的那一份（权限闸实时生效）。
 import { useMemo } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { Lock, Play, ShieldCheck } from 'lucide-react'
+import { Lock, Play, ShieldCheck, SquarePlay } from 'lucide-react'
 import { ME, RANKS, REASONS, STAFF, personById, projectById, type PersonId } from '@/data/model'
 import { meetingById } from '@/data/meetings'
 import { inboxOf, mmss, quoteSpan, visibility } from '@/data/derive'
+import { RUN_ID } from '@/data/run'
 import { go, goSource, useRoute } from '@/lib/router'
 import { useStore } from '@/lib/store'
 import { cn, cnDate } from '@/lib/utils'
@@ -12,6 +13,7 @@ import { TopBar } from '@/components/shell/TopBar'
 import { Empty, Face, Kb, RankTag, TypePill } from '@/components/common/bits'
 import { NOTE_COLORS } from '@/components/sketch/Briefs'
 import { FeishuCard } from '@/components/common/FeishuCard'
+import { reelHref } from '@/components/reel/spec'
 
 export function Shared() {
   const route = useRoute()
@@ -84,7 +86,12 @@ export function Shared() {
             {cur && (
               <motion.div key={cur.meeting.id + as} className="mx-auto grid max-w-[1000px] gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1fr)_280px]" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 <div>
-                  <div className="text-ink-3 mb-2 text-[12.5px]">飞书 · 会映会议助手 代 {personById(cur.meeting.publisher).name} 发来一张卡片</div>
+                  <div className="text-ink-3 mb-2 flex items-center gap-2 text-[12.5px]">
+                    <span className="min-w-0 flex-1">飞书 · 会映会议助手 代 {personById(cur.meeting.publisher).name} 发来一张卡片</span>
+                    {cur.meeting.id === RUN_ID && (
+                      <a href={reelHref(as)} className="sg-onyx inline-flex h-7 flex-none items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-transform hover:-translate-y-px"><SquarePlay size={13} />看{as === ME ? '我' : ` ${me.name} `}的 30 秒</a>
+                    )}
+                  </div>
                   <FeishuCard meeting={cur.meeting.id} pid={as} />
                 </div>
                 <aside className="flex flex-col gap-4">

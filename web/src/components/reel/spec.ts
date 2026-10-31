@@ -2,12 +2,13 @@
 // 片子分五幕：片头 → 筛选（20 条里留下几条）→ 逐条讲（最多 3 条）→ 接下来（和你手上哪件事接上）→ 收尾。
 // 所有画面都只由时间 t 和这份数据推导，所以网页里能直接播、能拖动，以后也能原样交给 Remotion 导出 MP4。
 
-import { personById, type Person, type PersonId } from '@/data/model'
+import { ME, personById, type Person, type PersonId } from '@/data/model'
 import { itemById, meetingById, type Item, type Meeting } from '@/data/meetings'
 import { briefFor, quoteSpan } from '@/data/derive'
 import { SUGGEST, addDays, md, resolveDue, type Due } from '@/data/schedule'
 import { RUN_ID } from '@/data/run'
 import { WEEK, weekday as _w } from '@/lib/utils'
+import { href } from '@/lib/router'
 import briefsJson from '../../../../data/cases/xiaomi-safety/briefs.json'
 
 export type ReelStyle = 'apple' | 'sketch' | 'pop' | 'iso'
@@ -18,6 +19,9 @@ export const REEL_STYLES: { id: ReelStyle; label: string; hint: string }[] = [
   { id: 'pop', label: '波普漫画', hint: '网点月亮、旁白框、拟声字，适合成员' },
   { id: 'iso', label: '3D 等距', hint: '暮色浮岛，有关的长成发光柱，适合路演' },
 ]
+
+/** 某个人的 30 秒 */
+export const reelHref = (pid: PersonId) => href('/reel', { as: pid === ME ? undefined : pid })
 
 /** 默认风格按职级给，用户可以切 */
 export const defaultStyle = (pid: PersonId): ReelStyle =>
