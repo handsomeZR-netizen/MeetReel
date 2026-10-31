@@ -13,6 +13,7 @@ import { Dispatch } from '@/pages/Dispatch'
 import { Shared } from '@/pages/Shared'
 import { Knowledge } from '@/pages/Knowledge'
 import { Templates } from '@/pages/Templates'
+import { ReelFrameOnly, Reels } from '@/pages/Reels'
 
 export function App() {
   const route = useRoute()
@@ -41,7 +42,11 @@ export function App() {
       : p0 === 'shared' ? <Shared />
       : p0 === 'kb' ? <Knowledge />
       : p0 === 'templates' ? <Templates />
+      : p0 === 'reel' ? <Reels />
       : <Home />
+
+  // 片子的纯画面模式：不带侧栏，录屏导出用
+  if (p0 === 'reel' && route.query.has('frame')) return <ReelFrameOnly />
 
   return (
     <TooltipProvider>

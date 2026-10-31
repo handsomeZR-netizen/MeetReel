@@ -1,4 +1,4 @@
-// 我的日程：会议和待办放在同一张日历上（默认），右边是收件箱和未排期。
+// 与我有关（原“我的日程”）：会议和待办放在同一张日历上（默认），右边是收件箱和未排期。
 // 切到“会议”：我发布的（我上传、我确认后才发出去）、发给我的（别人发布、路由给我的简报）、全部会议按项目归档。
 // 发布者和收到者是同一个人的两面，身份切换在右上角。
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
@@ -38,7 +38,7 @@ export function Home() {
 
   return (
     <>
-      <TopBar crumbs={[{ label: '我的日程', to: '/' }, ...(as !== ME ? [{ label: `以 ${me.name} 的身份预览` }] : [])]}>
+      <TopBar crumbs={[{ label: '与我有关', to: '/' }, ...(as !== ME ? [{ label: `以 ${me.name} 的身份预览` }] : [])]}>
         <Button size="sm" onClick={() => go('/new')}><SquarePen /> 新建会映</Button>
       </TopBar>
       <div className="min-h-0 flex-1 overflow-y-auto">

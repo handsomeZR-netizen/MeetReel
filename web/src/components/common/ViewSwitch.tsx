@@ -1,4 +1,4 @@
-// 页面顶上的大分段切换（我的日程：日程 / 会议；模板中心：会议模板 / 组织与角色）：
+// 页面顶上的大分段切换（与我有关：日程 / 会议；模板中心：会议模板 / 组织与角色）：
 // 凹槽里一块凸起的玻璃滑过去，右边跟一句说明这一页看什么。
 import type { ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
