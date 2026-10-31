@@ -16,6 +16,7 @@ import { TopBar } from '@/components/shell/TopBar'
 import { Face, FaceStack, Kb, LeaderTag, RankTag, SourceChip } from '@/components/common/bits'
 import { BriefPaper, NOTE_COLORS, Sticky, StickyNotes } from '@/components/sketch/Briefs'
 import { Schedule } from '@/components/schedule/Schedule'
+import { ViewSwitch } from '@/components/common/ViewSwitch'
 
 const TODAY = '2026-10-31'
 const hello = () => {
@@ -132,14 +133,14 @@ function ViewAs({ as }: { as: PersonId }) {
   }, [open])
   return (
     <div className="relative" onClick={e => e.stopPropagation()}>
-      <button className="flex h-9 items-center gap-2 rounded-xl border bg-white pr-2.5 pl-1.5 text-[13px] hover:bg-black/[.02]" onClick={() => setOpen(o => !o)}>
+      <button className="sg-raised flex h-9 items-center gap-2 rounded-full pr-3 pl-1 text-[13px] transition-transform hover:-translate-y-px" onClick={() => setOpen(o => !o)}>
         <Face p={as} size={24} /><span className="text-ink-3">以</span><b className="font-semibold">{personById(as).name}</b><span className="text-ink-3">的身份看</span>
         <ChevronDown size={14} className="text-ink-3" />
       </button>
       <AnimatePresence>
         {open && (
           <motion.div
-            className="absolute top-11 right-0 z-30 w-[340px] rounded-2xl border bg-white p-2 shadow-[0_12px_40px_-8px_rgba(0,0,0,.18)]"
+            className="pc-sheet absolute top-11 right-0 z-30 w-[340px] rounded-[22px] p-2"
             initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}
           >
             <div className="text-ink-3 px-2 pt-1 pb-2 text-[12px]">切换身份预览：权限闸和简报都按这个人生效</div>
@@ -149,7 +150,7 @@ function ViewAs({ as }: { as: PersonId }) {
                 <div key={r} className="mb-1">
                   <div className="text-ink-3 flex items-center gap-1.5 px-2 py-1 text-[11.5px]"><b className="font-mono">{RANKS[r].level}</b>{RANKS[r].label}</div>
                   {list.map(x => (
-                    <button key={x.id} className={cn('flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-black/[.04]', x.id === as && 'bg-[#EEF3FF]')} onClick={() => { setOpen(false); go('/', x.id === ME ? {} : { as: x.id }) }}>
+                    <button key={x.id} className={cn('flex w-full items-center gap-2 rounded-xl px-2 py-1.5 text-left transition-colors hover:bg-white/80', x.id === as && 'sg-raised')} onClick={() => { setOpen(false); go('/', x.id === ME ? {} : { as: x.id }) }}>
                       <Face p={x} size={24} />
                       <span className="min-w-0 flex-1 truncate text-[13px]"><b className="font-medium">{x.name}</b><span className="text-ink-3 ml-1.5 text-[12px]">{x.team} · {x.role}</span></span>
                       <LeaderTag pid={x.id} className="max-w-[110px] truncate" />
@@ -244,38 +245,20 @@ function PublishedCard({ m }: { m: Meeting }) {
 function ViewTabs({ as, view }: { as: PersonId; view: 'cal' | 'meet' }) {
   const dispatched = useStore(s => s.dispatched)
   const waiting = outboxOf(as).filter(m => !dispatched[m.id]).length
-  const tabs = [
-    { k: 'cal', label: '日程', icon: CalendarDays, hint: '会议和待办放在一张日历上' },
-    { k: 'meet', label: '会议', icon: Clapperboard, hint: '我发布的、发给我的、全部会议' },
-  ] as const
+  const link = (v?: string) => href('/', { as: as === ME ? undefined : as, v })
   return (
-    <nav className="-mt-2 flex flex-wrap items-center gap-x-4 gap-y-2">
-      <div className="flex rounded-[14px] bg-[#EEF0F4] p-1 shadow-[inset_0_1px_2px_rgba(16,24,40,.06)]">
-        {tabs.map(t => {
-          const on = view === t.k
-          const I = t.icon
-          return (
-            <a
-              key={t.k}
-              href={href('/', { as: as === ME ? undefined : as, v: t.k === 'cal' ? undefined : t.k })}
-              className={cn('relative flex h-10 items-center gap-2 rounded-[11px] pr-4 pl-3.5 text-[14.5px] transition-colors', on ? 'text-ink font-semibold' : 'text-ink-3 hover:text-ink-2')}
-            >
-              {on && <motion.span layoutId="home-view" className="absolute inset-0 rounded-[11px] bg-white shadow-[0_1px_2px_rgba(16,24,40,.08),0_6px_16px_-6px_rgba(16,24,40,.18)]" transition={{ type: 'spring', stiffness: 520, damping: 38 }} />}
-              <I size={17} strokeWidth={on ? 2.2 : 1.9} className={cn('relative', on && 'text-primary')} />
-              <span className="relative">{t.label}</span>
-              {t.k === 'meet' && waiting > 0 && (
-                <span className="relative grid h-[18px] min-w-[18px] place-items-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-white" title={`${waiting} 场等你分发`}>{waiting}</span>
-              )}
-            </a>
-          )
-        })}
-      </div>
-      <AnimatePresence mode="wait" initial={false}>
-        <motion.span key={view} className="text-ink-3 text-[13px]" initial={{ opacity: 0, x: -4 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.15 }}>
-          {tabs.find(t => t.k === view)!.hint}
-        </motion.span>
-      </AnimatePresence>
-    </nav>
+    <ViewSwitch
+      id="home-view"
+      className="-mt-2"
+      value={view}
+      items={[
+        { k: 'cal', label: '日程', icon: CalendarDays, hint: '会议和待办放在一张日历上', href: link() },
+        {
+          k: 'meet', label: '会议', icon: Clapperboard, hint: '我发布的、发给我的、全部会议', href: link('meet'),
+          badge: waiting > 0 && <span className="relative grid h-[18px] min-w-[18px] place-items-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-white" title={`${waiting} 场等你分发`}>{waiting}</span>,
+        },
+      ]}
+    />
   )
 }
 

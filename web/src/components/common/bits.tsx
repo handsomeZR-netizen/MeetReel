@@ -1,5 +1,5 @@
 // 到处都要用的小件：头像、职级标签、条目类型、模型图标、Koboyo 手绘图标、Logo、原话溯源按钮。
-import type { CSSProperties, ReactNode } from 'react'
+import { useState, type CSSProperties, type ReactNode } from 'react'
 import { Crown, Lock, Play, Send, Workflow } from 'lucide-react'
 import { ITEM_TYPES, PROJECTS, RANKS, personById, type IconKey, type Person, type PersonId } from '@/data/model'
 import type { Item } from '@/data/meetings'
@@ -23,6 +23,9 @@ const iconSrc = (k: IconKey) => {
 
 export function Face({ p, size = 28, muted, className, ring, title }: { p: Person | PersonId; size?: number; muted?: boolean; className?: string; ring?: string; title?: string }) {
   const person = typeof p === 'string' ? personById(p) : p
+  const src = `${import.meta.env.BASE_URL}assets/generated/${person.id}.${person.id === 'jiangwan' ? 'png' : 'webp'}`
+  const [failedSrc, setFailedSrc] = useState<string | null>(null)
+  const avatarLabel = `${person.name}${person.external ? '（AI 示意头像，非本人照片）' : ''}`
   return (
     <span
       className={cn('inline-grid flex-none place-items-center rounded-full leading-none font-semibold select-none', className)}
@@ -31,9 +34,9 @@ export function Face({ p, size = 28, muted, className, ring, title }: { p: Perso
         background: muted ? '#EDEDED' : person.bg, color: muted ? '#9B9B9B' : person.fg,
         boxShadow: ring ? `0 0 0 2px #fff, 0 0 0 3.5px ${ring}` : undefined,
       }}
-      title={title ?? `${person.name} · ${person.role}`}
+      title={`${title ?? `${person.name} · ${person.role}`}${person.external ? ' · AI 示意头像，非本人照片' : ''}`}
     >
-      {person.id === 'jiangwan' ? <img src={`${import.meta.env.BASE_URL}assets/generated/jiangwan.png`} alt={person.name} className="size-full rounded-[inherit] object-cover" style={{ filter: muted ? 'grayscale(1)' : undefined }} /> : person.short}
+      {failedSrc !== src ? <img src={src} alt={avatarLabel} decoding="async" onError={() => setFailedSrc(src)} className="size-full rounded-[inherit] object-cover" style={{ filter: muted ? 'grayscale(1)' : undefined }} /> : person.short}
     </span>
   )
 }

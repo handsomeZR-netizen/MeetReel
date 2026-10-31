@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/misc'
 import { Face, FaceStack, Kb } from '@/components/common/bits'
 import { rich, richLen, useStream } from '@/components/common/stream'
+import { DotLoader } from '@/components/common/DotMatrix'
 import type { KoboyoName } from '@/components/sketch/koboyoData'
 
 export type QKey = 'meta' | 'project' | 'people' | 'review'
@@ -113,7 +114,7 @@ export function Intake({ s, set, onDone, locked }: { s: IntakeState; set: SetInt
     <div className="mb-2 text-[15px] leading-[1.75]">
       <div className="mb-3">
         <div className="text-ink-2 inline-flex items-center gap-1.5 py-1 text-[15px]">
-          {reading ? <span className="shimmer-text">正在看录像</span> : <span>看完了录像，用时 3 秒</span>}
+          {reading ? <><DotLoader className="text-ink mr-0.5" /><span className="shimmer-text">正在看录像</span></> : <span>看完了录像，用时 3 秒</span>}
         </div>
         <div className="think-body">
           <ol className="think-steps py-1">

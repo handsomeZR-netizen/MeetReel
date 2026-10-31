@@ -1,0 +1,20 @@
+{
+  "tool": "built-in imagegen",
+  "date": "2026-10-31",
+  "style": "Internal: square natural studio headshot, fictional person, centered head and shoulders, soft daylight, pastel background, no text. External: generic conceptual speaker, soft 3D illustrated portrait, not an actual photograph or likeness.",
+  "people": {
+    "hanzong": "Chinese man about 48, neat short salt-and-pepper hair, navy blazer over white shirt, composed gentle smile, pale warm cream background",
+    "songlan": "Chinese woman about 40, elegant short black bob, charcoal blazer and ivory blouse, calm confident smile, pale lavender background",
+    "chengcheng": "Chinese woman about 32, dark hair loosely tied back, soft rose blouse, bright friendly smile, pale blush background",
+    "gaoyuan": "Chinese man about 37, short textured dark hair, sage casual collared shirt, approachable smile, pale mint background",
+    "dengkai": "Chinese man about 40, tidy side-parted dark hair, tan blazer over a white open collar shirt, broad friendly smile, pale sand background",
+    "weiran": "Chinese man about 35, short cropped black hair, thin rectangular glasses, dark teal collared shirt, relaxed smile, pale aqua background",
+    "xunuo": "Chinese woman about 33, straight black hair tied back, thin round glasses, slate blue blouse, intelligent calm expression and small smile, pale lilac background",
+    "linxia": "Chinese woman about 26, straight shoulder-length black hair with soft bangs, light blue shirt, youthful friendly smile, pale sky-blue background",
+    "tangchuan": "Chinese man about 28, slightly wavy short black hair, round dark-framed glasses, light gray collared shirt, gentle smile, pale cool gray background",
+    "leijun": "middle-aged Chinese male conference host, neatly side-parted black hair, navy jacket, warm peach background",
+    "houjinglei": "Chinese male automotive executive about 48, short black hair with gray temples, steel blue blazer, pale blue background",
+    "dingzhi": "Chinese male safety engineer about 42, rectangular dark glasses, short dark hair, forest green collared shirt, pale mint background",
+    "shuangge": "Chinese male interview guest about 35, round glasses, relaxed dark casual shirt, slightly wavy hair, pale gray background"
+  }
+}

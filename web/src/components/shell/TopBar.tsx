@@ -11,10 +11,10 @@ import { Face, TypePill } from '@/components/common/bits'
 export interface Crumb { label: string; to?: string }
 
 /** 每页顶栏：面包屑 + 页面动作 + 回流提醒。搜索只在侧栏（Ctrl K），这里不再重复 */
-export function TopBar({ crumbs, children }: { crumbs: Crumb[]; children?: ReactNode }) {
+export function TopBar({ crumbs, children, center, compact = false }: { crumbs: Crumb[]; children?: ReactNode; center?: ReactNode; compact?: boolean }) {
   return (
     <header className="glass-topbar flex h-14 flex-none items-center gap-3 border-b px-5">
-      <nav className="text-ink-3 flex min-w-0 items-center gap-1.5 text-sm">
+      <nav aria-label="页面路径" className={`text-ink-3 flex min-w-0 items-center gap-1.5 text-sm ${compact ? 'max-w-[36%]' : ''}`}>
         {crumbs.map((c, i) => (
           <Fragment key={i}>
             {i > 0 && <ChevronRight size={14} className="text-ink-4 flex-none" />}
@@ -22,7 +22,8 @@ export function TopBar({ crumbs, children }: { crumbs: Crumb[]; children?: React
           </Fragment>
         ))}
       </nav>
-      <div className="ml-auto flex items-center gap-2">
+      {center && <div className="min-w-0 flex-1">{center}</div>}
+      <div className="ml-auto flex flex-none items-center gap-2">
         {children}
         <FeedBell />
       </div>

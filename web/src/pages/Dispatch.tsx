@@ -30,6 +30,7 @@ import { RoutingBoard } from '@/components/dispatch/RoutingBoard'
 import { Matrix } from '@/components/sketch/Matrix'
 import { BriefPaper, StickyNotes } from '@/components/sketch/Briefs'
 import { Intake, QUESTIONS, answerQ, initialIntake, type Answers, type IntakeState } from '@/components/dispatch/Intake'
+import { DotLoader } from '@/components/common/DotMatrix'
 
 type CanvasTab = 'run' | 'flow' | 'matrix' | 'briefs'
 type Msg = { id: number; q: string; a: string; kind?: 'assign' }
@@ -511,6 +512,7 @@ function Thinking({ t, models, open, onToggle, onCanvas }: { t: number; models: 
         <button className="text-ink-2 inline-flex items-center gap-1.5 py-1 text-[15px]" onClick={onToggle}>
           {done ? <span>已编排 8 个智能体，用时 20 秒</span> : (
             <>
+              <DotLoader className="text-ink mr-0.5" />
               <span className="shimmer-text">正在编排</span>
               <span className="text-ink-3 text-[14px]">· {phase.label}{busy.length ? ` · ${busy.map(a => a.name).join('、')}` : ''}</span>
             </>
@@ -727,7 +729,7 @@ function FollowAnswer({ msg, onAsk, last, asked }: { msg: Msg; onAsk: (q: string
   const len = richLen(msg.a)
   return (
     <div className="mb-7 text-[15px] leading-[1.75]">
-      {!ready ? <div className="py-1"><span className="shimmer-text">{msg.kind === 'assign' ? '正在更新账本' : '正在查账本和录像'}</span></div> : (
+      {!ready ? <div className="flex items-center gap-2 py-1"><DotLoader className="text-ink" /><span className="shimmer-text">{msg.kind === 'assign' ? '正在更新账本' : '正在查账本和录像'}</span></div> : (
         <div className="chat-md"><p>{rich(msg.a, n)}{n < len && <span className="cursor-dot" />}</p></div>
       )}
       {msg.kind === 'assign' && ready && n >= len && (

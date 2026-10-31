@@ -14,3 +14,6 @@ Thumbs.db
 # web
 dist/
 *.tsbuildinfo
+
+# 本地参考素材（体积大，不进仓库）
+生成视频参考/

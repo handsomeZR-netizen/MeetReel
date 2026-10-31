@@ -1,6 +1,6 @@
 // 会议详情 · 溯源：录像、逐字稿、账本三者互相定位。
 // 入口 #/m/xm_safety?t=262&item=xm_06 —— 任何地方点“原话”都会落到这里的那一秒。
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { AlertTriangle, CheckCircle2, Clock3, Download, Link2, Lock, Play, Sparkles, Waypoints } from 'lucide-react'
 import { ITEM_TYPES, personById, projectById, type PersonId } from '@/data/model'
@@ -42,6 +42,17 @@ function MeetingView({ m }: { m: Meeting }) {
   const [paper, setPaper] = useState<PersonId | null>(null)
   const [member, setMember] = useState<PersonId>(m.related.find(p => p !== m.publisher && !isQuiet(m.id, p)) ?? m.related[0])
   const [copied, setCopied] = useState(false)
+  const [compact, setCompact] = useState(false)
+  const userScrollUntil = useRef(0)
+  const resizingUntil = useRef(0)
+  const compactRef = useRef(false)
+  const setHeaderCompact = (next: boolean) => {
+    if (compactRef.current === next) return
+    compactRef.current = next
+    resizingUntil.current = performance.now() + 450
+    setCompact(next)
+  }
+  useEffect(() => { setHeaderCompact(false) }, [tab])
   const dispatched = useStore(s => s.dispatched[m.id])
   const confirmed = useStore(s => s.confirmed)
   const project = projectById(m.project)
@@ -118,7 +129,7 @@ function MeetingView({ m }: { m: Meeting }) {
 
   return (
     <>
-      <TopBar crumbs={[{ label: '我的会议', to: '/?v=meet' }, { label: project.name, to: `/?v=meet&project=${project.id}` }, { label: m.title }]}>
+      <TopBar compact crumbs={compact ? [{ label: m.title }] : [{ label: '我的会议', to: '/?v=meet' }, { label: project.name, to: `/?v=meet&project=${project.id}` }]}>
         <Button variant="ghost" size="sm" onClick={() => { navigator.clipboard?.writeText(location.href); setCopied(true); setTimeout(() => setCopied(false), 1400) }}>
           <Link2 /> {copied ? '已复制链接' : '分享'}
         </Button>
@@ -130,7 +141,10 @@ function MeetingView({ m }: { m: Meeting }) {
         )}
       </TopBar>
 
-      <div className="flex-none border-b px-6 pt-4">
+      <div className={cn('meeting-heading flex-none border-b px-6', compact && 'is-compact')}>
+        <div className="meeting-overview-collapse" inert={compact} aria-hidden={compact}>
+        <div className="meeting-overview-clip">
+        <div className="meeting-overview">
         <div className="flex items-start gap-4">
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2 text-[12.5px]">
@@ -141,7 +155,7 @@ function MeetingView({ m }: { m: Meeting }) {
                 ? <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={13} /> 已分发 {peopleN} 人 · 待办确认 {okN}/{actionsN.length}</span>
                 : <span className="inline-flex items-center gap-1 text-amber-600"><Clock3 size={13} /> 已转写 · 等待分发</span>}
             </div>
-            <h1 className="mt-1.5 text-[22px] font-semibold tracking-tight">{m.title}</h1>
+            <h1 className="mt-2 text-[22px] leading-snug font-semibold tracking-tight">{m.title}</h1>
             <div className="text-ink-3 mt-1.5 flex flex-wrap items-center gap-y-1 text-[13px]">
               <span>{cnDate(m.date)} {weekday(m.date)} {m.time}</span>
               <span className="dot-sep">{m.source} {mmss(m.duration)}</span>
@@ -155,24 +169,36 @@ function MeetingView({ m }: { m: Meeting }) {
             </div>
           </div>
         </div>
-        <div className="mt-3 flex items-start gap-2 rounded-xl bg-[#F6F8FE] px-3 py-2 text-[13px] leading-6 text-[#3B4252]">
+        <div className="meeting-summary flex items-start gap-2 rounded-xl px-4 py-3 text-[13px] leading-6 text-[#3B4252]">
           <Sparkles size={14} className="text-primary mt-[5px] flex-none" />
-          <span><b className="font-semibold">AI 摘要</b>　{m.summary}</span>
+          <div className="min-w-0"><b className="mb-1 block font-semibold">AI 摘要</b><p className="meeting-summary-text">{m.summary}</p></div>
         </div>
-        <div className="mt-2 flex gap-1">
+        </div>
+        </div>
+        </div>
+        <div className="meeting-tabs flex items-center gap-1">
+          <div className="flex min-w-0 flex-1 overflow-x-auto">
           {TABS.filter(x => !x.hide).map(x => (
-            <button key={x.id} onClick={() => setTab(x.id)} className={cn('relative px-3 pt-2 pb-2.5 text-[13.5px] transition-colors', tab === x.id ? 'text-ink font-semibold' : 'text-ink-3 hover:text-ink')}>
+            <button key={x.id} onClick={() => setTab(x.id)} className={cn('relative flex-none px-3 pt-2 pb-2.5 text-[13.5px] transition-colors', tab === x.id ? 'text-ink font-semibold' : 'text-ink-3 hover:text-ink')}>
               {x.label}{x.n != null && <span className="text-ink-4 ml-1 font-normal tabular-nums">{x.n}</span>}
               {tab === x.id && <motion.span layoutId="m-tab" className="bg-ink absolute inset-x-2 -bottom-px h-[2px] rounded-full" />}
             </button>
           ))}
+          </div>
+          <button type="button" aria-expanded={!compact} onClick={() => setHeaderCompact(!compact)} className="meeting-details-toggle flex-none rounded-lg px-2 py-1.5 text-[12px] text-ink-3 hover:bg-black/5 hover:text-ink">{compact ? '展开会议信息' : '收起会议信息'}</button>
         </div>
       </div>
 
-      <div className="min-h-0 flex-1">
+      <div className="meeting-content min-h-0 flex-1" onWheelCapture={() => { userScrollUntil.current = performance.now() + 1200 }} onPointerDownCapture={() => { userScrollUntil.current = performance.now() + 1200 }} onKeyDownCapture={e => { if (['ArrowDown', 'ArrowUp', 'PageDown', 'PageUp', 'Home', 'End', ' '].includes(e.key)) userScrollUntil.current = performance.now() + 1200 }} onScrollCapture={e => {
+        const now = performance.now()
+        if (now > userScrollUntil.current || now < resizingUntil.current) return
+        const target = e.target as HTMLElement
+        if (target.scrollTop > 64) setHeaderCompact(true)
+        else if (target.scrollTop <= 4) setHeaderCompact(false)
+      }}>
         {tab === 'replay' && (
           <div className="grid h-full grid-cols-[minmax(0,1fr)_400px] max-xl:grid-cols-[minmax(0,1fr)_340px]">
-            <div className="min-h-0 overflow-y-auto px-6 py-5">
+            <div data-scroll="replay" tabIndex={0} aria-label="会议回放与章节" className="min-h-0 overflow-y-auto px-6 py-5">
               <div className="mx-auto max-w-[920px]">
                 <MeetingVideo meeting={m} t={clock.t} playing={clock.playing} onToggle={clock.toggle} focus={focus} pulse={pulse} captions={captions} speed={clock.speed} />
                 <div className="mt-3"><PlayerControls clock={clock} captions={captions} onCaptions={setCaptions} /></div>

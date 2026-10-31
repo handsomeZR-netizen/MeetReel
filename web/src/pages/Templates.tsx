@@ -2,18 +2,18 @@
 // 样例全部取自真实的几场会（小米直播、安全周会……）；另一页是组织与角色：职级、部门、项目 Leader、关注档案。
 import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowRight, BellOff, Crown, ShieldCheck } from 'lucide-react'
+import { ArrowRight, BellOff, Crown, LayoutTemplate, Network, ShieldCheck } from 'lucide-react'
 import { ITEM_TYPES, PROJECTS, RANKS, REASONS, SENSITIVITY, STAFF, PEOPLE, personById, type ItemType, type PersonId, type Rank, type Sensitivity } from '@/data/model'
 import { MEETINGS, meetingById } from '@/data/meetings'
 import { briefFor, isQuiet } from '@/data/derive'
 import { go } from '@/lib/router'
 import { cn } from '@/lib/utils'
-import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/misc'
 import { TopBar } from '@/components/shell/TopBar'
 import { Face, FaceStack, Kb, LeaderTag, RankTag } from '@/components/common/bits'
 import { Sticky } from '@/components/sketch/Briefs'
 import type { KoboyoName } from '@/components/sketch/koboyoData'
+import { ViewSwitch } from '@/components/common/ViewSwitch'
 
 type Tab = 'tpl' | 'org'
 type RuleId = 'R1' | 'R2' | 'R3' | 'R4' | 'R5' | 'R6'
@@ -81,19 +81,21 @@ export function Templates() {
   return (
     <>
       <TopBar crumbs={[{ label: '模板中心' }]} />
-      <div className="flex-none border-b px-6 pt-4">
-        <h1 className="text-[20px] font-semibold tracking-tight">模板中心</h1>
-        <p className="text-ink-3 mt-0.5 text-[13px]">一类会议开完之后，会映按模板做三件事：<b className="text-ink-2 font-medium">抽什么</b> → <b className="text-ink-2 font-medium">发给谁</b> → <b className="text-ink-2 font-medium">每个人收到什么样的简报</b>。改这里，下一场同类会议就按新的来。</p>
-        <div className="mt-2 flex gap-1">
-          {([['tpl', '会议模板'], ['org', '组织与角色']] as [Tab, string][]).map(([k, l]) => (
-            <button key={k} onClick={() => setTab(k)} className={cn('relative px-3 pt-2 pb-2.5 text-[13.5px]', tab === k ? 'text-ink font-semibold' : 'text-ink-3 hover:text-ink')}>
-              {l}{tab === k && <motion.span layoutId="tpl-tab" className="bg-ink absolute inset-x-2 -bottom-px h-[2px] rounded-full" />}
-            </button>
-          ))}
-        </div>
-      </div>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto max-w-[1280px] px-6 py-6">
+        <div className="mx-auto flex max-w-[1240px] flex-col gap-7 px-6 py-6">
+          <header>
+            <h1 className="text-[24px] font-semibold tracking-tight">模板中心</h1>
+            <p className="text-ink-3 mt-1.5 text-[13.5px]">一类会议开完之后，会映按模板做三件事：<b className="text-ink-2 font-medium">抽什么</b> → <b className="text-ink-2 font-medium">发给谁</b> → <b className="text-ink-2 font-medium">每个人收到什么样的简报</b>。改这里，下一场同类会议就按新的来。</p>
+          </header>
+          <ViewSwitch
+            id="tpl-view"
+            className="-mt-2"
+            value={tab}
+            items={[
+              { k: 'tpl', label: '会议模板', icon: LayoutTemplate, hint: '抽什么、发给谁、每个职级收到什么', onClick: () => setTab('tpl') },
+              { k: 'org', label: '组织与角色', icon: Network, hint: '职级、部门、项目 Leader 和关注档案', onClick: () => setTab('org') },
+            ]}
+          />
           {tab === 'tpl' ? <TemplateView /> : <OrgView />}
         </div>
       </div>
@@ -117,8 +119,8 @@ function TemplateView() {
       <div className="flex flex-col gap-2">
         <div className="text-ink-3 px-1 text-[12.5px]">选一类会议</div>
         {TPLS.map(x => (
-          <button key={x.id} onClick={() => setCur(x.id)} className={cn('kb-tile flex items-start gap-3 rounded-2xl border bg-white p-3 text-left', cur === x.id && 'border-ink shadow-[0_8px_24px_-16px_rgba(0,0,0,.4)]')}>
-            <span className="text-ink-2 flex-none"><Kb name={x.icon} size={30} /></span>
+          <button key={x.id} onClick={() => setCur(x.id)} className={cn('sg-card flex items-start gap-3 rounded-[18px] p-3 text-left transition-transform hover:-translate-y-px', cur === x.id && 'on')}>
+            <span className={cn('grid size-10 flex-none place-items-center rounded-xl', cur === x.id ? 'sg-onyx' : 'sg-raised text-[var(--plum)]')}><Kb name={x.icon} size={24} /></span>
             <span className="min-w-0">
               <b className="block text-[14px]">{x.name}</b>
               <span className="text-ink-3 block text-[12px] leading-snug">{x.desc}</span>
@@ -136,7 +138,7 @@ function TemplateView() {
                 {(Object.keys(ITEM_TYPES) as ItemType[]).map(k => {
                   const on = focus[cur].includes(k)
                   return (
-                    <button key={k} onClick={() => setFocus(s => ({ ...s, [cur]: on ? s[cur].filter(x => x !== k) : [...s[cur], k] }))} className={cn('inline-flex h-8 items-center gap-1.5 rounded-lg border px-2.5 text-[13px] transition-colors', on ? 'border-ink bg-white' : 'text-ink-3 border-dashed')}>
+                    <button key={k} onClick={() => setFocus(s => ({ ...s, [cur]: on ? s[cur].filter(x => x !== k) : [...s[cur], k] }))} className={cn('inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[13px] transition-colors', on ? 'sg-raised text-ink' : 'sg-well text-ink-3')}>
                       <i className="size-2 rounded-full" style={{ background: on ? ITEM_TYPES[k].color : '#D4D4D8' }} />{ITEM_TYPES[k].label}
                     </button>
                   )
@@ -154,19 +156,19 @@ function TemplateView() {
                 const on = rules[cur][r]
                 const ex = routes.find(x => x.reasons.includes(r))
                 return (
-                  <div key={r} className={cn('flex items-start gap-3 rounded-xl border bg-white px-3 py-2.5 transition-opacity', !on && 'opacity-50')}>
-                    <span className="text-ink-3 mt-0.5 w-6 flex-none font-mono text-[12px]">{r}</span>
+                  <div key={r} className={cn('flex items-start gap-3 rounded-2xl px-3 py-2.5 transition-opacity', on ? 'sg-raised' : 'sg-well opacity-60')}>
+                    <span className="ev-lv mt-0.5 flex-none">{r}</span>
                     <div className="min-w-0 flex-1">
                       <b className="text-[13.5px]">{REASONS[r]}</b>
                       <p className="text-ink-3 text-[12px] leading-snug">{RULE_DESC[r]}</p>
                       {ex && <p className="font-hand mt-1 truncate text-[14px]" title={`${ex.m.title}`}>例：{ex.m.items.find(i => i.id === ex.item)!.title.slice(0, 18)} → {personById(ex.person).name}</p>}
                     </div>
-                    <Switch checked={on} onCheckedChange={v => setRules(s => ({ ...s, [cur]: { ...s[cur], [r]: v } }))} />
+                    <Switch className="sg-switch" checked={on} onCheckedChange={v => setRules(s => ({ ...s, [cur]: { ...s[cur], [r]: v } }))} />
                   </div>
                 )
               })}
             </div>
-            <p className="text-ink-2 mt-2 rounded-xl bg-[#FAFAF7] px-3 py-2 text-[12.5px] leading-relaxed">{t.note}</p>
+            <p className="sg-well text-ink-2 mt-2.5 rounded-2xl px-3.5 py-2.5 text-[12.5px] leading-relaxed">{t.note}</p>
           </Step>
 
           <Step n={3} title="每个人收到什么" sub="编辑官按职级改写：同一场会，高管和成员拿到的不是同一份">
@@ -188,15 +190,15 @@ function TemplateView() {
                   )}
                 </div>
               </div>
-            ) : <div className="text-ink-3 rounded-xl border border-dashed px-4 py-5 text-[13px]">用这个模板开一场会之后，这里会出现每个职级收到的样例。</div>}
+            ) : <div className="sg-well text-ink-3 rounded-2xl px-4 py-5 text-[13px]">用这个模板开一场会之后，这里会出现每个职级收到的样例。</div>}
           </Step>
 
-          <div className="flex flex-wrap items-center gap-3 rounded-2xl border bg-white px-4 py-3">
-            <label className="flex items-center gap-2.5 text-[13px]"><Switch checked={review} onCheckedChange={setReview} /><span><b className="font-medium">发送前给发布者看矩阵</b><span className="text-ink-3 ml-2">关掉后：低敏感、高置信的直接发；含受限条目或待核实的仍会停下来</span></span></label>
+          <div className="sg-card flex flex-wrap items-center gap-3 rounded-[20px] py-2.5 pr-2.5 pl-4">
+            <label className="flex items-center gap-2.5 text-[13px]"><Switch className="sg-switch" checked={review} onCheckedChange={setReview} /><span><b className="font-medium">发送前给发布者看矩阵</b><span className="text-ink-3 ml-2">关掉后：低敏感、高置信的直接发；含受限条目或待核实的仍会停下来</span></span></label>
             <span className="text-ink-3 ml-auto flex flex-wrap items-center gap-1.5 text-[12px]">权限
               {(Object.keys(SENSITIVITY) as Sensitivity[]).map(s => <span key={s} className={cn('rounded-md px-1.5 py-0.5', s === 'public' ? 'bg-emerald-50 text-emerald-700' : s === 'internal' ? 'bg-muted text-ink-2' : s === 'restricted' ? 'bg-rose-50 text-rose-700' : 'bg-ink text-white')} title={SENSITIVITY[s].desc}>{SENSITIVITY[s].label}</span>)}
             </span>
-            <Button size="sm" onClick={() => go('/new')}>用这个模板新建会映 <ArrowRight /></Button>
+            <button className="sg-onyx inline-flex h-9 items-center gap-1.5 rounded-full px-4 text-[13px] font-medium transition-transform hover:-translate-y-px" onClick={() => go('/new')}>用这个模板新建会映 <ArrowRight size={14} /></button>
           </div>
         </motion.div>
       </AnimatePresence>
@@ -206,9 +208,9 @@ function TemplateView() {
 
 function Step({ n, title, sub, children }: { n: number; title: string; sub: string; children: ReactNode }) {
   return (
-    <section className="rounded-2xl border bg-white p-4">
+    <section className="sg-card rounded-[22px] p-4">
       <div className="mb-3 flex items-baseline gap-2">
-        <span className="bg-ink grid size-6 flex-none translate-y-[3px] place-items-center rounded-full text-[12px] font-semibold text-white">{n}</span>
+        <span className="sg-onyx grid size-6 flex-none translate-y-[3px] place-items-center rounded-full font-mono text-[12px] font-semibold">{n}</span>
         <h2 className="text-[16px] font-semibold">{title}</h2>
         <span className="text-ink-3 text-[12.5px]">{sub}</span>
       </div>
@@ -259,8 +261,8 @@ function OrgView() {
           <span className="ml-auto flex flex-wrap gap-1.5">{(['exec', 'head', 'lead', 'staff', 'guest'] as Rank[]).map(r => <span key={r} className="rounded-md px-1.5 text-[11.5px] leading-5" style={{ color: RANKS[r].color, background: RANKS[r].soft }}>{RANKS[r].level === '外部' ? '' : `${RANKS[r].level} `}{RANKS[r].label}</span>)}</span>
         </div>
         <div className="flex justify-center"><PersonCard pid="hanzong" wide /></div>
-        <div className="mx-auto h-5 w-px bg-[#D4D4D8]" />
-        <div className="relative grid gap-3 border-t border-[#D4D4D8] pt-5 sm:grid-cols-2 xl:grid-cols-5">
+        <div className="mx-auto h-5 w-px bg-[rgb(95_62_84/18%)]" />
+        <div className="relative grid gap-3 border-t border-[rgb(95_62_84/18%)] pt-5 sm:grid-cols-2 xl:grid-cols-5">
           {DEPTS.map(d => (
             <div key={d.name} className="flex flex-col gap-2">
               <div className="text-ink-3 text-center text-[12.5px] font-medium">{d.name}</div>
@@ -272,9 +274,9 @@ function OrgView() {
 
       <section>
         <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">项目组</h2><span className="text-ink-3 text-[12.5px]">项目 Leader 默认是这个项目里会议的发布者</span></div>
-        <div className="overflow-hidden rounded-2xl border bg-white">
+        <div className="sg-card overflow-hidden rounded-[20px]">
           {PROJECTS.map(p => (
-            <div key={p.id} className="flex flex-wrap items-center gap-4 border-b px-4 py-3 last:border-0">
+            <div key={p.id} className="pc-row flex flex-wrap items-center gap-4 px-4 py-3">
               <span className="flex w-[180px] items-center gap-2" style={{ color: p.color }}><Kb name={p.icon} size={24} /><b className="text-ink text-[14px]">{p.name}</b></span>
               <span className="flex items-center gap-2 text-[13px]"><Crown size={14} className="text-amber-600" /><Face p={p.leader} size={24} /><b className="font-medium">{personById(p.leader).name}</b><RankTag p={p.leader} /></span>
               <span className="text-ink-3 ml-auto flex items-center gap-2 text-[12.5px]">{p.members.length} 位成员<FaceStack ids={p.members.filter(x => x !== p.leader)} size={22} max={8} /></span>
@@ -288,7 +290,7 @@ function OrgView() {
         <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">外部发言人</h2><span className="text-ink-3 text-[12.5px]">发布会、直播里的人：只引用原话，不推送、不派任务，身份只记录直播里自己说的或被介绍的</span></div>
         <div className="flex flex-wrap gap-2">
           {PEOPLE.filter(x => x.external).map(x => (
-            <span key={x.id} className="flex items-center gap-2 rounded-xl border border-dashed bg-white px-3 py-2 text-[13px]"><Face p={x} size={26} /><b className="font-medium">{x.name}</b><span className="text-ink-3 text-[12px]">{x.role}</span></span>
+            <span key={x.id} className="sg-well flex items-center gap-2 rounded-full py-1.5 pr-3.5 pl-1.5 text-[13px]"><Face p={x} size={26} /><b className="font-medium">{x.name}</b><span className="text-ink-3 text-[12px]">{x.role}</span></span>
           ))}
         </div>
       </section>
@@ -300,7 +302,8 @@ function OrgView() {
 function PersonCard({ pid, wide, indent }: { pid: PersonId; wide?: boolean; indent?: boolean }) {
   const p = personById(pid)
   return (
-    <div className={cn('rounded-2xl border bg-white p-3', wide && 'w-full max-w-[420px]', indent && 'ml-3 border-l-[3px]')} style={indent ? { borderLeftColor: RANKS[p.rank].soft } : undefined}>
+    <div className={cn('sg-card relative rounded-[18px] p-3', wide && 'w-full max-w-[420px]', indent && 'ml-3')}>
+      {indent && <span className="absolute top-3 bottom-3 -left-[7px] w-[3px] rounded-full" style={{ background: RANKS[p.rank].color, opacity: 0.25 }} />}
       <div className="flex items-start gap-2.5">
         <Face p={p} size={34} />
         <div className="min-w-0 flex-1 leading-tight">
@@ -311,9 +314,9 @@ function PersonCard({ pid, wide, indent }: { pid: PersonId; wide?: boolean; inde
       </div>
       <LeaderTag pid={pid} className="mt-2" />
       <div className="mt-2 flex flex-wrap gap-1 text-[11.5px]">
-        {p.profile.owns.slice(0, 3).map(x => <span key={x} className="bg-muted text-ink-2 rounded-full px-2 py-px">负责 {x}</span>)}
-        {p.profile.dependsOn.slice(0, 2).map(x => <span key={x} className="rounded-full bg-rose-50 px-2 py-px text-rose-700">依赖 {x}</span>)}
-        {p.profile.interests.slice(0, 2).map(x => <span key={x} className="rounded-full bg-[#EEF3FF] px-2 py-px text-[#2F64F2]">订阅 {x}</span>)}
+        {p.profile.owns.slice(0, 3).map(x => <span key={x} className="sg-well text-ink-2 rounded-full px-2 py-px">负责 {x}</span>)}
+        {p.profile.dependsOn.slice(0, 2).map(x => <span key={x} className="rounded-full bg-rose-50/80 px-2 py-px text-rose-700 shadow-[inset_0_0_0_1px_rgb(225_29_72/12%)]">依赖 {x}</span>)}
+        {p.profile.interests.slice(0, 2).map(x => <span key={x} className="rounded-full bg-[rgb(95_62_84/8%)] px-2 py-px text-[var(--plum)] shadow-[inset_0_0_0_1px_rgb(95_62_84/12%)]">订阅 {x}</span>)}
       </div>
     </div>
   )
