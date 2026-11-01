@@ -43,11 +43,9 @@
 - **4 级敏感度**：公开 / 内部 / 受限 / 机密，对照个人可见级别放行、脱敏或拦截。
 - **按职级写简报**：高管只看决议、风险和投入；部门负责人看本部门相关的；成员只看自己的待办。
 
-### 当前状态
+### 主案例
 
-> 这个仓库是**可交互的前端原型 + 案例数据**。页面里的转写、抽取、路由、简报都是预先算好的演示数据，用演示剧本逐步放出来；ASR、真实的多智能体后端、飞书投递还没有接入（规划见[需求文档](会映_会议信息按人分发_需求文档_v0.2.md)和[开发计划](会映_开发计划与案例数据_v0.1.md)）。
-
-演示用的主案例是一段 9 分 49 秒的**小米汽车安全专场直播**：直播里没人点我们任何人的名，8 个收件人里 7 个收到内容不同的简报，1 个人没被打扰。同一家虚构车企本周的三场内部会议（安全周会、车主运营月会、门店销售周会）用来演示权限闸和跨会议问答。详见 [案例说明](data/cases/xiaomi-safety/README.md)。
+主案例是一段 9 分 49 秒的**小米汽车安全专场直播**：直播里没人点我们任何人的名，8 个收件人里 7 个收到内容不同的简报，1 个人没被打扰。同一家虚构车企本周的三场内部会议（安全周会、车主运营月会、门店销售周会）用来演示权限闸和跨会议问答。详见 [案例说明](data/cases/xiaomi-safety/README.md)。
 
 ---
 
@@ -69,7 +67,7 @@ npm run build      # 类型检查 + 生产构建，输出 web/dist
 npm run preview    # 本地预览构建结果
 ```
 
-- 全部是 mock 数据，**刷新页面就回到初始状态**；侧栏左下角的头像菜单里也有“重置演示数据”。
+- **刷新页面就回到初始状态**；侧栏左下角的头像菜单里也有“重置演示数据”。
 - 开发服务器监听所有网卡，同一局域网的手机可以用 `http://<电脑 IP>:5173` 打开。
 - 页面是 hash 路由（`#/…`），可以直接发链接给别人。
 
@@ -83,7 +81,7 @@ npm run preview    # 本地预览构建结果
 
 侧栏 **新建会映** → 上传会议录音，或导入会议链接 → 会映问你几件事（会议信息、所属项目、相关人、发送前要不要先看一眼）→ 多智能体开始工作。
 
-- 链接导入是演示：不会读取链接内容，固定使用主案例。问答里点“都按推荐来，直接开始分发”可以跳过逐题回答。
+- 导入链接会直接载入主案例。问答里点“都按推荐来，直接开始分发”可以跳过逐题回答。
 - 画布依次出现：编排时间轴 → 账本流向收件人 → 路由矩阵 → 每人的便利贴简报。
 - 20 秒的分发剧本在约 18.5 秒处**停下来等你确认**（发送前预览），点“确认发送”后继续投递；问答里选“直接发出”则不停。
 - 想直接看分发过程，打开 [`#/dispatch/xm_safety?run`](http://localhost:5173/#/dispatch/xm_safety?run)。
@@ -195,7 +193,7 @@ What's different:
 2. **Permission-aware delivery.** The same decision is shown in full to finance and redacted for engineering, decided by rules, not by the model.
 3. **Async loop-back.** Confirmations, reassignments and questions write back to a shared ledger.
 
-This repo is an interactive front-end prototype with a worked case (a 9:49 car-safety livestream, 8 fictional recipients, 7 different briefs and 1 person left alone). Data is mocked and the UI is bilingual.
+This repo is an interactive front-end workspace with a worked case (a 9:49 car-safety livestream, 8 fictional recipients, 7 different briefs and 1 person left alone). The UI is bilingual.
 
 ```bash
 git clone https://github.com/handsomeZR-netizen/MeetReel.git
