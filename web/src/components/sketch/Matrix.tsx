@@ -9,6 +9,7 @@ import { QUIET_AT, RUN_ID, RUN_PEOPLE, itemState } from '@/data/run'
 import { isQuiet } from '@/data/derive'
 import { Kb } from '@/components/common/bits'
 import { Rough, RoughArrow } from './rough'
+import { L } from '@/lib/i18n'
 
 const INK = '#1E1E1E'
 const PAD = 24
@@ -99,7 +100,7 @@ export function Matrix({ meeting: m, t = 99, onOpen, onItem }: Props) {
           })()}
         </svg>
 
-        <div className="sk-mx-title" style={{ left: PAD, top: 26 }}><Kb name="route" size={26} /> 谁收到什么</div>
+        <div className="sk-mx-title" style={{ left: PAD, top: 26 }}><Kb name="route" size={26} /> {L('谁收到什么', 'Who gets what')}</div>
 
         {routing && people.map((pid, j) => {
           const p = personById(pid)
@@ -129,7 +130,7 @@ export function Matrix({ meeting: m, t = 99, onOpen, onItem }: Props) {
               style={{ left: PAD, top: ry(i) - 12, width: LBL - 10 }}
               initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} transition={{ delay: live ? 0 : i * 0.03 }}
               onClick={() => onItem?.(it)}
-              title="回到录像里的这一秒"
+              title={L('回到录像里的这一秒', 'Jump to this moment in the recording')}
             >
               <span style={{ color: c.color }}>{c.label}</span>
               <span className="truncate text-[14.5px] font-normal" style={{ color: 'inherit' }}>{it.title}</span>
@@ -141,25 +142,25 @@ export function Matrix({ meeting: m, t = 99, onOpen, onItem }: Props) {
         <AnimatePresence>
           {r4 && (!live || t >= 12) && (
             <Note key="r4" x={PAD + 40} y={HEAD + gridH + 40} color="#E03131" rotate={-1.5}>
-              {personById(r4.person).name}没参会、没被点名，<br />但{depText(m, r4.item)}
+              {L(`${personById(r4.person).name}没参会、没被点名，`, `${personById(r4.person).name} wasn’t there and wasn’t named,`)}<br />{L('但', 'but ')}{depText(m, r4.item)}
             </Note>
           )}
           {fan && (!live || t >= 12.5) && (
             <Note key="fan" x={PAD + 40} y={HEAD + gridH + 40} color="#1971C2" rotate={-1.2}>
-              “{items.find(i => i.id === fan.id)!.title.replace(/^.*：/, '')}”发给了 {fan.rs.length} 个人，理由各不同：<br />
-              {fan.rs.map(r => `${personById(r.person).name}（${r.reasons.map(k => REASON_SHORT[k]).join('、')}）`).join(' · ')}
+              {L(`“${items.find(i => i.id === fan.id)!.title.replace(/^.*：/, '')}”发给了 ${fan.rs.length} 个人，理由各不同：`, `“${items.find(i => i.id === fan.id)!.title.replace(/^.*: /, '')}” went to ${fan.rs.length} people, each for a different reason:`)}<br />
+              {fan.rs.map(r => L(`${personById(r.person).name}（${r.reasons.map(k => REASON_SHORT[k]).join('、')}）`, `${personById(r.person).name} (${r.reasons.map(k => REASON_SHORT[k]).join(', ')})`)).join(' · ')}
             </Note>
           )}
           {lockItem && (!live || t >= 13.2) && (
             <Note key="lock" x={PAD + 2} y={HEAD + gridH + 92} color="#C2255C" rotate={1}>
-              <span className="inline-flex items-center gap-1"><Kb name="lock" size={18} /> {lockItem.title.slice(0, 8)}… 原文只有 {lockN} 个人看得到</span>
+              <span className="inline-flex items-center gap-1"><Kb name="lock" size={18} /> {L(`${lockItem.title.slice(0, 8)}… 原文只有 ${lockN} 个人看得到`, `${lockItem.title.split(' ').slice(0, 4).join(' ')}… only ${lockN} people see the full text`)}</span>
             </Note>
           )}
         </AnimatePresence>
         <AnimatePresence>
           {quiet.length > 0 && quietShown && (
             <motion.div className="sk-quiet" style={{ left: cx(people.indexOf(quiet[0])) - 190, top: 14 }} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: live ? 0 : 1.2 }}>
-              <Kb name="coffee" size={22} /> {quiet.map(q => personById(q).name).join('、')}：这场不打扰
+              <Kb name="coffee" size={22} /> {L(`${quiet.map(q => personById(q).name).join('、')}：这场不打扰`, `${quiet.map(q => personById(q).name).join(', ')}: not pinged this time`)}
             </motion.div>
           )}
         </AnimatePresence>
@@ -185,7 +186,7 @@ function Note({ x, y, color, rotate = 0, children }: { x: number; y: number; col
 
 function depText(m: Meeting, itemId: string) {
   const it = m.items.find(i => i.id === itemId)!
-  return `他依赖的「${it.topic}」变了`
+  return L(`他依赖的「${it.topic}」变了`, `“${it.topic}”, which they depend on, changed`)
 }
 
 /** 列的顺序：发布者在前，再按职级、收到条数排，不打扰的人在最后 */

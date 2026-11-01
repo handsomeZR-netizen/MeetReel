@@ -3,6 +3,43 @@
 // 字段沿用需求文档第 8 节的数据契约；现在全部是 mock，后端接好后由接口返回同样的结构。
 
 import type { KoboyoName } from '@/components/sketch/koboyoData'
+import { L } from '@/lib/i18n'
+
+// ---------- 术语对照 ----------
+// 话题、负责范围、订阅词、标记、渠道：同一个词在关注档案、条目、知识库、路由理由里必须一模一样
+// （路由和依赖关系靠字符串相等来匹配），所以英文统一在这里对照，数据里照旧写中文，过一遍 term()。
+const TERMS_EN: Record<string, string> = {
+  // 话题
+  评审机制: 'Review gate', 座椅安全: 'Seat safety', 'OTA 功能安全': 'OTA functional safety', 安全组织: 'Safety org',
+  竞品安全体系: 'Competitor safety system', '车主 App': 'Owner app', 车主激励: 'Owner incentives', 交付体验: 'Delivery experience',
+  车主培训: 'Owner training', 门店安全话术: 'Store safety talk track', 竞品卖点: 'Competitor selling points', 购车权益: 'Purchase perks',
+  试驾: 'Test drives', 电子安全: 'Electronic safety', 安全理念: 'Safety philosophy', 安全体系: 'Safety system', 安全目标: 'Safety goal',
+  事故预防: 'Accident prevention', 全域安全: 'Full-domain safety', 用车安全: 'Safety in use', 'App 安全分': 'App safety score',
+  // 负责 / 依赖 / 订阅
+  品牌定位: 'Brand positioning', 竞品研究: 'Competitive research', 对外宣传口径: 'External messaging', 宣传口径: 'Messaging',
+  公司经营: 'Company operations', 安全战略: 'Safety strategy', 竞品目标: 'Competitor goals', 组织机制: 'Org & mechanisms', 投入规模: 'Investment scale',
+  安全体系建设: 'Safety system build-out', 安全委员会: 'Safety Committee', 安全评审流程: 'Safety review process',
+  车主积分体系: 'Owner points program', 车主社区: 'Owner community', 用户授权: 'User consent',
+  车主驾驶培训: 'Owner driver training', 门店销售: 'Store sales', 购车权益对比: 'Perk comparison',
+  整车安全开发: 'Vehicle safety engineering', 碰撞安全: 'Crash safety', 电池安全: 'Battery safety', 主被动安全: 'Active & passive safety',
+  智能驾驶: 'Assisted driving', 电子电气架构: 'E/E architecture', 网络安全: 'Cybersecurity',
+  竞品资料库: 'Competitor library', 权益对比素材: 'Perk comparison data', 安全检查清单: 'Safety checklist', 评审记录: 'Review records',
+  // 别名
+  市场: 'Marketing', 品牌: 'Brand', 竞品: 'Competitors', 老板: 'the boss', 管理层: 'Management', 安全部: 'Safety', 安委会: 'the committee',
+  车主运营: 'Owner ops', 新车主运营: 'New-owner ops', 交付: 'Delivery', 培训: 'Training', 门店: 'Stores', 销售: 'Sales',
+  整车安全: 'Vehicle safety', 产品安全: 'Product safety', 智驾: 'ADAS', 电子电气: 'E/E', 竞品专员: 'Competitor analyst', 评审: 'Reviews',
+  雷总: 'Lei', 静雷: 'Jinglei', 景雷: 'Jing Lei', 丁老师: 'Ding', 丁志老师: 'Ding Zhi',
+  // 渠道
+  飞书: 'Lark', H5: 'Web', '90 秒视频': '90-sec video', 日报: 'Daily digest',
+  // 条目标记
+  缺截止: 'No due date', 缺负责人: 'No owner', 本段未覆盖: 'Not in this clip', 旧闻重申: 'Restated', 绝对化表述: 'Absolute claim', 待核实: 'Unverified',
+  // 口语截止
+  '11 月经营会': 'Nov ops review', 直播后: 'After the livestream', 下次周会: 'Next weekly',
+  // 会议类型与来源
+  竞品直播: 'Competitor livestream', 周会: 'Weekly', 月会: 'Monthly',
+  录音: 'Audio', 飞书妙记: 'Lark Minutes', 会议录像: 'Meeting recording', 直播录像: 'Livestream recording',
+}
+export const term = (zh: string) => L(zh, TERMS_EN[zh] ?? zh)
 
 export type PersonId =
   // 直播发言人（真人，外部）
@@ -16,11 +53,11 @@ export type Sensitivity = 'public' | 'internal' | 'restricted' | 'confidential'
 export type Rank = 'exec' | 'head' | 'lead' | 'staff' | 'guest'
 
 export const RANKS: Record<Rank, { level: string; label: string; color: string; soft: string; brief: string }> = {
-  exec: { level: 'L1', label: '高管', color: '#17171A', soft: '#EDEDED', brief: '决议、风险、投入规模，约 60 秒' },
-  head: { level: 'L2', label: '部门负责人', color: '#4338CA', soft: '#EEF0FF', brief: '本部门相关的决议和变化' },
-  lead: { level: 'L3', label: '组长', color: '#1D4ED8', soft: '#EAF2FF', brief: '负责的事 + 组员的待办' },
-  staff: { level: 'L4', label: '成员', color: '#475569', soft: '#F1F5F9', brief: '只有自己的待办，约 10 秒' },
-  guest: { level: '外部', label: '外部发言人', color: '#C2410C', soft: '#FFF1E6', brief: '不推送，只引用原话' },
+  exec: { level: 'L1', label: L('高管', 'Executive'), color: '#17171A', soft: '#EDEDED', brief: L('决议、风险、投入规模，约 60 秒', 'Decisions, risks, investment — about 60 s') },
+  head: { level: 'L2', label: L('部门负责人', 'Dept head'), color: '#4338CA', soft: '#EEF0FF', brief: L('本部门相关的决议和变化', 'Decisions and changes that touch the department') },
+  lead: { level: 'L3', label: L('组长', 'Team lead'), color: '#1D4ED8', soft: '#EAF2FF', brief: L('负责的事 + 组员的待办', 'What they own + the team’s to-dos') },
+  staff: { level: 'L4', label: L('成员', 'Member'), color: '#475569', soft: '#F1F5F9', brief: L('只有自己的待办，约 10 秒', 'Only their own to-dos — about 10 s') },
+  guest: { level: L('外部', 'Ext'), label: L('外部发言人', 'External speaker'), color: '#C2410C', soft: '#FFF1E6', brief: L('不推送，只引用原话', 'Never notified, only quoted') },
 }
 
 export interface Person {
@@ -50,39 +87,42 @@ export interface Person {
 }
 
 type PersonInput = Omit<Person, 'profile'> & { profile: Partial<Person['profile']> & { clearance: Sensitivity } }
-const p = (x: PersonInput): Person => ({
-  ...x,
-  profile: { aliases: [], owns: [], dependsOn: [], interests: [], channels: ['飞书'], ...x.profile },
-})
+const p = (x: PersonInput): Person => {
+  const f = { aliases: [], owns: [], dependsOn: [], interests: [], channels: ['飞书'], ...x.profile }
+  return {
+    ...x,
+    profile: { ...f, aliases: f.aliases.map(term), owns: f.owns.map(term), dependsOn: f.dependsOn.map(term), interests: f.interests.map(term), channels: f.channels.map(term) },
+  }
+}
 
 export const PEOPLE: Person[] = [
   // ---- 收件人（虚构车企）----
-  p({ id: 'jiangwan', name: '江晚', short: '晚', role: '竞品研究组组长', team: '市场部', group: '竞品研究组', rank: 'lead', reportsTo: 'hanzong', bg: '#FFE4E6', fg: '#9F1239',
+  p({ id: 'jiangwan', name: L('江晚', 'Jiang Wan'), short: L('晚', 'W'), role: L('竞品研究组组长', 'Competitive Research Lead'), team: L('市场部', 'Marketing'), group: L('竞品研究组', 'Competitive Research'), rank: 'lead', reportsTo: 'hanzong', bg: '#FFE4E6', fg: '#9F1239',
     profile: { aliases: ['市场', '品牌', '竞品'], owns: ['品牌定位', '竞品研究', '对外宣传口径', '门店安全话术'], interests: ['安全理念', '宣传口径', '竞品卖点'], clearance: 'restricted', channels: ['飞书', 'H5'] } }),
-  p({ id: 'hanzong', name: '韩总', short: '韩', role: '总经理', team: '管理层', rank: 'exec', bg: '#FEF3C7', fg: '#92400E',
+  p({ id: 'hanzong', name: L('韩总', 'GM Han'), short: L('韩', 'H'), role: L('总经理', 'General Manager'), team: L('管理层', 'Leadership'), rank: 'exec', bg: '#FEF3C7', fg: '#92400E',
     profile: { aliases: ['老板', '管理层'], owns: ['公司经营', '安全战略'], interests: ['竞品目标', '组织机制', '投入规模'], clearance: 'confidential', channels: ['飞书', '90 秒视频'] } }),
-  p({ id: 'songlan', name: '宋岚', short: '岚', role: '安全部负责人', team: '安全部', rank: 'head', reportsTo: 'hanzong', bg: '#E0E7FF', fg: '#3730A3',
+  p({ id: 'songlan', name: L('宋岚', 'Song Lan'), short: L('岚', 'L'), role: L('安全部负责人', 'Head of Safety'), team: L('安全部', 'Safety'), rank: 'head', reportsTo: 'hanzong', bg: '#E0E7FF', fg: '#3730A3',
     profile: { aliases: ['安全部', '安委会'], owns: ['安全体系建设', '安全委员会', '安全评审流程'], interests: ['竞品安全体系', '安全组织'], clearance: 'restricted', channels: ['飞书', 'H5'] } }),
-  p({ id: 'chengcheng', name: '程橙', short: '橙', role: '车主运营负责人', team: '用户运营部', rank: 'head', reportsTo: 'hanzong', bg: '#FCE7F3', fg: '#9D174D',
+  p({ id: 'chengcheng', name: L('程橙', 'Cheng Cheng'), short: L('橙', 'C'), role: L('车主运营负责人', 'Head of Owner Ops'), team: L('用户运营部', 'User Operations'), rank: 'head', reportsTo: 'hanzong', bg: '#FCE7F3', fg: '#9D174D',
     profile: { aliases: ['车主运营', '新车主运营'], owns: ['车主积分体系', '车主 App', '车主社区'], dependsOn: ['用户授权'], interests: ['用车安全'], clearance: 'internal' } }),
-  p({ id: 'gaoyuan', name: '高远', short: '远', role: '交付与车主培训负责人', team: '交付中心', rank: 'head', reportsTo: 'hanzong', bg: '#DCFCE7', fg: '#166534',
+  p({ id: 'gaoyuan', name: L('高远', 'Gao Yuan'), short: L('远', 'Y'), role: L('交付与车主培训负责人', 'Head of Delivery & Owner Training'), team: L('交付中心', 'Delivery Center'), rank: 'head', reportsTo: 'hanzong', bg: '#DCFCE7', fg: '#166534',
     profile: { aliases: ['交付', '培训'], owns: ['交付体验', '车主驾驶培训', '试驾'], dependsOn: ['车主积分体系', '门店安全话术'], interests: ['车主培训', '车主激励'], clearance: 'internal' } }),
-  p({ id: 'dengkai', name: '邓凯', short: '凯', role: '销售渠道负责人', team: '销售部', rank: 'head', reportsTo: 'hanzong', bg: '#FEF9C3', fg: '#854D0E',
+  p({ id: 'dengkai', name: L('邓凯', 'Deng Kai'), short: L('凯', 'K'), role: L('销售渠道负责人', 'Head of Sales Channels'), team: L('销售部', 'Sales'), rank: 'head', reportsTo: 'hanzong', bg: '#FEF9C3', fg: '#854D0E',
     profile: { aliases: ['门店', '销售'], owns: ['门店销售', '购车权益对比'], dependsOn: ['门店安全话术'], interests: ['竞品卖点'], clearance: 'internal' } }),
-  p({ id: 'weiran', name: '魏然', short: '然', role: '整车安全开发组长', team: '安全部', group: '整车安全开发组', rank: 'lead', reportsTo: 'songlan', bg: '#CCFBF1', fg: '#115E59',
+  p({ id: 'weiran', name: L('魏然', 'Wei Ran'), short: L('然', 'R'), role: L('整车安全开发组长', 'Vehicle Safety Eng. Lead'), team: L('安全部', 'Safety'), group: L('整车安全开发组', 'Vehicle Safety Engineering'), rank: 'lead', reportsTo: 'songlan', bg: '#CCFBF1', fg: '#115E59',
     profile: { aliases: ['整车安全', '产品安全'], owns: ['整车安全开发', '座椅安全', '碰撞安全', '电池安全'], interests: ['主被动安全'], clearance: 'internal', channels: ['飞书', 'MCP'] } }),
-  p({ id: 'xunuo', name: '许诺', short: '诺', role: '电子电气安全组长', team: '安全部', group: '智驾与电子电气安全组', rank: 'lead', reportsTo: 'songlan', bg: '#EDE9FE', fg: '#5B21B6',
+  p({ id: 'xunuo', name: L('许诺', 'Xu Nuo'), short: L('诺', 'N'), role: L('电子电气安全组长', 'E/E Safety Lead'), team: L('安全部', 'Safety'), group: L('智驾与电子电气安全组', 'ADAS & E/E Safety'), rank: 'lead', reportsTo: 'songlan', bg: '#EDE9FE', fg: '#5B21B6',
     profile: { aliases: ['智驾', '电子电气'], owns: ['智能驾驶', '电子电气架构', '网络安全', 'OTA 功能安全'], interests: ['电子安全'], clearance: 'internal', channels: ['飞书', '日报'] } }),
-  p({ id: 'linxia', name: '林夏', short: '夏', role: '竞品研究专员', team: '市场部', group: '竞品研究组', rank: 'staff', reportsTo: 'jiangwan', bg: '#E0F2FE', fg: '#075985',
+  p({ id: 'linxia', name: L('林夏', 'Lin Xia'), short: L('夏', 'X'), role: L('竞品研究专员', 'Competitive Research Analyst'), team: L('市场部', 'Marketing'), group: L('竞品研究组', 'Competitive Research'), rank: 'staff', reportsTo: 'jiangwan', bg: '#E0F2FE', fg: '#075985',
     profile: { aliases: ['竞品专员'], owns: ['竞品资料库', '权益对比素材'], interests: ['竞品卖点', '购车权益'], clearance: 'internal' } }),
-  p({ id: 'tangchuan', name: '唐川', short: '川', role: '安全评审工程师', team: '安全部', group: '安全评审', rank: 'staff', reportsTo: 'songlan', bg: '#F1F5F9', fg: '#334155',
+  p({ id: 'tangchuan', name: L('唐川', 'Tang Chuan'), short: L('川', 'T'), role: L('安全评审工程师', 'Safety Review Engineer'), team: L('安全部', 'Safety'), group: L('安全评审', 'Safety Review'), rank: 'staff', reportsTo: 'songlan', bg: '#F1F5F9', fg: '#334155',
     profile: { aliases: ['评审'], owns: ['安全检查清单', '评审记录'], dependsOn: ['安全评审流程'], interests: ['安全组织'], clearance: 'internal' } }),
 
   // ---- 直播发言人（真人，外部）：只记录直播中自己说出或被介绍的身份 ----
-  p({ id: 'leijun', name: '雷军', short: '雷', role: '直播主持 · 小米', team: '小米', rank: 'guest', external: true, bg: '#FFEDD5', fg: '#9A3412', profile: { aliases: ['雷总'], clearance: 'public', channels: [] } }),
-  p({ id: 'houjinglei', name: '侯静雷', short: '静', role: '小米汽车副总裁兼安全部总经理', team: '小米汽车', rank: 'guest', external: true, bg: '#DBEAFE', fg: '#1E40AF', profile: { aliases: ['静雷', '景雷'], clearance: 'public', channels: [] } }),
-  p({ id: 'dingzhi', name: '丁志', short: '志', role: '小米汽车全域安全部负责人', team: '小米汽车', rank: 'guest', external: true, bg: '#D1FAE5', fg: '#065F46', profile: { aliases: ['丁老师', '丁志老师'], clearance: 'public', channels: [] } }),
-  p({ id: 'shuangge', name: '爽哥', short: '爽', role: '直播嘉宾 · 提问', team: '直播', rank: 'guest', external: true, bg: '#F1F5F9', fg: '#475569', profile: { clearance: 'public', channels: [] } }),
+  p({ id: 'leijun', name: L('雷军', 'Lei Jun'), short: L('雷', 'L'), role: L('直播主持 · 小米', 'Host · Xiaomi'), team: L('小米', 'Xiaomi'), rank: 'guest', external: true, bg: '#FFEDD5', fg: '#9A3412', profile: { aliases: ['雷总'], clearance: 'public', channels: [] } }),
+  p({ id: 'houjinglei', name: L('侯静雷', 'Hou Jinglei'), short: L('静', 'J'), role: L('小米汽车副总裁兼安全部总经理', 'VP, Xiaomi Auto & GM of Safety'), team: L('小米汽车', 'Xiaomi Auto'), rank: 'guest', external: true, bg: '#DBEAFE', fg: '#1E40AF', profile: { aliases: ['静雷', '景雷'], clearance: 'public', channels: [] } }),
+  p({ id: 'dingzhi', name: L('丁志', 'Ding Zhi'), short: L('志', 'D'), role: L('小米汽车全域安全部负责人', 'Head of Full-Domain Safety, Xiaomi Auto'), team: L('小米汽车', 'Xiaomi Auto'), rank: 'guest', external: true, bg: '#D1FAE5', fg: '#065F46', profile: { aliases: ['丁老师', '丁志老师'], clearance: 'public', channels: [] } }),
+  p({ id: 'shuangge', name: L('爽哥', 'Shuang'), short: L('爽', 'S'), role: L('直播嘉宾 · 提问', 'Guest · asks questions'), team: L('直播', 'Livestream'), rank: 'guest', external: true, bg: '#F1F5F9', fg: '#475569', profile: { clearance: 'public', channels: [] } }),
 ]
 
 export const personById = (id: PersonId) => PEOPLE.find(x => x.id === id)!
@@ -110,10 +150,10 @@ export interface Project {
 }
 
 export const PROJECTS: Project[] = [
-  { id: 'p_intel', name: '竞品情报', color: '#0891B2', soft: '#E6F7FB', icon: 'newspaper', desc: '竞品发布会、直播的按人分发', leader: 'jiangwan', members: ['jiangwan', 'linxia', 'hanzong', 'songlan', 'weiran', 'xunuo', 'chengcheng', 'gaoyuan', 'dengkai'] },
-  { id: 'p_safety', name: '安全体系建设', color: '#4F46E5', soft: '#EEF0FF', icon: 'stamp', desc: '安委会、评审机制、开发安全清单', leader: 'songlan', members: ['songlan', 'weiran', 'xunuo', 'tangchuan', 'hanzong', 'jiangwan'] },
-  { id: 'p_owner', name: '车主运营', color: '#DB2777', soft: '#FDF0F6', icon: 'handshake', desc: '积分、App 安全分、车主培训', leader: 'chengcheng', members: ['chengcheng', 'gaoyuan', 'dengkai', 'jiangwan', 'hanzong'] },
-  { id: 'p_retail', name: '门店与交付', color: '#D97706', soft: '#FEF5E7', icon: 'rocket', desc: '门店话术、权益对比、交付体验', leader: 'dengkai', members: ['dengkai', 'gaoyuan', 'jiangwan', 'linxia', 'chengcheng'] },
+  { id: 'p_intel', name: L('竞品情报', 'Competitive Intel'), color: '#0891B2', soft: '#E6F7FB', icon: 'newspaper', desc: L('竞品发布会、直播的按人分发', 'Competitor launches and livestreams, split per person'), leader: 'jiangwan', members: ['jiangwan', 'linxia', 'hanzong', 'songlan', 'weiran', 'xunuo', 'chengcheng', 'gaoyuan', 'dengkai'] },
+  { id: 'p_safety', name: L('安全体系建设', 'Safety System'), color: '#4F46E5', soft: '#EEF0FF', icon: 'stamp', desc: L('安委会、评审机制、开发安全清单', 'Safety Committee, review gate, dev safety checklist'), leader: 'songlan', members: ['songlan', 'weiran', 'xunuo', 'tangchuan', 'hanzong', 'jiangwan'] },
+  { id: 'p_owner', name: L('车主运营', 'Owner Ops'), color: '#DB2777', soft: '#FDF0F6', icon: 'handshake', desc: L('积分、App 安全分、车主培训', 'Points, app safety score, owner training'), leader: 'chengcheng', members: ['chengcheng', 'gaoyuan', 'dengkai', 'jiangwan', 'hanzong'] },
+  { id: 'p_retail', name: L('门店与交付', 'Retail & Delivery'), color: '#D97706', soft: '#FEF5E7', icon: 'rocket', desc: L('门店话术、权益对比、交付体验', 'Store talk tracks, perk comparison, delivery experience'), leader: 'dengkai', members: ['dengkai', 'gaoyuan', 'jiangwan', 'linxia', 'chengcheng'] },
 ]
 
 export const projectById = (id: ProjectId) => PROJECTS.find(x => x.id === id) ?? PROJECTS[0]
@@ -123,35 +163,44 @@ export const projectById = (id: ProjectId) => PROJECTS.find(x => x.id === id) ??
 export type ItemType = 'decision' | 'action' | 'change' | 'risk' | 'question' | 'info'
 
 export const ITEM_TYPES: Record<ItemType, { label: string; color: string; soft: string }> = {
-  decision: { label: '决议', color: '#4F46E5', soft: '#EEF0FF' },
-  action: { label: '待办', color: '#2563EB', soft: '#EAF2FF' },
-  change: { label: '变更', color: '#D97706', soft: '#FEF5E7' },
-  risk: { label: '风险', color: '#E11D48', soft: '#FFEDF1' },
-  question: { label: '问题', color: '#0891B2', soft: '#E6F7FB' },
-  info: { label: '信息', color: '#64748B', soft: '#F1F5F9' },
+  decision: { label: L('决议', 'Decision'), color: '#4F46E5', soft: '#EEF0FF' },
+  action: { label: L('待办', 'To-do'), color: '#2563EB', soft: '#EAF2FF' },
+  change: { label: L('变更', 'Change'), color: '#D97706', soft: '#FEF5E7' },
+  risk: { label: L('风险', 'Risk'), color: '#E11D48', soft: '#FFEDF1' },
+  question: { label: L('问题', 'Question'), color: '#0891B2', soft: '#E6F7FB' },
+  info: { label: L('信息', 'Info'), color: '#64748B', soft: '#F1F5F9' },
 }
 
 export const SENSITIVITY: Record<Sensitivity, { label: string; desc: string }> = {
-  public: { label: '公开', desc: '可以转发给任何人' },
-  internal: { label: '内部', desc: '团队内相关人可见' },
-  restricted: { label: '受限', desc: '只给名单内的人看原文，其他人看脱敏版' },
-  confidential: { label: '机密', desc: '只给名单内的人，其他人完全看不到' },
+  public: { label: L('公开', 'Public'), desc: L('可以转发给任何人', 'Can be forwarded to anyone') },
+  internal: { label: L('内部', 'Internal'), desc: L('团队内相关人可见', 'Visible to relevant people on the team') },
+  restricted: { label: L('受限', 'Restricted'), desc: L('只给名单内的人看原文，其他人看脱敏版', 'Full text for the allow-list only; others see a redacted version') },
+  confidential: { label: L('机密', 'Confidential'), desc: L('只给名单内的人，其他人完全看不到', 'Allow-list only; hidden from everyone else') },
 }
 
 // ---------- 推送理由 ----------
 
-export const REASONS: Record<string, string> = {
+export const REASONS: Record<string, string> = L({
   R1: '被点名',
   R2: '被角色点到',
   R3: '负责的东西被提到',
   R4: '依赖的东西变了',
   R5: '订阅的话题',
   R6: '管理者规则',
-}
+}, {
+  R1: 'Named in the meeting',
+  R2: 'Their role was called on',
+  R3: 'Something they own came up',
+  R4: 'Something they depend on changed',
+  R5: 'A topic they follow',
+  R6: 'Manager rule',
+})
 
-export const REASON_SHORT: Record<string, string> = {
+export const REASON_SHORT: Record<string, string> = L({
   R1: '点名', R2: '角色', R3: '负责', R4: '依赖变了', R5: '订阅', R6: '规则',
-}
+}, {
+  R1: 'Named', R2: 'Role', R3: 'Owns', R4: 'Dependency', R5: 'Follows', R6: 'Rule',
+})
 
 // ---------- 模型（可替换，默认多模型协同） ----------
 
@@ -172,20 +221,20 @@ export interface ModelInfo {
 }
 
 export const MODELS: ModelInfo[] = [
-  { id: 'deepseek', label: 'DeepSeek', vendor: '深度求索', region: 'cn', open: true, yuanPerM: 2.2 },
-  { id: 'qwen', label: '通义千问', vendor: '阿里云', region: 'cn', open: true, yuanPerM: 2.4 },
-  { id: 'kimi', label: 'Kimi', vendor: '月之暗面', region: 'cn', open: true, yuanPerM: 6 },
-  { id: 'glm', label: '智谱 GLM', vendor: '智谱 AI', region: 'cn', open: true, yuanPerM: 3 },
-  { id: 'doubao', label: '豆包', vendor: '字节跳动', region: 'cn', yuanPerM: 1.6 },
-  { id: 'ernie', label: '文心', vendor: '百度', region: 'cn', yuanPerM: 4 },
-  { id: 'hunyuan', label: '混元', vendor: '腾讯', region: 'cn', yuanPerM: 3 },
-  { id: 'minimax', label: 'MiniMax', vendor: '稀宇科技', region: 'cn', open: true, yuanPerM: 3.5 },
-  { id: 'spark', label: '讯飞星火', vendor: '科大讯飞', region: 'cn', yuanPerM: 4 },
-  { id: 'stepfun', label: '阶跃星辰', vendor: '阶跃星辰', region: 'cn', open: true, yuanPerM: 4 },
-  { id: 'baichuan', label: '百川', vendor: '百川智能', region: 'cn', open: true, yuanPerM: 3 },
-  { id: 'yi', label: '零一万物', vendor: '零一万物', region: 'cn', open: true, yuanPerM: 3 },
-  { id: 'sensenova', label: '日日新', vendor: '商汤', region: 'cn', yuanPerM: 4 },
-  { id: 'internlm', label: '书生', vendor: '上海 AI 实验室', region: 'cn', open: true, yuanPerM: 0 },
+  { id: 'deepseek', label: 'DeepSeek', vendor: L('深度求索', 'DeepSeek'), region: 'cn', open: true, yuanPerM: 2.2 },
+  { id: 'qwen', label: L('通义千问', 'Qwen'), vendor: L('阿里云', 'Alibaba Cloud'), region: 'cn', open: true, yuanPerM: 2.4 },
+  { id: 'kimi', label: 'Kimi', vendor: L('月之暗面', 'Moonshot AI'), region: 'cn', open: true, yuanPerM: 6 },
+  { id: 'glm', label: L('智谱 GLM', 'GLM'), vendor: L('智谱 AI', 'Zhipu AI'), region: 'cn', open: true, yuanPerM: 3 },
+  { id: 'doubao', label: L('豆包', 'Doubao'), vendor: L('字节跳动', 'ByteDance'), region: 'cn', yuanPerM: 1.6 },
+  { id: 'ernie', label: L('文心', 'ERNIE'), vendor: L('百度', 'Baidu'), region: 'cn', yuanPerM: 4 },
+  { id: 'hunyuan', label: L('混元', 'Hunyuan'), vendor: L('腾讯', 'Tencent'), region: 'cn', yuanPerM: 3 },
+  { id: 'minimax', label: 'MiniMax', vendor: L('稀宇科技', 'MiniMax'), region: 'cn', open: true, yuanPerM: 3.5 },
+  { id: 'spark', label: L('讯飞星火', 'iFlytek Spark'), vendor: L('科大讯飞', 'iFlytek'), region: 'cn', yuanPerM: 4 },
+  { id: 'stepfun', label: L('阶跃星辰', 'StepFun'), vendor: L('阶跃星辰', 'StepFun'), region: 'cn', open: true, yuanPerM: 4 },
+  { id: 'baichuan', label: L('百川', 'Baichuan'), vendor: L('百川智能', 'Baichuan AI'), region: 'cn', open: true, yuanPerM: 3 },
+  { id: 'yi', label: L('零一万物', 'Yi'), vendor: L('零一万物', '01.AI'), region: 'cn', open: true, yuanPerM: 3 },
+  { id: 'sensenova', label: L('日日新', 'SenseNova'), vendor: L('商汤', 'SenseTime'), region: 'cn', yuanPerM: 4 },
+  { id: 'internlm', label: L('书生', 'InternLM'), vendor: L('上海 AI 实验室', 'Shanghai AI Lab'), region: 'cn', open: true, yuanPerM: 0 },
   { id: 'claude', label: 'Claude', vendor: 'Anthropic', region: 'global', yuanPerM: 45 },
   { id: 'gpt', label: 'GPT', vendor: 'OpenAI', region: 'global', yuanPerM: 40 },
   { id: 'gemini', label: 'Gemini', vendor: 'Google', region: 'global', yuanPerM: 25 },

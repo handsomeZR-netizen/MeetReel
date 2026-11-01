@@ -14,6 +14,7 @@ import { Face, FaceStack, Kb } from '@/components/common/bits'
 import { rich, richLen, useStream } from '@/components/common/stream'
 import { DotLoader } from '@/components/common/DotMatrix'
 import type { KoboyoName } from '@/components/sketch/koboyoData'
+import { L } from '@/lib/i18n'
 
 export type QKey = 'meta' | 'project' | 'people' | 'review'
 export const QUESTIONS: QKey[] = ['meta', 'project', 'people', 'review']
@@ -38,36 +39,37 @@ export interface IntakeState {
 
 export const initialIntake = (): IntakeState => ({ phase: 'reading', step: 0, answers: { ...RECOMMENDED }, editing: null, quick: false })
 
-const KINDS = ['竞品直播', '周会', '月会', '评审会', '其他']
+// 和 term() 里的会议类型对得上（推荐答案的 kind 来自 XM.kind）
+const KINDS = L(['竞品直播', '周会', '月会', '评审会', '其他'], ['Competitor livestream', 'Weekly', 'Monthly', 'Review', 'Other'])
 const RANK_ORDER: Rank[] = ['exec', 'head', 'lead', 'staff']
 const P_COLORS = ['#0891B2', '#4F46E5', '#DB2777', '#D97706', '#059669', '#7C3AED']
 const P_ICONS: KoboyoName[] = ['newspaper', 'target', 'rocket', 'lightbulb', 'compass', 'team']
 
 const READ_STEPS: { agent: AgentId; text: string }[] = [
-  { agent: 'scribe', text: '上传完成，转写 9 分 49 秒的竖屏录像' },
-  { agent: 'scribe', text: `认出 ${XM.attendees.length} 位发言人：${XM.attendees.map(id => personById(id).name).join('、')}` },
-  { agent: 'topic', text: `切出 ${XM.segments.length} 段发言、${XM.chapters.length} 个章节` },
-  { agent: 'orc', text: '判断类型：外部竞品直播，按关注档案圈出候选收到者' },
+  { agent: 'scribe', text: L('上传完成，转写 9 分 49 秒的竖屏录像', 'Upload done — transcribing a 9 min 49 s vertical recording') },
+  { agent: 'scribe', text: L(`认出 ${XM.attendees.length} 位发言人：${XM.attendees.map(id => personById(id).name).join('、')}`, `Found ${XM.attendees.length} speakers: ${XM.attendees.map(id => personById(id).name).join(', ')}`) },
+  { agent: 'topic', text: L(`切出 ${XM.segments.length} 段发言、${XM.chapters.length} 个章节`, `Split into ${XM.segments.length} segments and ${XM.chapters.length} chapters`) },
+  { agent: 'orc', text: L('判断类型：外部竞品直播，按关注档案圈出候选收到者', 'Type: external competitor livestream — shortlisting recipients from interest profiles') },
 ]
 
 const projectOf = (id: ProjectId, custom: typeof PROJECTS) => [...PROJECTS, ...custom].find(p => p.id === id) ?? PROJECTS[0]
 
 /** 用户这一问的回答，写成一句话放在右边的气泡里 */
 function answerText(k: QKey, a: Answers, custom: typeof PROJECTS) {
-  if (k === 'meta') return `「${a.title}」· ${cnDate(a.date)} · ${a.kind}`
-  if (k === 'project') return `放进「${projectOf(a.project, custom).name}」`
-  if (k === 'review') return a.review ? '先给我看一眼分发矩阵，再发' : '不用看，直接发出'
+  if (k === 'meta') return L(`「${a.title}」· ${cnDate(a.date)} · ${a.kind}`, `“${a.title}” · ${cnDate(a.date)} · ${a.kind}`)
+  if (k === 'project') return L(`放进「${projectOf(a.project, custom).name}」`, `Put it in “${projectOf(a.project, custom).name}”`)
+  if (k === 'review') return a.review ? L('先给我看一眼分发矩阵，再发', 'Show me the routing matrix before sending') : L('不用看，直接发出', 'No need — just send it')
   const added = a.people.filter(x => !RECOMMENDED.people.includes(x)).map(x => personById(x).name)
   const removed = RECOMMENDED.people.filter(x => !a.people.includes(x)).map(x => personById(x).name)
-  const diff = [added.length ? `加上${added.join('、')}` : '', removed.length ? `去掉${removed.join('、')}` : ''].filter(Boolean).join('，')
-  return `收到者候选 ${a.people.length} 位${diff ? `：${diff}` : '，就按你圈的'}`
+  const diff = [added.length ? L(`加上${added.join('、')}`, `add ${added.join(', ')}`) : '', removed.length ? L(`去掉${removed.join('、')}`, `drop ${removed.join(', ')}`) : ''].filter(Boolean).join(L('，', '; '))
+  return L(`收到者候选 ${a.people.length} 位${diff ? `：${diff}` : '，就按你圈的'}`, `${a.people.length} candidate recipients${diff ? `: ${diff}` : ', as you picked'}`)
 }
 
 const PROMPTS: Record<QKey, string> = {
-  meta: '先对一下会议信息。标题和时间是我从片头和文件里认出来的：',
-  project: '放进哪个项目？会议、账本和待办都跟着项目走。外部竞品直播一般归**竞品情报**，你是这个项目的 Leader。',
-  people: `收到者候选我按关注档案先圈了 **${RECOMMENDED.people.length} 位**。路由官只在这些人里判断要不要打扰；没参会但可能相关的人，也可以加进来。`,
-  review: '最后一件：发出去之前，要不要先给你看一眼分发矩阵？',
+  meta: L('先对一下会议信息。标题和时间是我从片头和文件里认出来的：', 'First, the meeting details. I read the title and time from the opening and the file:'),
+  project: L('放进哪个项目？会议、账本和待办都跟着项目走。外部竞品直播一般归**竞品情报**，你是这个项目的 Leader。', 'Which project does it go in? The meeting, ledger and to-dos all follow the project. External competitor livestreams usually go to **Competitive Intel**, which you lead.'),
+  people: L(`收到者候选我按关注档案先圈了 **${RECOMMENDED.people.length} 位**。路由官只在这些人里判断要不要打扰；没参会但可能相关的人，也可以加进来。`, `From interest profiles I shortlisted **${RECOMMENDED.people.length} candidate recipients**. The Router only decides whom to ping within this list; you can add people who weren’t there but may care.`),
+  review: L('最后一件：发出去之前，要不要先给你看一眼分发矩阵？', 'Last thing: want to see the routing matrix before it goes out?'),
 }
 
 // ---------------- 对话里的整段“问你几件事” ----------------
@@ -114,7 +116,7 @@ export function Intake({ s, set, onDone, locked }: { s: IntakeState; set: SetInt
     <div className="mb-2 text-[15px] leading-[1.75]">
       <div className="mb-3">
         <div className="text-ink-2 inline-flex items-center gap-1.5 py-1 text-[15px]">
-          {reading ? <><DotLoader className="text-ink mr-0.5" /><span className="shimmer-text">正在看录像</span></> : <span>看完了录像，用时 3 秒</span>}
+          {reading ? <><DotLoader className="text-ink mr-0.5" /><span className="shimmer-text">{L('正在看录像', 'Watching the recording')}</span></> : <span>{L('看完了录像，用时 3 秒', 'Watched the recording in 3 s')}</span>}
         </div>
         <div className="think-body">
           <ol className="think-steps py-1">
@@ -132,14 +134,14 @@ export function Intake({ s, set, onDone, locked }: { s: IntakeState; set: SetInt
 
       {!reading && (
         <>
-          <Said id="sum" onEnd={hear} text={`这是一场 **9 分 49 秒的外部竞品直播**，${XM.attendees.length} 位发言人都是外部嘉宾，只引用原话、不推送。内容集中在**安全体系**；开场说的第二部分**电子安全**不在这段录像里。开始分发之前，跟你确认 ${QUESTIONS.length} 件事。`}>
+          <Said id="sum" onEnd={hear} text={L(`这是一场 **9 分 49 秒的外部竞品直播**，${XM.attendees.length} 位发言人都是外部嘉宾，只引用原话、不推送。内容集中在**安全体系**；开场说的第二部分**电子安全**不在这段录像里。开始分发之前，跟你确认 ${QUESTIONS.length} 件事。`, `This is a **9 min 49 s external competitor livestream**. All ${XM.attendees.length} speakers are external guests, so they’re only quoted, never notified. It focuses on the **safety system**; part two, **electronic safety**, isn’t in this recording. Before dispatching, ${QUESTIONS.length} quick questions.`)}>
             <AnalysisCard />
             {s.step === 0 && !s.quick && !locked && (
-              <button className="text-primary -mt-3 mb-5 inline-flex items-center gap-1 text-[13px] hover:underline" onClick={() => set(x => ({ ...x, step: QUESTIONS.length, phase: 'done', quick: true }))}>都按推荐来，直接开始分发 →</button>
+              <button className="text-primary -mt-3 mb-5 inline-flex items-center gap-1 text-[13px] hover:underline" onClick={() => set(x => ({ ...x, step: QUESTIONS.length, phase: 'done', quick: true }))}>{L('都按推荐来，直接开始分发 →', 'Use all the suggestions and start dispatching →')}</button>
             )}
           </Said>
           {s.quick ? (
-            <Bubble>都按推荐来</Bubble>
+            <Bubble>{L('都按推荐来', 'Use all the suggestions')}</Bubble>
           ) : heard.sum && QUESTIONS.map((k, i) => {
             if (i > s.step || (i > 0 && !heard[QUESTIONS[i - 1]])) return null
             const answered = i < s.step
@@ -160,7 +162,7 @@ export function Intake({ s, set, onDone, locked }: { s: IntakeState; set: SetInt
             )
           })}
           {s.phase === 'done' && lastHeard && (
-            <Said id="end" onEnd={hear} text={`好，信息齐了：**${projectOf(s.answers.project, custom).name}** · ${s.answers.people.length} 位候选收到者 · ${s.answers.review ? '发送前先给你看' : '确认后直接发出'}。开始编排 8 个智能体。`} />
+            <Said id="end" onEnd={hear} text={L(`好，信息齐了：**${projectOf(s.answers.project, custom).name}** · ${s.answers.people.length} 位候选收到者 · ${s.answers.review ? '发送前先给你看' : '确认后直接发出'}。开始编排 8 个智能体。`, `Got everything: **${projectOf(s.answers.project, custom).name}** · ${s.answers.people.length} candidate recipients · ${s.answers.review ? 'you review before sending' : 'sent straight after confirming'}. Starting 8 agents.`)} />
           )}
         </>
       )}
@@ -174,7 +176,7 @@ function Bubble({ children, onEdit }: { children: ReactNode; onEdit?: () => void
     <motion.div className="group mt-1 mb-6 flex items-center justify-end gap-2" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       {onEdit && (
         <button className="text-ink-3 hover:text-ink inline-flex items-center gap-1 text-[12.5px] opacity-0 transition-opacity group-hover:opacity-100" onClick={onEdit}>
-          <Pencil size={12} /> 修改
+          <Pencil size={12} /> {L('修改', 'Edit')}
         </button>
       )}
       <div className="max-w-[75%] rounded-[22px] bg-[#F4F4F4] px-[18px] py-2.5 text-[15px] leading-relaxed">{children}</div>
@@ -200,15 +202,15 @@ function Said({ id, text, onEnd, children }: { id: string; text: string; onEnd: 
 /** 看完录像的结论卡 */
 function AnalysisCard() {
   const rows: { k: string; v: ReactNode }[] = [
-    { k: '来源', v: <>小米汽车安全专场直播.mp4 · 09:49 · 竖屏 {XM.video!.width}×{XM.video!.height}</> },
-    { k: '发言人', v: <span className="inline-flex items-center gap-2"><FaceStack ids={XM.attendees} size={20} /><span className="text-ink-3 text-[12.5px]">外部嘉宾 · 只引用原话</span></span> },
-    { k: '内容', v: <>{XM.segments.length} 段发言 · {XM.chapters.length} 个章节 · 安全体系</> },
-    { k: '没覆盖', v: <span className="text-amber-700">电子安全（直播第二部分）</span> },
+    { k: L('来源', 'Source'), v: <>{L('小米汽车安全专场直播.mp4', 'xiaomi-auto-safety-livestream.mp4')} · 09:49 · {L('竖屏', 'vertical')} {XM.video!.width}×{XM.video!.height}</> },
+    { k: L('发言人', 'Speakers'), v: <span className="inline-flex items-center gap-2"><FaceStack ids={XM.attendees} size={20} /><span className="text-ink-3 text-[12.5px]">{L('外部嘉宾 · 只引用原话', 'External guests · quoted only')}</span></span> },
+    { k: L('内容', 'Content'), v: <>{L(`${XM.segments.length} 段发言 · ${XM.chapters.length} 个章节 · 安全体系`, `${XM.segments.length} segments · ${XM.chapters.length} chapters · safety system`)}</> },
+    { k: L('没覆盖', 'Missing'), v: <span className="text-amber-700">{L('电子安全（直播第二部分）', 'Electronic safety (part two of the stream)')}</span> },
   ]
   return (
     <motion.div className="mt-2 mb-6 flex gap-4 rounded-2xl border bg-[#FAFAF8] p-3.5" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
       <img src={XM.video!.poster} alt="" className="h-[104px] w-[59px] flex-none rounded-lg object-cover" draggable={false} />
-      <dl className="grid min-w-0 flex-1 grid-cols-[52px_minmax(0,1fr)] content-center gap-x-3 gap-y-1.5 text-[13px]">
+      <dl className="grid min-w-0 flex-1 grid-cols-[64px_minmax(0,1fr)] content-center gap-x-3 gap-y-1.5 text-[13px]">
         {rows.map(r => (
           <div key={r.k} className="contents">
             <dt className="text-ink-3">{r.k}</dt>
@@ -259,20 +261,20 @@ function MetaQ({ i, a, onAnswer }: { i: number; a: Answers; onAnswer: (p: Partia
   const ok = () => title.trim() && onAnswer({ title: title.trim(), date, kind })
   const enter = (e: React.KeyboardEvent) => e.key === 'Enter' && ok()
   return (
-    <Card i={i} title="会议信息" foot={<><Hint>在下面输入框直接回车 = 用识别结果</Hint><Confirm disabled={!title.trim()} onClick={ok}>没问题</Confirm></>}>
-      <div className="grid gap-3 sm:grid-cols-[minmax(0,1fr)_150px]">
-        <label className="flex flex-col gap-1"><span className="text-ink-3 text-[12px]">标题</span><Input value={title} onChange={e => setTitle(e.target.value)} onKeyDown={enter} /></label>
-        <label className="flex flex-col gap-1"><span className="text-ink-3 text-[12px]">时间</span><Input value={date} onChange={e => setDate(e.target.value)} onKeyDown={enter} /></label>
+    <Card i={i} title={L('会议信息', 'Meeting details')} foot={<><Hint>{L('在下面输入框直接回车 = 用识别结果', 'Press Enter in the box below to accept')}</Hint><Confirm disabled={!title.trim()} onClick={ok}>{L('没问题', 'Looks good')}</Confirm></>}>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-[minmax(0,1fr)_150px]">
+        <label className="flex flex-col gap-1"><span className="text-ink-3 text-[12px]">{L('标题', 'Title')}</span><Input value={title} onChange={e => setTitle(e.target.value)} onKeyDown={enter} /></label>
+        <label className="flex flex-col gap-1"><span className="text-ink-3 text-[12px]">{L('时间', 'Date')}</span><Input value={date} onChange={e => setDate(e.target.value)} onKeyDown={enter} /></label>
       </div>
       <div className="mt-3 flex flex-wrap items-center gap-1.5">
-        <span className="text-ink-3 mr-1 text-[12px]">类型</span>
+        <span className="text-ink-3 mr-1 text-[12px]">{L('类型', 'Type')}</span>
         {KINDS.map(x => (
           <button key={x} onClick={() => setKind(x)} className={cn('h-7 rounded-full border px-3 text-[12.5px] transition-colors', kind === x ? 'border-ink bg-white font-medium' : 'text-ink-2 border-transparent bg-[#F4F4F4] hover:bg-[#EDEDED]')}>{x}</button>
         ))}
       </div>
       <div className="text-ink-3 mt-3 flex items-center gap-2 text-[12.5px]">
-        <span>发布者</span><Face p={ME} size={20} /><b className="text-ink font-medium">{personById(ME).name}（你）</b>
-        <span>· 收到者看到的是“{personById(ME).name} 发来”</span>
+        <span>{L('发布者', 'Publisher')}</span><Face p={ME} size={20} /><b className="text-ink font-medium">{personById(ME).name}{L('（你）', ' (you)')}</b>
+        <span>· {L(`收到者看到的是“${personById(ME).name} 发来”`, `recipients see “from ${personById(ME).name}”`)}</span>
       </div>
     </Card>
   )
@@ -284,15 +286,15 @@ function ProjectQ({ i, a, onAnswer }: { i: number; a: Answers; onAnswer: (p: Par
   const [creating, setCreating] = useState(false)
   const list = [...PROJECTS, ...custom]
   return (
-    <Card i={i} title="放进哪个项目" foot={<><Hint>项目的 Leader 默认是发布者</Hint><Confirm onClick={() => onAnswer({ project: pick })}>放进这个项目</Confirm></>}>
-      <div className="grid gap-2 sm:grid-cols-2">
+    <Card i={i} title={L('放进哪个项目', 'Which project')} foot={<><Hint>{L('项目的 Leader 默认是发布者', 'The project leader is the default publisher')}</Hint><Confirm onClick={() => onAnswer({ project: pick })}>{L('放进这个项目', 'Use this project')}</Confirm></>}>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-2">
         {list.map(p => {
           const on = pick === p.id
           return (
             <button key={p.id} onClick={() => setPick(p.id)} className={cn('flex items-center gap-2.5 rounded-xl border p-2.5 text-left transition-colors', on ? 'border-ink bg-white shadow-[0_0_0_3px_rgba(0,0,0,.05)]' : 'hover:border-ink-4 border-[#E8E8E8]')}>
               <span className="grid size-9 flex-none place-items-center rounded-lg" style={{ background: p.soft, color: p.color }}><Kb name={p.icon} size={22} /></span>
               <span className="min-w-0 flex-1 leading-tight">
-                <span className="flex items-center gap-1.5"><b className="text-[13.5px]">{p.name}</b>{p.id === RECOMMENDED.project && <span className="bg-primary/10 text-primary rounded px-1 text-[10.5px] font-medium">推荐</span>}</span>
+                <span className="flex items-center gap-1.5"><b className="text-[13.5px]">{p.name}</b>{p.id === RECOMMENDED.project && <span className="bg-primary/10 text-primary rounded px-1 text-[10.5px] font-medium">{L('推荐', 'Suggested')}</span>}</span>
                 <small className="text-ink-3 block truncate text-[11.5px]">{p.desc} · {personById(p.leader).name}</small>
               </span>
               <span className={cn('grid size-4 flex-none place-items-center rounded-full border', on ? 'border-ink bg-ink text-white' : 'border-[#D0D0D0]')}>{on && <Check size={10} strokeWidth={3.4} />}</span>
@@ -301,7 +303,7 @@ function ProjectQ({ i, a, onAnswer }: { i: number; a: Answers; onAnswer: (p: Par
         })}
         {!creating && (
           <button onClick={() => setCreating(true)} className="text-ink-2 hover:border-ink-4 hover:text-ink flex items-center justify-center gap-1.5 rounded-xl border border-dashed p-2.5 text-[13px] transition-colors">
-            <Plus size={15} /> 新建项目
+            <Plus size={15} /> {L('新建项目', 'New project')}
           </button>
         )}
       </div>
@@ -319,7 +321,7 @@ function NewProject({ onDone }: { onDone: (id?: ProjectId) => void }) {
   const create = () => {
     if (!name.trim()) return
     const id = `p_${Date.now()}`
-    actions.addProject({ id, name: name.trim(), color, soft: `${color}14`, icon, desc: '新建项目', leader: ME, members: [ME] })
+    actions.addProject({ id, name: name.trim(), color, soft: `${color}14`, icon, desc: L('新建项目', 'New project'), leader: ME, members: [ME] })
     onDone(id)
   }
   return (
@@ -327,18 +329,18 @@ function NewProject({ onDone }: { onDone: (id?: ProjectId) => void }) {
       <div className="flex flex-col gap-2.5 p-3">
         <div className="flex items-center gap-2.5">
           <span className="grid size-9 flex-none place-items-center rounded-lg bg-white" style={{ color }}><Kb name={icon} size={22} /></span>
-          <Input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); create() } }} placeholder="项目名称，例如：电子安全专项" className="bg-white" />
+          <Input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') { e.stopPropagation(); create() } }} placeholder={L('项目名称，例如：电子安全专项', 'Project name, e.g. Electronic safety task force')} className="bg-white" />
         </div>
         <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-[12px]">
-          <span className="flex items-center gap-1.5"><span className="text-ink-3">颜色</span>
+          <span className="flex items-center gap-1.5"><span className="text-ink-3">{L('颜色', 'Color')}</span>
             {P_COLORS.map(c => <button key={c} onClick={() => setColor(c)} className={cn('size-4 rounded-full', color === c && 'ring-2 ring-offset-2')} style={{ background: c, '--tw-ring-color': c } as CSSProperties} aria-label={c} />)}
           </span>
-          <span className="flex items-center gap-0.5"><span className="text-ink-3 mr-1">图标</span>
+          <span className="flex items-center gap-0.5"><span className="text-ink-3 mr-1">{L('图标', 'Icon')}</span>
             {P_ICONS.map(k => <button key={k} onClick={() => setIcon(k)} className={cn('grid size-7 place-items-center rounded-lg', icon === k ? 'bg-white shadow-sm' : 'opacity-50 hover:opacity-100')} style={{ color }}><Kb name={k} size={17} /></button>)}
           </span>
           <span className="ml-auto flex gap-1.5">
-            <Button variant="ghost" size="sm" onClick={() => onDone()}>取消</Button>
-            <Button size="sm" disabled={!name.trim()} onClick={create}><Check /> 创建并选中</Button>
+            <Button variant="ghost" size="sm" onClick={() => onDone()}>{L('取消', 'Cancel')}</Button>
+            <Button size="sm" disabled={!name.trim()} onClick={create}><Check /> {L('创建并选中', 'Create & select')}</Button>
           </span>
         </div>
       </div>
@@ -350,7 +352,7 @@ function PeopleQ({ i, a, onAnswer }: { i: number; a: Answers; onAnswer: (p: Part
   const [people, setPeople] = useState<PersonId[]>(a.people)
   const toggle = (id: PersonId) => setPeople(ps => (ps.includes(id) ? ps.filter(x => x !== id) : [...ps, id]))
   return (
-    <Card i={i} title={`收到者候选 · ${people.length} 位`} foot={<><Hint>实线是候选，虚线点一下加进来</Hint><Confirm disabled={!people.length} onClick={() => onAnswer({ people })}>就这些人</Confirm></>}>
+    <Card i={i} title={L(`收到者候选 · ${people.length} 位`, `Candidate recipients · ${people.length}`)} foot={<><Hint>{L('实线是候选，虚线点一下加进来', 'Solid = in the list; tap a dashed one to add')}</Hint><Confirm disabled={!people.length} onClick={() => onAnswer({ people })}>{L('就这些人', 'That’s everyone')}</Confirm></>}>
       <div className="flex flex-col gap-2">
         {RANK_ORDER.map(r => (
           <div key={r} className="flex flex-wrap items-center gap-1.5">
@@ -366,9 +368,9 @@ function PeopleQ({ i, a, onAnswer }: { i: number; a: Answers; onAnswer: (p: Part
           </div>
         ))}
         <div className="flex flex-wrap items-center gap-1.5 border-t pt-2">
-          <span className="w-[76px] flex-none text-[12px] text-[#C2410C]">外部发言人</span>
+          <span className="w-[76px] flex-none text-[12px] text-[#C2410C]">{L('外部发言人', 'External speakers')}</span>
           <FaceStack ids={XM.attendees} size={22} />
-          <span className="text-ink-3 text-[12px]">自动识别，只引用原话，不推送</span>
+          <span className="text-ink-3 text-[12px]">{L('自动识别，只引用原话，不推送', 'Auto-detected · quoted only, never notified')}</span>
         </div>
       </div>
     </Card>
@@ -377,19 +379,19 @@ function PeopleQ({ i, a, onAnswer }: { i: number; a: Answers; onAnswer: (p: Part
 
 function ReviewQ({ i, a, onAnswer }: { i: number; a: Answers; onAnswer: (p: Partial<Answers>) => void }) {
   const opts = [
-    { v: true, icon: Eye, t: '先给我看一眼，再发', d: '投递官停在发送前，等你看完分发矩阵点“确认发送”', rec: true },
-    { v: false, icon: Send, t: '直接发出', d: '编排完自动投递飞书；确认、追问照样回流到账本', rec: false },
+    { v: true, icon: Eye, t: L('先给我看一眼，再发', 'Let me look first'), d: L('投递官停在发送前，等你看完分发矩阵点“确认发送”', 'The Courier stops before sending until you review the matrix and click “Confirm & send”'), rec: true },
+    { v: false, icon: Send, t: L('直接发出', 'Send right away'), d: L('编排完自动投递飞书；确认、追问照样回流到账本', 'Delivers to Lark as soon as the run ends; confirms and questions still flow back to the ledger'), rec: false },
   ]
   return (
-    <Card i={i} title="发送前">
-      <div className="grid gap-2 sm:grid-cols-2">
+    <Card i={i} title={L('发送前', 'Before sending')}>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-2 sm:grid-cols-2">
         {opts.map(o => {
           const I = o.icon
           return (
             <button key={String(o.v)} onClick={() => onAnswer({ review: o.v })} className={cn('group flex gap-3 rounded-xl border p-3 text-left transition-all hover:-translate-y-px', a.review === o.v ? 'border-ink' : 'hover:border-ink-4 border-[#E8E8E8]')}>
               <span className="text-ink-2 group-hover:text-ink mt-0.5"><I size={18} /></span>
               <span className="leading-snug">
-                <span className="flex items-center gap-1.5"><b className="text-[13.5px]">{o.t}</b>{o.rec && <span className="bg-primary/10 text-primary rounded px-1 text-[10.5px] font-medium">推荐</span>}</span>
+                <span className="flex items-center gap-1.5"><b className="text-[13.5px]">{o.t}</b>{o.rec && <span className="bg-primary/10 text-primary rounded px-1 text-[10.5px] font-medium">{L('推荐', 'Suggested')}</span>}</span>
                 <small className="text-ink-3 mt-0.5 block text-[12px]">{o.d}</small>
               </span>
             </button>

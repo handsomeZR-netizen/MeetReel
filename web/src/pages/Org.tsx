@@ -13,16 +13,17 @@ import { TopBar } from '@/components/shell/TopBar'
 import { Face, FaceStack, Kb, RankTag } from '@/components/common/bits'
 import { ViewSwitch } from '@/components/common/ViewSwitch'
 import { reelHref } from '@/components/reel/spec'
+import { L } from '@/lib/i18n'
 
 export function Org() {
   return (
     <>
-      <TopBar crumbs={[{ label: '组织与角色' }]} />
+      <TopBar crumbs={[{ label: L('组织与角色', 'Org & roles') }]} />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-[1280px] flex-col gap-7 px-6 py-6">
+        <div className="mx-auto flex max-w-[1280px] flex-col gap-7 px-6 py-6 max-md:gap-5 max-md:px-4 max-md:py-4">
           <header>
-            <h1 className="text-[24px] font-semibold tracking-tight">组织与角色</h1>
-            <p className="text-ink-3 mt-1.5 max-w-[820px] text-[13.5px]">会映按这张图判断一条信息该流向谁：<b className="text-ink-2 font-medium">关注档案</b>（负责 / 依赖 / 订阅）决定发不发，<b className="text-ink-2 font-medium">职级</b>决定简报怎么写。移到一个人上看 TA 和谁连着，点一下钉住。</p>
+            <h1 className="text-[24px] font-semibold tracking-tight">{L('组织与角色', 'Org & roles')}</h1>
+            <p className="text-ink-3 mt-1.5 max-w-[820px] text-[13.5px]">{L('会映按这张图判断一条信息该流向谁：', 'MeetReel uses this map to decide where each piece of information goes: ')}<b className="text-ink-2 font-medium">{L('关注档案', 'interest profiles')}</b>{L('（负责 / 依赖 / 订阅）决定发不发，', ' (owns / depends on / follows) decide whether to send, and ')}<b className="text-ink-2 font-medium">{L('职级', 'level')}</b>{L('决定简报怎么写。移到一个人上看 TA 和谁连着，点一下钉住。', ' decides how the brief is written. Hover a person to see their connections; click to pin.')}</p>
           </header>
           <OrgGraph />
           <Projects />
@@ -84,9 +85,9 @@ const FLOW_EDGES: Edge[] = MEETINGS.flatMap(m => {
 })
 
 const LENS: Record<Lens, { label: string; hint: string; icon: typeof Waypoints }> = {
-  flow: { label: '信息流向', icon: Waypoints, hint: '这周的会，条目从发布者流到每个收到者；线越粗条数越多' },
-  dep: { label: '依赖', icon: Link2, hint: 'A 负责的东西变了，依赖它的 B 没参会也会收到（R4）' },
-  report: { label: '汇报线', icon: Network, hint: '职级决定简报怎么写：高管看决议和风险，成员只看自己的待办' },
+  flow: { label: L('信息流向', 'Info flow'), icon: Waypoints, hint: L('这周的会，条目从发布者流到每个收到者；线越粗条数越多', 'This week’s meetings: items flow from publisher to each recipient; thicker lines mean more items') },
+  dep: { label: L('依赖', 'Dependencies'), icon: Link2, hint: L('A 负责的东西变了，依赖它的 B 没参会也会收到（R4）', 'When something A owns changes, B who depends on it gets it even without attending (R4)') },
+  report: { label: L('汇报线', 'Reporting'), icon: Network, hint: L('职级决定简报怎么写：高管看决议和风险，成员只看自己的待办', 'Level shapes the brief: executives see decisions and risks, members only their own to-dos') },
 }
 
 /** 两个人之间的线：汇报走树形，依赖从头顶拱过去，信息流从一个人中心弯到另一个人中心 */
@@ -187,11 +188,11 @@ function OrgGraph() {
         {lens === 'flow' && (
           <motion.div className="overflow-hidden" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.22 }}>
             <div className="flex flex-wrap items-center gap-1.5 px-4 pt-3">
-              <span className="text-ink-3 mr-1 text-[12px]">这周</span>
-              <MeetingChip on={!meeting} onClick={() => setMeeting(null)}>全部 {MEETINGS.length} 场</MeetingChip>
+              <span className="text-ink-3 mr-1 text-[12px]">{L('这周', 'This week')}</span>
+              <MeetingChip on={!meeting} onClick={() => setMeeting(null)}>{L(`全部 ${MEETINGS.length} 场`, `All ${MEETINGS.length}`)}</MeetingChip>
               {MEETINGS.map(m => (
                 <MeetingChip key={m.id} on={meeting === m.id} color={projectById(m.project).color} onClick={() => setMeeting(x => (x === m.id ? null : m.id))}>
-                  {short(m.title)}{!dispatched[m.id] && <span className="ml-1 text-[10.5px] text-amber-600">待分发</span>}
+                  {short(m.title)}{!dispatched[m.id] && <span className="ml-1 text-[10.5px] text-amber-600">{L('待分发', 'to send')}</span>}
                 </MeetingChip>
               ))}
             </div>
@@ -199,7 +200,7 @@ function OrgGraph() {
         )}
       </AnimatePresence>
 
-      <div className="grid lg:grid-cols-[minmax(0,1fr)_300px]">
+      <div className="grid grid-cols-[minmax(0,1fr)] lg:grid-cols-[minmax(0,1fr)_300px]">
         <div className="org-stage overflow-x-auto p-4">
           <div ref={stage} className="relative min-w-[720px] pb-2" onClick={e => { if (e.target === e.currentTarget) setPinned(null) }}>
             <svg className="pointer-events-none absolute inset-0 size-full overflow-visible" aria-hidden>
@@ -321,14 +322,14 @@ function OrgNode({ pid, state, lens, edges, className, ref, onEnter, onLeave, on
         <span className="flex items-center gap-1">
           <b className="truncate text-[13.5px]">{p.name}</b>
           <RankTag p={p} short />
-          {led.length > 0 && <span title={`${led.map(x => x.name).join('、')} 项目组 Leader`}><Crown size={12} className="flex-none text-amber-500" /></span>}
+          {led.length > 0 && <span title={L(`${led.map(x => x.name).join('、')} 项目组 Leader`, `Leader of ${led.map(x => x.name).join(', ')}`)}><Crown size={12} className="flex-none text-amber-500" /></span>}
         </span>
         <span className="text-ink-3 block truncate text-[11.5px]">{p.group ?? p.role}</span>
       </span>
       <span className="absolute -top-2 -right-1.5 flex gap-1">
-        {sentN > 0 && <span className="org-badge" style={{ background: edges.find(e => e.from === pid)!.color }} title="这周发出的条目">发 {sentN}</span>}
-        {gotN > 0 && <span className="org-badge bg-[var(--onyx)]" title={got.map(e => `${short(meetingById(e.meeting!)!.title)} ${e.n} 条`).join(' · ')}>+{gotN}</span>}
-        {reports > 0 && <span className="org-badge bg-[var(--plum)]">带 {reports}</span>}
+        {sentN > 0 && <span className="org-badge" style={{ background: edges.find(e => e.from === pid)!.color }} title={L('这周发出的条目', 'Items sent this week')}>{L('发', 'out')} {sentN}</span>}
+        {gotN > 0 && <span className="org-badge bg-[var(--onyx)]" title={got.map(e => `${short(meetingById(e.meeting!)!.title)} ${e.n}${L(' 条', '')}`).join(' · ')}>+{gotN}</span>}
+        {reports > 0 && <span className="org-badge bg-[var(--plum)]">{L('带', 'leads')} {reports}</span>}
       </span>
     </button>
   )
@@ -341,21 +342,21 @@ function Overview({ lens }: { lens: Lens }) {
   return (
     <div className="flex flex-col gap-4">
       <div>
-        <div className="flex items-center gap-2"><Kb name="route" size={22} /><b className="text-[15px]">点一个人，看 TA 和谁连着</b></div>
-        <p className="text-ink-3 mt-1.5 text-[12.5px] leading-relaxed">{LENS[lens].hint}。</p>
+        <div className="flex items-center gap-2"><Kb name="route" size={22} /><b className="text-[15px]">{L('点一个人，看 TA 和谁连着', 'Click a person to see their connections')}</b></div>
+        <p className="text-ink-3 mt-1.5 text-[12.5px] leading-relaxed">{LENS[lens].hint}{L('。', '.')}</p>
       </div>
       <div className="grid grid-cols-2 gap-2">
-        <Stat n={STAFF.length} label="位同事" />
-        <Stat n={MEETINGS.length} label="场会 · 这周" />
-        <Stat n={pushes} label="次按人推送" />
-        <Stat n={DEP_EDGES.length} label="条依赖关系" />
+        <Stat n={STAFF.length} label={L('位同事', 'colleagues')} />
+        <Stat n={MEETINGS.length} label={L('场会 · 这周', 'meetings this week')} />
+        <Stat n={pushes} label={L('次按人推送', 'per-person pushes')} />
+        <Stat n={DEP_EDGES.length} label={L('条依赖关系', 'dependencies')} />
       </div>
       <div className="sg-well rounded-2xl p-3 text-[12px] leading-relaxed">
-        <div className="text-ink-2 mb-1.5 font-medium">图例</div>
+        <div className="text-ink-2 mb-1.5 font-medium">{L('图例', 'Legend')}</div>
         <div className="flex flex-col gap-1.5">
-          <span className="flex items-center gap-2"><Line color={PLUM} />汇报：谁带谁，决定简报写给哪个职级</span>
-          <span className="flex items-center gap-2"><Line color={ROSE} />依赖：负责的东西一变，依赖的人跟着收到</span>
-          <span className="flex items-center gap-2"><span className="flex gap-0.5">{PROJECTS.map(p => <i key={p.id} className="size-2 rounded-full" style={{ background: p.color }} />)}</span>信息流：颜色是会议所属的项目</span>
+          <span className="flex items-center gap-2"><Line color={PLUM} />{L('汇报：谁带谁，决定简报写给哪个职级', 'Reporting: who leads whom, sets which level a brief is written for')}</span>
+          <span className="flex items-center gap-2"><Line color={ROSE} />{L('依赖：负责的东西一变，依赖的人跟着收到', 'Dependency: when what someone owns changes, those depending on it are told')}</span>
+          <span className="flex items-center gap-2"><span className="flex gap-0.5">{PROJECTS.map(p => <i key={p.id} className="size-2 rounded-full" style={{ background: p.color }} />)}</span>{L('信息流：颜色是会议所属的项目', 'Info flow: color = the meeting’s project')}</span>
         </div>
       </div>
       <div className="text-ink-3 flex flex-wrap gap-1.5 text-[11.5px]">
@@ -380,9 +381,9 @@ function Relations({ pid, pinned, onPerson, onMeeting, onClose }: { pid: PersonI
   const published = MEETINGS.filter(m => m.publisher === pid)
   const received = FLOW_EDGES.filter(e => e.to === pid)
   const chips = [
-    ...p.profile.owns.map(x => ({ k: '负责', x, cls: 'sg-well text-ink-2' })),
-    ...p.profile.dependsOn.map(x => ({ k: '依赖', x, cls: 'bg-rose-50/80 text-rose-700 shadow-[inset_0_0_0_1px_rgb(225_29_72/12%)]' })),
-    ...p.profile.interests.map(x => ({ k: '订阅', x, cls: 'bg-[rgb(95_62_84/8%)] text-[var(--plum)] shadow-[inset_0_0_0_1px_rgb(95_62_84/12%)]' })),
+    ...p.profile.owns.map(x => ({ k: L('负责', 'Owns'), x, cls: 'sg-well text-ink-2' })),
+    ...p.profile.dependsOn.map(x => ({ k: L('依赖', 'Depends'), x, cls: 'bg-rose-50/80 text-rose-700 shadow-[inset_0_0_0_1px_rgb(225_29_72/12%)]' })),
+    ...p.profile.interests.map(x => ({ k: L('订阅', 'Follows'), x, cls: 'bg-[rgb(95_62_84/8%)] text-[var(--plum)] shadow-[inset_0_0_0_1px_rgb(95_62_84/12%)]' })),
   ]
 
   return (
@@ -393,18 +394,18 @@ function Relations({ pid, pinned, onPerson, onMeeting, onClose }: { pid: PersonI
           <div className="flex flex-wrap items-center gap-1.5"><b className="text-[16px]">{p.name}</b><RankTag p={p} /></div>
           <div className="text-ink-3 mt-1 text-[12px]">{p.team}{p.group ? ` · ${p.group}` : ''} · {p.role}</div>
         </div>
-        {pinned ? <button className="sg-raised sg-icon-btn size-7 flex-none" onClick={onClose} aria-label="取消钉住"><X size={14} /></button> : <span className="text-ink-4 flex-none pt-1 text-[11px]">点一下钉住</span>}
+        {pinned ? <button className="sg-raised sg-icon-btn size-7 flex-none" onClick={onClose} aria-label={L('取消钉住', 'Unpin')}><X size={14} /></button> : <span className="text-ink-4 flex-none pt-1 text-[11px]">{L('点一下钉住', 'Click to pin')}</span>}
       </div>
       <div className="flex flex-wrap gap-1 text-[11px]">
         {chips.map(c => <span key={c.k + c.x} className={cn('rounded-full px-2 py-px', c.cls)}>{c.k} {c.x}</span>)}
       </div>
 
-      <Rel title="这周的信息流" color={PLUM}>
+      <Rel title={L('这周的信息流', 'This week’s info flow')} color={PLUM}>
         {published.map(m => (
           <RelRow key={m.id} onClick={() => onMeeting(m.id)}>
             <i className="size-2 flex-none rounded-full" style={{ background: projectById(m.project).color }} />
-            <span className="min-w-0 flex-1 truncate">发布「{short(m.title)}」</span>
-            <span className="text-ink-3 flex-none">→ {FLOW_EDGES.filter(e => e.meeting === m.id).length} 人 · {m.items.length} 条</span>
+            <span className="min-w-0 flex-1 truncate">{L(`发布「${short(m.title)}」`, `Published “${short(m.title)}”`)}</span>
+            <span className="text-ink-3 flex-none">→ {L(`${FLOW_EDGES.filter(e => e.meeting === m.id).length} 人 · ${m.items.length} 条`, `${FLOW_EDGES.filter(e => e.meeting === m.id).length} people · ${m.items.length} items`)}</span>
           </RelRow>
         ))}
         {received.map(e => {
@@ -412,49 +413,49 @@ function Relations({ pid, pinned, onPerson, onMeeting, onClose }: { pid: PersonI
           return (
             <RelRow key={e.id} onClick={() => onPerson(e.from)}>
               <Face p={e.from} size={20} />
-              <span className="min-w-0 flex-1 truncate">{personById(e.from).name} ·「{short(m.title)}」</span>
-              <span className="flex-none font-medium" style={{ color: e.color }}>+{e.n} 条</span>
+              <span className="min-w-0 flex-1 truncate">{personById(e.from).name} · {L(`「${short(m.title)}」`, `“${short(m.title)}”`)}</span>
+              <span className="flex-none font-medium" style={{ color: e.color }}>+{e.n}{L(' 条', '')}</span>
             </RelRow>
           )
         })}
-        {!published.length && !received.length && <Empty>这周没有流到 TA 的条目，不打扰</Empty>}
+        {!published.length && !received.length && <Empty>{L('这周没有流到 TA 的条目，不打扰', 'Nothing flowed to them this week — no pings')}</Empty>}
       </Rel>
 
-      <Rel title="依赖" color={ROSE}>
+      <Rel title={L('依赖', 'Dependencies')} color={ROSE}>
         {relyOn.map(e => (
           <RelRow key={e.id} onClick={() => onPerson(e.from)}>
             <Face p={e.from} size={20} />
-            <span className="min-w-0 flex-1 truncate">依赖 {personById(e.from).name} 负责的「{e.label}」</span>
+            <span className="min-w-0 flex-1 truncate">{L(`依赖 ${personById(e.from).name} 负责的「${e.label}」`, `Depends on “${e.label}”, owned by ${personById(e.from).name}`)}</span>
           </RelRow>
         ))}
         {reliedBy.map(e => (
           <RelRow key={e.id} onClick={() => onPerson(e.to)}>
             <Face p={e.to} size={20} />
-            <span className="min-w-0 flex-1 truncate">{personById(e.to).name} 依赖 TA 的「{e.label}」</span>
+            <span className="min-w-0 flex-1 truncate">{L(`${personById(e.to).name} 依赖 TA 的「${e.label}」`, `${personById(e.to).name} depends on their “${e.label}”`)}</span>
           </RelRow>
         ))}
-        {orphans.map(o => <Empty key={o.thing}>依赖「{o.thing}」，还没有人在档案里认领</Empty>)}
-        {!relyOn.length && !reliedBy.length && !orphans.length && <Empty>没有跨人的依赖</Empty>}
+        {orphans.map(o => <Empty key={o.thing}>{L(`依赖「${o.thing}」，还没有人在档案里认领`, `Depends on “${o.thing}”, which nobody has claimed yet`)}</Empty>)}
+        {!relyOn.length && !reliedBy.length && !orphans.length && <Empty>{L('没有跨人的依赖', 'No cross-person dependencies')}</Empty>}
       </Rel>
 
-      <Rel title="汇报线" color={PLUM}>
+      <Rel title={L('汇报线', 'Reporting')} color={PLUM}>
         {boss && (
           <RelRow onClick={() => onPerson(boss.id)}>
-            <Face p={boss} size={20} /><span className="min-w-0 flex-1 truncate">汇报给 {boss.name}</span><RankTag p={boss} short />
+            <Face p={boss} size={20} /><span className="min-w-0 flex-1 truncate">{L('汇报给', 'Reports to')} {boss.name}</span><RankTag p={boss} short />
           </RelRow>
         )}
         {team.length > 0 && (
           <div className="flex flex-wrap items-center gap-1.5 px-1 py-1 text-[12px]">
-            <span className="text-ink-3">带</span>
+            <span className="text-ink-3">{L('带', 'Leads')}</span>
             {team.map(x => <button key={x.id} onClick={() => onPerson(x.id)} className="sg-raised flex items-center gap-1 rounded-full py-0.5 pr-2 pl-0.5 hover:-translate-y-px"><Face p={x} size={18} />{x.name}</button>)}
           </div>
         )}
-        <p className="text-ink-3 px-1 text-[11.5px]">简报写法：{RANKS[p.rank].brief}</p>
+        <p className="text-ink-3 px-1 text-[11.5px]">{L('简报写法：', 'Brief style: ')}{RANKS[p.rank].brief}</p>
       </Rel>
 
       <div className="flex flex-wrap gap-2 pt-1">
-        <a href={href('/', { as: pid })} className="sg-raised inline-flex h-8 items-center rounded-full px-3 text-[12px] font-medium hover:-translate-y-px">以 TA 的身份看</a>
-        <a href={reelHref(pid)} className="sg-onyx inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium hover:-translate-y-px"><SquarePlay size={13} />TA 的 30 秒</a>
+        <a href={href('/', { as: pid })} className="sg-raised inline-flex h-8 items-center rounded-full px-3 text-[12px] font-medium hover:-translate-y-px">{L('以 TA 的身份看', 'View as them')}</a>
+        <a href={reelHref(pid)} className="sg-onyx inline-flex h-8 items-center gap-1.5 rounded-full px-3 text-[12px] font-medium hover:-translate-y-px"><SquarePlay size={13} />{L('TA 的 30 秒', 'Their 30 s')}</a>
       </div>
     </div>
   )
@@ -479,14 +480,14 @@ const Empty = ({ children }: { children: ReactNode }) => <p className="text-ink-
 function Projects() {
   return (
     <section>
-      <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">项目组</h2><span className="text-ink-3 text-[12.5px]">项目 Leader 默认是这个项目里会议的发布者</span></div>
+      <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">{L('项目组', 'Projects')}</h2><span className="text-ink-3 text-[12.5px]">{L('项目 Leader 默认是这个项目里会议的发布者', 'The project leader publishes the project’s meetings by default')}</span></div>
       <div className="sg-card overflow-hidden rounded-[20px]">
         {PROJECTS.map(p => (
           <div key={p.id} className="pc-row flex flex-wrap items-center gap-4 px-4 py-3">
             <span className="flex w-[180px] items-center gap-2" style={{ color: p.color }}><Kb name={p.icon} size={24} /><b className="text-ink text-[14px]">{p.name}</b></span>
             <span className="flex items-center gap-2 text-[13px]"><Crown size={14} className="text-amber-600" /><Face p={p.leader} size={24} /><b className="font-medium">{personById(p.leader).name}</b><RankTag p={p.leader} /></span>
-            <span className="text-ink-3 ml-auto flex items-center gap-2 text-[12.5px]">{p.members.length} 位成员<FaceStack ids={p.members.filter(x => x !== p.leader)} size={22} max={8} /></span>
-            <span className="text-ink-3 w-full text-[12px] sm:w-auto">{MEETINGS.filter(m => m.project === p.id).length} 场会</span>
+            <span className="text-ink-3 ml-auto flex items-center gap-2 text-[12.5px]">{L(`${p.members.length} 位成员`, `${p.members.length} members`)}<FaceStack ids={p.members.filter(x => x !== p.leader)} size={22} max={8} /></span>
+            <span className="text-ink-3 w-full text-[12px] sm:w-auto">{L(`${MEETINGS.filter(m => m.project === p.id).length} 场会`, `${MEETINGS.filter(m => m.project === p.id).length} meetings`)}</span>
           </div>
         ))}
       </div>
@@ -498,13 +499,13 @@ function Guests() {
   const guests: Person[] = PEOPLE.filter(x => x.external)
   return (
     <section>
-      <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">外部发言人</h2><span className="text-ink-3 text-[12.5px]">发布会、直播里的人：只引用原话，不推送、不派任务，身份只记录直播里自己说的或被介绍的</span></div>
+      <div className="mb-3 flex items-baseline gap-2"><h2 className="text-[16px] font-semibold">{L('外部发言人', 'External speakers')}</h2><span className="text-ink-3 text-[12.5px]">{L('发布会、直播里的人：只引用原话，不推送、不派任务，身份只记录直播里自己说的或被介绍的', 'People from launches and livestreams: quoted only, never notified or assigned; identities are only what they said or were introduced as on stream')}</span></div>
       <div className="flex flex-wrap gap-2">
         {guests.map(x => (
           <span key={x.id} className="sg-well flex items-center gap-2 rounded-full py-1.5 pr-3.5 pl-1.5 text-[13px]"><Face p={x} size={26} /><b className="font-medium">{x.name}</b><span className="text-ink-3 text-[12px]">{x.role}</span></span>
         ))}
       </div>
-      <p className="text-ink-3 mt-4 text-[12px]">共 {STAFF.length} 位同事。每个人可以在自己的简报里改订阅，改动会回到这里。</p>
+      <p className="text-ink-3 mt-4 text-[12px]">{L(`共 ${STAFF.length} 位同事。每个人可以在自己的简报里改订阅，改动会回到这里。`, `${STAFF.length} colleagues. Anyone can change what they follow from their own brief, and it flows back here.`)}</p>
     </section>
   )
 }

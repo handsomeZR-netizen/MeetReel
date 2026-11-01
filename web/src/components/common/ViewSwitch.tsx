@@ -18,15 +18,15 @@ export interface ViewItem {
 export function ViewSwitch({ id, items, value, className }: { id: string; items: ViewItem[]; value: string; className?: string }) {
   return (
     <nav className={cn('flex flex-wrap items-center gap-x-4 gap-y-2', className)}>
-      <div className="sg-well flex rounded-[16px] p-1">
+      <div className="sg-well flex max-w-full rounded-[16px] p-1">
         {items.map(t => {
           const on = value === t.k
           const I = t.icon
-          const cls = cn('relative flex h-10 items-center gap-2 rounded-[12px] pr-4 pl-3.5 text-[14.5px] transition-colors', on ? 'text-ink font-semibold' : 'text-ink-3 hover:text-ink-2')
+          const cls = cn('relative flex h-10 items-center gap-2 rounded-[12px] pr-4 pl-3.5 text-[14.5px] whitespace-nowrap transition-colors max-md:h-9 max-md:gap-1.5 max-md:pr-3 max-md:pl-2.5 max-md:text-[13.5px]', on ? 'text-ink font-semibold' : 'text-ink-3 hover:text-ink-2')
           const inner = (
             <>
               {on && <motion.span layoutId={id} className="sg-raised absolute inset-0 rounded-[12px]" transition={{ type: 'spring', stiffness: 520, damping: 38 }} />}
-              <I size={17} strokeWidth={on ? 2.2 : 1.9} className={cn('relative', on && 'text-[var(--plum)]')} />
+              <I size={17} strokeWidth={on ? 2.2 : 1.9} className={cn('relative', on && 'text-[var(--plum)]', items.length > 2 && 'max-md:hidden')} />
               <span className="relative">{t.label}</span>
               {t.badge}
             </>

@@ -2,7 +2,8 @@
 // 会上说的截止日期是口语（“11/7”“直播后”“下次周会”“11 月经营会”），这里统一翻成日历能定位的日期；
 // 状态和编号也在这里定义：待确认 → 待办 → 进行中 → 已完成，和 Linear 一样一个条目只有一种状态。
 
-import type { PersonId } from './model'
+import { term, type PersonId } from './model'
+import { L, isEn } from '@/lib/i18n'
 import { ALL_ITEMS, MEETINGS, type Item, type Meeting } from './meetings'
 import { RUN_ID } from './run'
 
@@ -35,10 +36,10 @@ export const md = (iso: string) => `${Number(iso.slice(5, 7))}/${Number(iso.slic
 export type TodoStatus = 'triage' | 'todo' | 'doing' | 'done'
 
 export const STATUS: Record<TodoStatus, { label: string; color: string }> = {
-  triage: { label: '待确认', color: '#D97706' },
-  todo: { label: '待办', color: '#8A8F98' },
-  doing: { label: '进行中', color: '#2F64F2' },
-  done: { label: '已完成', color: '#16A34A' },
+  triage: { label: L('待确认', 'Triage'), color: '#D97706' },
+  todo: { label: L('待办', 'To do'), color: '#8A8F98' },
+  doing: { label: L('进行中', 'In progress'), color: '#2F64F2' },
+  done: { label: L('已完成', 'Done'), color: '#16A34A' },
 }
 
 /** 下一个状态：待确认 → 待办 → 进行中 → 已完成 → 回到待办 */
@@ -67,26 +68,29 @@ const meetingOfItem = (it: Item) => MEETINGS.find(m => m.id === it.meeting)!
 export function resolveDue(it: Item, override?: string): Due {
   if (override) return { kind: 'date', date: override, label: md(override) }
   const raw = it.due
-  if (!raw) return { kind: 'none', label: it.flags?.includes('缺截止') ? '缺截止' : '未定' }
+  if (!raw) return { kind: 'none', label: it.flags?.includes(term('缺截止')) ? term('缺截止') : L('未定', 'TBD') }
   const exact = raw.match(/^(\d{1,2})\/(\d{1,2})$/)
   if (exact) return { kind: 'date', date: `2026-${exact[1].padStart(2, '0')}-${exact[2].padStart(2, '0')}`, label: raw }
-  if (raw === '直播后') {
+  if (raw === term('直播后')) {
     const live = MEETINGS.find(m => m.id === RUN_ID)!
-    return { kind: 'date', date: live.date, label: '直播后', follows: '跟随竞品直播' }
+    return { kind: 'date', date: live.date, label: raw, follows: L('跟随竞品直播', 'Follows the competitor livestream') }
   }
-  if (raw === '下次周会') {
+  if (raw === term('下次周会')) {
     const m = meetingOfItem(it)
-    return { kind: 'date', date: addDays(m.date, 7), label: '下次周会', follows: `${m.kind}每周一次` }
+    return { kind: 'date', date: addDays(m.date, 7), label: raw, follows: L(`${m.kind}每周一次`, `${m.kind} meeting, every week`) }
   }
-  const month = raw.match(/^(\d{1,2}) 月/)
-  if (month) return { kind: 'milestone', month: `2026-${month[1].padStart(2, '0')}`, label: raw }
+  const month = isEn ? raw.match(/^(Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)\b/) : raw.match(/^(\d{1,2}) 月/)
+  if (month) {
+    const n = isEn ? 'JanFebMarAprMayJunJulAugSepOctNovDec'.indexOf(month[1]) / 3 + 1 : Number(month[1])
+    return { kind: 'milestone', month: `2026-${String(n).padStart(2, '0')}`, label: raw }
+  }
   return { kind: 'none', label: raw }
 }
 
 /** AI 给缺截止的待办建议的日期，附依据；接受后写进日历 */
 export const SUGGEST: Record<string, { date: string; why: string }> = {
-  ow_06: { date: '2026-11-05', why: '门店话术卡 11/5 前要印到门店，口径得先统一' },
-  ow_03: { date: '2026-11-10', why: '积分方案 11/10 定稿后，培训课才好接' },
+  ow_06: { date: '2026-11-05', why: L('门店话术卡 11/5 前要印到门店，口径得先统一', 'The store talk-track card goes to print by 11/5, so the messaging has to be settled first') },
+  ow_03: { date: '2026-11-10', why: L('积分方案 11/10 定稿后，培训课才好接', 'Training can build on the points plan once it’s final on 11/10') },
 }
 
 // ---------- 日历上的条目 ----------

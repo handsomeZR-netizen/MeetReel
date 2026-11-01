@@ -12,6 +12,7 @@ import {
 } from '@/data/run'
 import type { Clock } from '@/lib/useClock'
 import { ModelIcon } from '@/components/common/bits'
+import { L } from '@/lib/i18n'
 
 const LANE_H = 50
 const TOP = 6
@@ -19,7 +20,10 @@ const BAR_H = 22
 const AXIS_H = 34
 const R = 8
 
-const KIND_LABEL: Record<SpanKind, string> = { think: '思考', tool: '工具调用', wait: '等待', fail: '失败', retry: '重试' }
+const KIND_LABEL: Record<SpanKind, string> = L(
+  { think: '思考', tool: '工具调用', wait: '等待', fail: '失败', retry: '重试' },
+  { think: 'Thinking', tool: 'Tool call', wait: 'Waiting', fail: 'Failed', retry: 'Retry' },
+)
 
 const LANE = Object.fromEntries(AGENTS.map((a, i) => [a.id, i])) as Record<string, number>
 const laneY = (i: number) => TOP + i * LANE_H + LANE_H / 2
@@ -58,11 +62,11 @@ export function AgentTimeline({ clock, models, gated }: Props) {
     clock.seek(((e.clientX - r.left - 4) / span) * AXIS_MAX)
   }
   const hovered = hover != null ? SPANS[hover] : null
-  const status = done ? '已完成' : gated ? '等待确认' : clock.playing ? '运行中' : t > 0 ? '已暂停' : '就绪'
+  const status = done ? L('已完成', 'Done') : gated ? L('等待确认', 'Awaiting approval') : clock.playing ? L('运行中', 'Running') : t > 0 ? L('已暂停', 'Paused') : L('就绪', 'Ready')
 
   return (
     <section className="tld">
-      <div className="tld-title">{RUN_MEETING.title} · 多智能体编排</div>
+      <div className="tld-title">{RUN_MEETING.title} · {L('多智能体编排', 'Multi-agent run')}</div>
       <div className="tld-sub">
         {status} · <b>{Math.min(t, T_END).toFixed(1)}s</b> · <b>{tokens.toLocaleString()}</b> tokens · {costText(t, models)}
       </div>
@@ -212,7 +216,7 @@ export function AgentTimeline({ clock, models, gated }: Props) {
                 <div className="t">{hovered.title}</div>
                 <div className="m">
                   {KIND_LABEL[hovered.kind]} · {(hovered.end - hovered.start).toFixed(1)}s
-                  {hovered.tokens ? ` · ${hovered.tokens.toLocaleString()} tokens` : hovered.kind === 'tool' ? ' · 规则 / 代码' : ''}
+                  {hovered.tokens ? ` · ${hovered.tokens.toLocaleString()} tokens` : hovered.kind === 'tool' ? L(' · 规则 / 代码', ' · rules / code') : ''}
                 </div>
                 {hovered.note && <div className="n"><CornerDownRight size={13} className="mt-0.5 flex-none" /> {hovered.note}</div>}
               </motion.div>
@@ -223,10 +227,10 @@ export function AgentTimeline({ clock, models, gated }: Props) {
 
       <div className="tld-foot">
         <div className="tld-ctl">
-          <button className="tld-btn" onClick={clock.toggle} aria-label={clock.playing ? '暂停' : '播放'}>
+          <button className="tld-btn" onClick={clock.toggle} aria-label={clock.playing ? L('暂停', 'Pause') : L('播放', 'Play')}>
             <MorphIcon icon={clock.playing ? Pause : Play} size={16} strokeWidth={2.4} />
           </button>
-          <button className="tld-icon" onClick={clock.restart} aria-label="重放"><RotateCcw size={17} /></button>
+          <button className="tld-icon" onClick={clock.restart} aria-label={L('重放', 'Replay')}><RotateCcw size={17} /></button>
           <div className="tld-speed">
             {[1, 2].map(s => (
               <button key={s} className={clock.speed === s ? 'on' : ''} onClick={() => clock.setSpeed(s)}>
@@ -237,11 +241,11 @@ export function AgentTimeline({ clock, models, gated }: Props) {
           </div>
         </div>
         <div className="tld-legend">
-          <span><i className="lg" style={{ background: '#3B3B4A' }} />思考</span>
-          <span><i className="lg" style={{ background: '#C7D2FE' }} />工具调用</span>
-          <span><i className="lg" style={{ background: 'repeating-linear-gradient(45deg,#1F1F1F 0 2px,#3A3A3A 2px 4px)', border: '1px solid #333' }} />等待</span>
-          <span><CornerDownRight size={14} />交接</span>
-          <span><i className="grid size-[15px] place-items-center rounded-full border border-[#F87171] text-[#F87171]"><X size={9} strokeWidth={3} /></i>失败</span>
+          <span><i className="lg" style={{ background: '#3B3B4A' }} />{KIND_LABEL.think}</span>
+          <span><i className="lg" style={{ background: '#C7D2FE' }} />{KIND_LABEL.tool}</span>
+          <span><i className="lg" style={{ background: 'repeating-linear-gradient(45deg,#1F1F1F 0 2px,#3A3A3A 2px 4px)', border: '1px solid #333' }} />{KIND_LABEL.wait}</span>
+          <span><CornerDownRight size={14} />{L('交接', 'Handoff')}</span>
+          <span><i className="grid size-[15px] place-items-center rounded-full border border-[#F87171] text-[#F87171]"><X size={9} strokeWidth={3} /></i>{KIND_LABEL.fail}</span>
         </div>
       </div>
     </section>

@@ -8,6 +8,13 @@ npm run build
 
 全部是 mock 数据，刷新页面回到初始状态（侧栏底部头像菜单里也能“重置演示数据”）。
 
+**中英文**：顶栏右上角“EN / 中文”切换（存在 localStorage，切换会刷新页面、演示数据回到初始）；链接带 `?lang=en` 直接打开英文版，例如 `#/?lang=en`。
+文案就近写成 `L('中文', 'English')`（`src/lib/i18n.ts`）；话题、负责范围这类要互相匹配的词统一走 `term()`（`data/model.ts`）；主案例直播的英文转写和简报在 `data/xm-en.ts`。
+
+**手机**：小于 768px 时侧栏收进左上角菜单的抽屉，录像页上下叠放，智能分发的画布盖在对话上。
+
+**部署**：`bash web/scripts/deploy.sh` 把当前分支已提交的 HEAD 发布到 https://120.26.94.180/sukesong/（同机还有别的项目，脚本只换 `/opt/sukesong/current`，不动 nginx）。
+
 ## 页面
 
 | 地址 | 页面 | 看点 |

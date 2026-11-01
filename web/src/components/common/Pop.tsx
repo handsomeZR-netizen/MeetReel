@@ -5,6 +5,7 @@ import { AnimatePresence, motion } from 'motion/react'
 import { Dialog } from 'radix-ui'
 import { ChevronDown, X } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { L } from '@/lib/i18n'
 
 export function Pop({ label, active, onClear, align = 'left', width = 260, title, triggerClassName, panelClassName, children }: {
   label: ReactNode
@@ -36,7 +37,7 @@ export function Pop({ label, active, onClear, align = 'left', width = 260, title
           {!(active && onClear) && <ChevronDown size={14} className={cn('flex-none opacity-60 transition-transform', open && 'rotate-180')} />}
         </button>
         {active && onClear && (
-          <button className="grid size-6 flex-none place-items-center rounded-full opacity-70 hover:bg-white/15 hover:opacity-100" onClick={onClear} aria-label="清除">
+          <button className="grid size-6 flex-none place-items-center rounded-full opacity-70 hover:bg-white/15 hover:opacity-100" onClick={onClear} aria-label={L('清除', 'Clear')}>
             <X size={13} />
           </button>
         )}
@@ -99,5 +100,5 @@ export function Modal({ open, onClose, label, className, children }: { open: boo
 }
 
 export const ModalClose = ({ className }: { className?: string }) => (
-  <Dialog.Close className={cn('sg-raised sg-icon-btn size-8 flex-none', className)} aria-label="关闭"><X size={15} /></Dialog.Close>
+  <Dialog.Close className={cn('sg-raised sg-icon-btn size-8 flex-none', className)} aria-label={L('关闭', 'Close')}><X size={15} /></Dialog.Close>
 )

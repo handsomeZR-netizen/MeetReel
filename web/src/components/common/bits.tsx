@@ -7,6 +7,7 @@ import { mmss, quoteSpan } from '@/data/derive'
 import { goSource } from '@/lib/router'
 import { cn } from '@/lib/utils'
 import { KOBOYO, type KoboyoName } from '@/components/sketch/koboyoData'
+import { L } from '@/lib/i18n'
 
 // 模型图标：Lobe Icons 的静态 SVG（见 assets/models/SOURCE.md），按文件名对应模型
 const ICON_FILES = import.meta.glob<string>('../../assets/models/*.svg', { eager: true, import: 'default' })
@@ -25,7 +26,7 @@ export function Face({ p, size = 28, muted, className, ring, title }: { p: Perso
   const person = typeof p === 'string' ? personById(p) : p
   const src = `${import.meta.env.BASE_URL}assets/generated/${person.id}.${person.id === 'jiangwan' ? 'png' : 'webp'}`
   const [failedSrc, setFailedSrc] = useState<string | null>(null)
-  const avatarLabel = `${person.name}${person.external ? '（AI 示意头像，非本人照片）' : ''}`
+  const avatarLabel = `${person.name}${person.external ? L('（AI 示意头像，非本人照片）', ' (AI illustration, not a real photo)') : ''}`
   return (
     <span
       className={cn('inline-grid flex-none place-items-center rounded-full leading-none font-semibold select-none', className)}
@@ -34,7 +35,7 @@ export function Face({ p, size = 28, muted, className, ring, title }: { p: Perso
         background: muted ? '#EDEDED' : person.bg, color: muted ? '#9B9B9B' : person.fg,
         boxShadow: ring ? `0 0 0 2px #fff, 0 0 0 3.5px ${ring}` : undefined,
       }}
-      title={`${title ?? `${person.name} · ${person.role}`}${person.external ? ' · AI 示意头像，非本人照片' : ''}`}
+      title={`${title ?? `${person.name} · ${person.role}`}${person.external ? L(' · AI 示意头像，非本人照片', ' · AI illustration, not a real photo') : ''}`}
     >
       {failedSrc !== src ? <img src={src} alt={avatarLabel} decoding="async" onError={() => setFailedSrc(src)} className="size-full rounded-[inherit] object-cover" style={{ filter: muted ? 'grayscale(1)' : undefined }} /> : person.short}
     </span>
@@ -71,7 +72,7 @@ export function LeaderTag({ pid, className }: { pid: PersonId; className?: strin
   const led = PROJECTS.filter(x => x.leader === pid)
   if (!led.length) return null
   return (
-    <span className={cn('inline-flex flex-none items-center gap-1 rounded-md bg-amber-50 px-1.5 text-[11px] leading-[18px] font-medium whitespace-nowrap text-amber-700', className)} title={`${led.map(x => x.name).join('、')} 项目组 Leader`}>
+    <span className={cn('inline-flex flex-none items-center gap-1 rounded-md bg-amber-50 px-1.5 text-[11px] leading-[18px] font-medium whitespace-nowrap text-amber-700', className)} title={L(`${led.map(x => x.name).join('、')} 项目组 Leader`, `Leader of ${led.map(x => x.name).join(', ')}`)}>
       <Crown size={11} strokeWidth={2.4} />{led.map(x => x.name).join(' · ')} Leader
     </span>
   )
@@ -96,7 +97,7 @@ export function TypePill({ item, type, className }: { item?: Item; type?: Item['
   return <span className={cn('type-pill', className)} style={{ '--c': c.color, '--soft': c.soft } as CSSProperties}>{c.label}</span>
 }
 
-export const LockMark = ({ size = 12 }: { size?: number }) => <Lock size={size} className="flex-none text-rose-600" aria-label="受限" />
+export const LockMark = ({ size = 12 }: { size?: number }) => <Lock size={size} className="flex-none text-rose-600" aria-label={L('受限', 'Restricted')} />
 
 /** 模型图标（Lobe Icons，见 assets/models/SOURCE.md）；非模型的用 lucide 图标 */
 export function ModelIcon({ icon, size = 14, className }: { icon: IconKey; size?: number; className?: string }) {
@@ -143,7 +144,7 @@ export function SourceChip({ item, className, children, onGo }: { item: Item; cl
         onGo?.()
         goSource(item.meeting, Math.max(0, t0 - 0.4), item.id)
       }}
-      title="回到录像里的这一秒"
+      title={L('回到录像里的这一秒', 'Jump to this moment in the recording')}
     >
       <span className="bg-primary grid size-5 flex-none place-items-center rounded-full text-white transition-transform group-hover:scale-110"><Play size={9} fill="currentColor" /></span>
       <span className="text-ink-2 truncate">{children ?? `“${item.quote}”`}</span>

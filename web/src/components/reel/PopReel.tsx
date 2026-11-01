@@ -3,6 +3,7 @@
 import type { CSSProperties, ReactNode } from 'react'
 import { ACT, beatWindow, tc, weekdayShort, type ReelSpec } from './spec'
 import { FONT, Layer, PaperGrain, actLife, avatarSrc, clamp, count, ease, lerp, life, prog, rnd } from './kit'
+import { L, monthName } from '@/lib/i18n'
 
 const INK = '#151515'
 const BLUE = '#2D6BE0'
@@ -88,15 +89,15 @@ function Intro({ s, t }: { s: ReelSpec; t: number }) {
         {STARS.map(([x, y], i) => <Star key={i} x={x - 22} y={y - 22} s={0.5 + 0.4 * Math.abs(Math.sin(t * 2 + i))} />)}
         <Moon cx={880} cy={360} r={220} t={t} o={clamp(prog(t, 0, 0.4))} />
       </div>
-      <Caption x={58} y={52} size={30} rot={-1} o={clamp(prog(t, 0.05, 0.3))}>与此同时，在小米的直播间里……</Caption>
+      <Caption x={58} y={52} size={30} rot={-1} o={clamp(prog(t, 0.05, 0.3))}>{L('与此同时，在小米的直播间里……', 'Meanwhile, in Xiaomi’s livestream…')}</Caption>
       <div style={{ position: 'absolute', left: 92, top: 180, transform: `scale(${pop}) rotate(${-6 + Math.sin(t * 3) * 1.2}deg) skewX(-6deg)`, transformOrigin: '20% 60%' }}>
-        <div style={{ fontSize: 96, color: '#fff', ...LETTER(4, 6) }}>{s.person.name}的</div>
-        <div style={{ fontSize: 196, lineHeight: 1, color: YEL, ...LETTER(7, 0), textShadow: `8px 8px 0 ${RED}, 15px 15px 0 ${INK}` }}>30 秒！</div>
+        <div style={{ fontSize: 96, color: '#fff', ...LETTER(4, 6) }}>{L(`${s.person.name}的`, `${s.person.name}’s`)}</div>
+        <div style={{ fontSize: 196, lineHeight: 1, color: YEL, ...LETTER(7, 0), textShadow: `8px 8px 0 ${RED}, 15px 15px 0 ${INK}` }}>{L('30 秒！', '30 SEC!')}</div>
       </div>
       <Burst x={700} y={150} r={70} fill={RED} scale={ease.back(prog(t, 1.2, 1.6))} rot={-10} seed={3}>
-        <span style={{ fontSize: 44, color: '#fff', ...LETTER(3, 3) }}>叮！</span>
+        <span style={{ fontSize: 44, color: '#fff', ...LETTER(3, 3) }}>{L('叮！', 'DING!')}</span>
       </Burst>
-      <Caption x={790} y={628} bg="#fff" size={24} rot={1.5} o={ease.out(prog(t, 1.4, 1.9))}>会映替你看完了 {Math.floor(m.duration / 60)} 分 {m.duration % 60} 秒</Caption>
+      <Caption x={790} y={628} bg="#fff" size={24} rot={1.5} o={ease.out(prog(t, 1.4, 1.9))}>{L(`会映替你看完了 ${Math.floor(m.duration / 60)} 分 ${m.duration % 60} 秒`, `MeetReel watched all ${Math.floor(m.duration / 60)} min ${m.duration % 60} s for you`)}</Caption>
     </Layer>
   )
 }
@@ -109,7 +110,7 @@ function Filter({ s, t }: { s: ReelSpec; t: number }) {
   const n = s.kept.length
   const cx = 640, cy = 378, R = 256
   const phase = t < A + 1.5 ? 0 : t < A + 3.0 ? 1 : 2
-  const cap = phase === 0 ? `这场直播，一共 ${s.total} 条……` : phase === 1 ? '跟你有关的？' : n ? `只有 ${n} 条！` : '一条都没有！'
+  const cap = phase === 0 ? L(`这场直播，一共 ${s.total} 条……`, `This stream: ${s.total} items in all…`) : phase === 1 ? L('跟你有关的？', 'And yours?') : n ? L(`只有 ${n} 条！`, `Just ${n}!`) : L('一条都没有！', 'Not one!')
   const sfx = ease.back(prog(t, A + 1.6, A + 2.0)) * (1 - prog(t, A + 2.8, A + 3.1))
   const lab = ease.back(prog(t, A + 3.5, A + 4.0))
   let k = 0
@@ -165,11 +166,11 @@ function Filter({ s, t }: { s: ReelSpec; t: number }) {
           <Moon cx={cx} cy={cy} r={170} t={t} />
           <div style={{ position: 'absolute', left: cx - 170, top: cy - 104, width: 340, textAlign: 'center' }}>
             <div style={{ fontSize: 150, lineHeight: 1, color: INK }}>{count(t, A + 1.6, A + 3.0, s.total, n)}</div>
-            <div style={{ fontSize: 34, marginTop: 2 }}>条</div>
+            <div style={{ fontSize: 34, marginTop: 2 }}>{L('条', 'items')}</div>
           </div>
           <svg width={1280} height={720} style={{ position: 'absolute', inset: 0, overflow: 'visible' }}>{lines}</svg>
           {tokens}
-          {sfx > 0.01 && <div style={{ position: 'absolute', right: 70, top: 120, fontSize: 130, color: '#fff', ...LETTER(6, 8), transform: `rotate(-14deg) skewX(-10deg) scale(${sfx})` }}>嗖——！</div>}
+          {sfx > 0.01 && <div style={{ position: 'absolute', right: 70, top: 120, fontSize: 130, color: '#fff', ...LETTER(6, 8), transform: `rotate(-14deg) skewX(-10deg) scale(${sfx})` }}>{L('嗖——！', 'WHOOSH!')}</div>}
         </div>
       </div>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 46, display: 'flex', justifyContent: 'center' }}>
@@ -192,7 +193,7 @@ function Items({ s, t }: { s: ReelSpec; t: number }) {
       <Layer o={life(t, A, B, 0.25, 0.4)}>
         <div style={{ position: 'absolute', inset: 22, ...LINE(6), background: dots(YEL, 'rgb(239 75 63 / 22%)', 18, 3.5) }} />
         <Burst x={640} y={360} r={230} fill="#fff" seed={9} spikes={18} scale={ease.back(prog(t, A, A + 0.5))}>
-          <span style={{ fontSize: 60, lineHeight: 1.3 }}>这一话，<br />没你的戏份！</span>
+          <span style={{ fontSize: 60, lineHeight: 1.3 }}>{L('这一话，', 'This episode:')}<br />{L('没你的戏份！', 'you’re not in it!')}</span>
         </Burst>
       </Layer>
     )
@@ -223,8 +224,8 @@ function Items({ s, t }: { s: ReelSpec; t: number }) {
               <div style={{ position: 'absolute', left: 80, top: 400, width: 240, height: 240, borderRadius: '50%', overflow: 'hidden', ...LINE(6), ...HARD(8), background: '#fff' }}>
                 <img src={avatarSrc(b.speaker.id)} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover', filter: 'contrast(1.1) saturate(1.15)' }} />
               </div>
-              <Caption x={330} y={560} size={30} rot={-2}>{b.speaker.name}说</Caption>
-              <Caption x={330} y={620} bg="#fff" size={17} style={{ fontFamily: FONT.sans, fontWeight: 600, padding: '4px 10px 3px', borderWidth: 3, boxShadow: `3px 3px 0 ${INK}` }}>原话 {tc(b.at)} · 示意头像</Caption>
+              <Caption x={330} y={560} size={30} rot={-2}>{L(`${b.speaker.name}说`, `${b.speaker.name} says`)}</Caption>
+              <Caption x={330} y={620} bg="#fff" size={17} style={{ fontFamily: FONT.sans, fontWeight: 600, padding: '4px 10px 3px', borderWidth: 3, boxShadow: `3px 3px 0 ${INK}` }}>{L('原话', 'Quote')} {tc(b.at)} · {L('示意头像', 'illustrative avatar')}</Caption>
             </div>
             <div style={{ position: 'absolute', left: 22, top: 22, width: 548, height: 676, pointerEvents: 'none', transform: `translateX(${lerp(-620, 0, inL)}px)` }}>
               <svg width={548} height={676} style={{ position: 'absolute', inset: 0, overflow: 'visible', transform: `scale(${bal})`, transformOrigin: '200px 380px' }}>
@@ -233,16 +234,16 @@ function Items({ s, t }: { s: ReelSpec; t: number }) {
               <div style={{ position: 'absolute', left: 74, top: 76, width: 400, height: 200, display: 'grid', placeItems: 'center', textAlign: 'center', fontSize: q.length > 20 ? 32 : 38, lineHeight: 1.35, opacity: clamp(bal * 2) }}>“{q.slice(0, k)}{k >= q.length ? '”' : ''}</div>
             </div>
             <div style={{ position: 'absolute', left: 592, top: 22, width: 666, height: 676, ...LINE(6), background: dots('#FFFDF5', 'rgb(45 107 224 / 8%)', 14, 2.4), transform: `translateX(${lerp(720, 0, inR)}px)`, padding: '108px 48px 0' }}>
-              <Caption x={-6} y={-6} size={28} style={{ boxShadow: 'none' }}>第 {i + 1} 格 · 对你来说……</Caption>
+              <Caption x={-6} y={-6} size={28} style={{ boxShadow: 'none' }}>{L(`第 ${i + 1} 格 · 对你来说……`, `Panel ${i + 1} · for you…`)}</Caption>
               <div style={{ fontSize: len > 16 ? 46 : 56, lineHeight: 1.3 }}>
                 <span style={{ background: `linear-gradient(transparent 58%, ${YEL} 58%, ${YEL} 92%, transparent 92%)`, boxDecorationBreak: 'clone', WebkitBoxDecorationBreak: 'clone' }}>{e.item.title}</span>
               </div>
               <div style={{ fontFamily: FONT.sans, fontWeight: 500, fontSize: 24, lineHeight: 1.7, marginTop: 24, color: '#2A2A2A' }}>{e.forYou}</div>
-              <div style={{ position: 'absolute', left: 44, right: 44, bottom: 40, background: BLUE, color: '#fff', padding: '14px 20px 12px', fontSize: 26, ...LINE(5), ...HARD(6), opacity: why, transform: `translateY(${lerp(16, 0, why)}px)` }}>为什么是你？{e.why}</div>
-              {i === n - 1 && s.more > 0 && <div style={{ position: 'absolute', right: 48, bottom: 128, fontSize: 20, color: '#555' }}>还有 {s.more} 格在卡片里 →</div>}
+              <div style={{ position: 'absolute', left: 44, right: 44, bottom: 40, background: BLUE, color: '#fff', padding: '14px 20px 12px', fontSize: 26, ...LINE(5), ...HARD(6), opacity: why, transform: `translateY(${lerp(16, 0, why)}px)` }}>{L('为什么是你？', 'Why you? ')}{e.why}</div>
+              {i === n - 1 && s.more > 0 && <div style={{ position: 'absolute', right: 48, bottom: 128, fontSize: 20, color: '#555' }}>{L(`还有 ${s.more} 格在卡片里 →`, `${s.more} more panels in the card →`)}</div>}
             </div>
             <Burst x={1140} y={500} r={80} fill={e.tier === 'must' ? RED : YEL} seed={i + 21} scale={tag} rot={12}>
-              <span style={{ fontSize: e.tier === 'must' ? 40 : 30, color: e.tier === 'must' ? '#fff' : INK, ...(e.tier === 'must' ? LETTER(3, 3) : {}) }}>{e.tier === 'must' ? '必读！' : '瞄一眼'}</span>
+              <span style={{ fontSize: e.tier === 'must' ? 40 : 30, color: e.tier === 'must' ? '#fff' : INK, ...(e.tier === 'must' ? LETTER(3, 3) : {}) }}>{e.tier === 'must' ? L('必读！', 'MUST-READ!') : L('瞄一眼', 'Glance')}</span>
             </Burst>
           </Layer>
         )
@@ -263,18 +264,18 @@ function Next({ s, t }: { s: ReelSpec; t: number }) {
     <Layer o={o}>
       <div style={{ position: 'absolute', inset: 22, ...LINE(6), background: dots(YEL, 'rgb(239 75 63 / 24%)', 18, 3.6) }} />
       <div style={{ position: 'absolute', left: 120, top: 110, width: 370, height: 490, background: '#fff', ...LINE(6), ...HARD(14), transform: `translateY(${lerp(-760, 0, drop)}px) rotate(-5deg)`, textAlign: 'center', overflow: 'hidden' }}>
-        <div style={{ background: RED, color: '#fff', fontSize: 50, padding: '12px 0 8px', borderBottom: `6px solid ${INK}`, ...LETTER(2, 0) }}>{nx.date ? `${Number(nx.date.slice(5, 7))} 月` : '截止'}</div>
+        <div style={{ background: RED, color: '#fff', fontSize: 50, padding: '12px 0 8px', borderBottom: `6px solid ${INK}`, ...LETTER(2, 0) }}>{nx.date ? L(`${Number(nx.date.slice(5, 7))} 月`, monthName(Number(nx.date.slice(5, 7))).toUpperCase()) : L('截止', 'DUE')}</div>
         {nx.date ? (
           <>
             <div style={{ fontSize: 270, lineHeight: 1.08 }}>{Number(nx.date.slice(8))}</div>
-            <div style={{ fontSize: 44 }}>周{weekdayShort(nx.date)}</div>
+            <div style={{ fontSize: 44 }}>{L('周', '')}{weekdayShort(nx.date)}</div>
           </>
         ) : <div style={{ fontSize: 60, padding: '120px 20px 0', lineHeight: 1.25 }}>{nx.dueLabel}</div>}
       </div>
       <Burst x={500} y={130} r={88} fill={RED} seed={33} scale={sfx} rot={14}>
-        <span style={{ fontSize: 56, color: '#fff', ...LETTER(3, 4) }}>咚！</span>
+        <span style={{ fontSize: 56, color: '#fff', ...LETTER(3, 4) }}>{L('咚！', 'BOOM!')}</span>
       </Burst>
-      <Caption x={576} y={92} size={32} rot={-2} o={clamp(prog(t, A + 0.2, A + 0.4))}>下一话预告！</Caption>
+      <Caption x={576} y={92} size={32} rot={-2} o={clamp(prog(t, A + 0.2, A + 0.4))}>{L('下一话预告！', 'Next episode!')}</Caption>
       <div style={{ position: 'absolute', left: 576, top: 176, width: 620, background: '#fff', ...LINE(6), ...HARD(10), padding: '28px 32px 24px', fontSize: 38, lineHeight: 1.45, transform: `scale(${ease.back(prog(t, A + 0.5, A + 0.95))})`, transformOrigin: 'left top' }}>{nx.link}</div>
       <div style={{ position: 'absolute', left: 610, top: 446, width: 560, background: BLUE, color: '#fff', ...LINE(6), ...HARD(10), padding: '20px 26px 16px', transform: `scale(${card}) rotate(1.5deg)` }}>
         <div style={{ fontSize: 32, ...LETTER(2, 3) }}>★ {nx.item.title}</div>
@@ -289,19 +290,19 @@ function Outro({ s, t }: { s: ReelSpec; t: number }) {
   const o = clamp(prog(t, A, A + 0.2))
   if (o <= 0) return null
   const pop = ease.back(prog(t, A + 0.1, A + 0.6))
-  const btns: [string, string][] = [['确认！', YEL], ['追问？', '#fff'], ['不是我', PINK]]
+  const btns: [string, string][] = [[L('确认！', 'Confirm!'), YEL], [L('追问？', 'Ask?'), '#fff'], [L('不是我', 'Not me'), PINK]]
   return (
     <Layer o={o}>
       <div style={{ position: 'absolute', inset: 22, ...LINE(6), overflow: 'hidden', background: `repeating-conic-gradient(from ${t * 10}deg at 50% 46%, ${BLUE} 0deg 10deg, ${DEEP} 10deg 20deg)` }}>
         <div style={{ position: 'absolute', inset: 0, background: dots('transparent', 'rgb(255 255 255 / 10%)', 16, 2.6) }} />
       </div>
-      <div style={{ position: 'absolute', left: 0, right: 0, top: 56, textAlign: 'center', fontSize: 86, color: YEL, ...LETTER(5, 7), transform: `scale(${pop}) rotate(-2deg)` }}>省下 {s.savedMin} 分钟！</div>
-      <div style={{ position: 'absolute', left: 500, top: 196, width: 280, height: 280, borderRadius: '50%', background: dots(YEL, 'rgb(239 75 63 / 26%)', 16, 3.4), ...LINE(8), ...HARD(12), display: 'grid', placeItems: 'center', fontSize: 170, transform: `scale(${pop}) rotate(${lerp(-40, 0, pop)}deg)` }}>完</div>
+      <div style={{ position: 'absolute', left: 0, right: 0, top: 56, textAlign: 'center', fontSize: 86, color: YEL, ...LETTER(5, 7), transform: `scale(${pop}) rotate(-2deg)` }}>{L(`省下 ${s.savedMin} 分钟！`, `${s.savedMin} MIN SAVED!`)}</div>
+      <div style={{ position: 'absolute', left: 500, top: 196, width: 280, height: 280, borderRadius: '50%', background: dots(YEL, 'rgb(239 75 63 / 26%)', 16, 3.4), ...LINE(8), ...HARD(12), display: 'grid', placeItems: 'center', fontSize: L(170, 96), transform: `scale(${pop}) rotate(${lerp(-40, 0, pop)}deg)` }}>{L('完', 'END')}</div>
       {btns.map(([b, bg], i) => {
         const p = ease.back(prog(t, A + 0.8 + i * 0.15, A + 1.2 + i * 0.15))
         return <div key={b} style={{ position: 'absolute', left: 220 + i * 300, top: 530, width: 240, textAlign: 'center', background: bg, ...LINE(6), ...HARD(9), fontSize: 42, padding: '14px 0 10px', transform: `scale(${p}) rotate(${[-4, 2, -2][i]}deg)` }}>{b}</div>
       })}
-      <Caption x={500} y={648} bg="#fff" size={22} o={clamp(prog(t, A + 1.6, A + 2))}>会映 MeetReel · 下一话见</Caption>
+      <Caption x={500} y={648} bg="#fff" size={22} o={clamp(prog(t, A + 1.6, A + 2))}>{L('会映 MeetReel · 下一话见', 'MeetReel · see you next episode')}</Caption>
     </Layer>
   )
 }

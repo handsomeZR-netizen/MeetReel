@@ -4,6 +4,7 @@ import type { CSSProperties, ReactNode } from 'react'
 import { ITEM_TYPES } from '@/data/model'
 import { ACT, beatWindow, stripDays, tc, weekdayShort, type ReelSpec } from './spec'
 import { FONT, Grain, Layer, actLife, avatarSrc, clamp, count, ease, lerp, life, prog, rise, rnd } from './kit'
+import { L } from '@/lib/i18n'
 
 const TILT = 57
 const PITCH = 104
@@ -177,15 +178,15 @@ function Titles({ s, t }: { s: ReelSpec; t: number }) {
     <>
       <Layer o={intro}>
         <div style={{ position: 'absolute', left: 0, right: 0, top: 64, textAlign: 'center' }}>
-          <div style={{ fontSize: 18, opacity: 0.8, letterSpacing: '0.24em', ...rise(ease.out(prog(t, 0.4, 1.1)), 8, 4) }}>会映 · {m.title}</div>
-          <div style={{ fontSize: 86, fontWeight: 700, marginTop: 12, textShadow: shadow, letterSpacing: '-0.01em', ...rise(ease.out(prog(t, 0.6, 1.5)), 20, 12) }}>{s.person.name}的 30 秒</div>
+          <div style={{ fontSize: 18, opacity: 0.8, letterSpacing: '0.24em', ...rise(ease.out(prog(t, 0.4, 1.1)), 8, 4) }}>{L('会映', 'MeetReel')} · {m.title}</div>
+          <div style={{ fontSize: 86, fontWeight: 700, marginTop: 12, textShadow: shadow, letterSpacing: '-0.01em', ...rise(ease.out(prog(t, 0.6, 1.5)), 20, 12) }}>{L(`${s.person.name}的 30 秒`, `${s.person.name}’s 30 seconds`)}</div>
         </div>
       </Layer>
       <Layer o={filt}>
         <div style={{ position: 'absolute', left: 0, right: 0, top: 44, textAlign: 'center' }}>
-          <div style={{ fontSize: 80, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textShadow: shadow, lineHeight: 1.1 }}>{count(t, F + 1.5, F + 2.6, s.total, n)}<span style={{ fontSize: 30, marginLeft: 8 }}>条</span></div>
+          <div style={{ fontSize: 80, fontWeight: 700, fontVariantNumeric: 'tabular-nums', textShadow: shadow, lineHeight: 1.1 }}>{count(t, F + 1.5, F + 2.6, s.total, n)}<span style={{ fontSize: 30, marginLeft: 8 }}>{L('条', 'items')}</span></div>
           <div style={{ fontSize: 22, opacity: 0.92, marginTop: 6, textShadow: shadow }}>
-            {t < F + 1.5 ? `这场直播的 ${s.total} 条要点` : n ? `无关的 ${s.total - n} 条压平，有关的 ${n} 条长出来` : '整场都与你无关，全部压平'}
+            {t < F + 1.5 ? L(`这场直播的 ${s.total} 条要点`, `${s.total} key points in this stream`) : n ? L(`无关的 ${s.total - n} 条压平，有关的 ${n} 条长出来`, `${s.total - n} irrelevant ones flatten, your ${n} grow tall`) : L('整场都与你无关，全部压平', 'None of it is for you — everything flattens')}
           </div>
         </div>
       </Layer>
@@ -206,7 +207,7 @@ function Titles({ s, t }: { s: ReelSpec; t: number }) {
                 <span style={{ width: 12, height: 12, borderRadius: 4, background: c, boxShadow: `0 0 12px ${c}` }} />
                 <span style={{ fontFamily: FONT.mono }}>{String(i + 1).padStart(2, '0')} / {String(s.beats.length).padStart(2, '0')}</span>
                 <span>· {ITEM_TYPES[e.item.type].label}</span>
-                <span style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 999, fontWeight: 700, fontSize: 13.5, color: '#fff', background: e.tier === 'must' ? '#E2557A' : '#9A93B3' }}>{e.tier === 'must' ? '必读' : '建议看'}</span>
+                <span style={{ marginLeft: 'auto', padding: '4px 12px', borderRadius: 999, fontWeight: 700, fontSize: 13.5, color: '#fff', background: e.tier === 'must' ? '#E2557A' : '#9A93B3' }}>{e.tier === 'must' ? L('必读', 'Must-read') : L('建议看', 'Suggested')}</span>
               </div>
               <div style={{ fontSize: e.item.title.length > 16 ? 30 : 36, fontWeight: 700, lineHeight: 1.28, marginTop: 20, letterSpacing: '-0.01em' }}>{e.item.title}</div>
               <div style={{ fontSize: 18.5, lineHeight: 1.7, marginTop: 14, color: '#4B4462', ...rise(p2, 10, 4) }}>{e.forYou}</div>
@@ -215,17 +216,17 @@ function Titles({ s, t }: { s: ReelSpec; t: number }) {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginTop: 12 }}>
                   <img src={avatarSrc(b.speaker.id)} alt="" style={{ width: 36, height: 36, borderRadius: 18, objectFit: 'cover' }} />
                   <span style={{ fontSize: 15, fontWeight: 700 }}>{b.speaker.name}</span>
-                  <span style={{ fontSize: 13, color: MUTE }}>原话 {tc(b.at)} · 示意头像</span>
+                  <span style={{ fontSize: 13, color: MUTE }}>{L('原话', 'Quote')} {tc(b.at)} · {L('示意头像', 'illustrative avatar')}</span>
                 </div>
               </div>
-              <div style={{ marginTop: 18, fontSize: 16, color: MUTE }}>为什么发给你 · <b style={{ color: INK }}>{e.why}</b></div>
-              {i === s.beats.length - 1 && s.more > 0 && <div style={{ marginTop: 6, fontSize: 14, color: MUTE }}>另外 {s.more} 条在卡片里</div>}
+              <div style={{ marginTop: 18, fontSize: 16, color: MUTE }}>{L('为什么发给你', 'Why you')} · <b style={{ color: INK }}>{e.why}</b></div>
+              {i === s.beats.length - 1 && s.more > 0 && <div style={{ marginTop: 6, fontSize: 14, color: MUTE }}>{L(`另外 ${s.more} 条在卡片里`, `${s.more} more in the card`)}</div>}
             </div>
           </Layer>
         )
       }) : (
         <Layer o={life(t, I, IZ, 0.5, 0.45)}>
-          <div style={{ ...CARD, position: 'absolute', left: 748, top: 230, width: 460, padding: '44px 40px', fontSize: 40, fontWeight: 700, lineHeight: 1.35 }}>这场会，<br />没有要你看的。</div>
+          <div style={{ ...CARD, position: 'absolute', left: 748, top: 230, width: 460, padding: '44px 40px', fontSize: 40, fontWeight: 700, lineHeight: 1.35 }}>{L('这场会，', 'This meeting:')}<br />{L('没有要你看的。', 'nothing for you.')}</div>
         </Layer>
       ))}
     </>
@@ -247,7 +248,7 @@ function Next({ s, t }: { s: ReelSpec; t: number }) {
   return (
     <Layer o={o}>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 58, textAlign: 'center', ...rise(ease.out(prog(t, A, A + 0.8)), 16, 8) }}>
-        <div style={{ fontSize: 18, opacity: 0.8, letterSpacing: '0.3em' }}>接下来</div>
+        <div style={{ fontSize: 18, opacity: 0.8, letterSpacing: '0.3em' }}>{L('接下来', 'NEXT UP')}</div>
         <div style={{ fontSize: 36, fontWeight: 700, marginTop: 12, padding: '0 150px', lineHeight: 1.4, textShadow: '0 8px 24px rgb(20 10 60 / 50%)' }}>{nx.link}</div>
       </div>
       <World cx={cx} cy={cy} phi={phi}>
@@ -265,7 +266,7 @@ function Next({ s, t }: { s: ReelSpec; t: number }) {
           <div key={d || 'x'} style={{ position: 'absolute', left: cx + X, top: cy + Y - (on ? 18 : 44), transform: 'translate(-50%, -100%)', textAlign: 'center', opacity: clamp(prog(t, A + 0.5 + i * 0.07, A + 0.9 + i * 0.07)), textShadow: '0 4px 14px rgb(30 15 60 / 60%)' }}>
             {days.length ? (
               <>
-                <div style={{ fontSize: on ? 15 : 12.5, opacity: 0.85 }}>周{weekdayShort(d)}</div>
+                <div style={{ fontSize: on ? 15 : 12.5, opacity: 0.85 }}>{L('周', '')}{weekdayShort(d)}</div>
                 <div style={{ fontSize: on ? 52 : 26, fontWeight: 700, lineHeight: 1.05 }}>{Number(d.slice(8))}</div>
               </>
             ) : <div style={{ fontSize: 34, fontWeight: 700 }}>{nx.dueLabel}</div>}
@@ -289,13 +290,13 @@ function Outro({ s, t }: { s: ReelSpec; t: number }) {
   if (o <= 0) return null
   const phi = -45 + Math.sin(t * 0.3) * 6
   const cx = 640, cy = 500 + Math.sin(t * 1.1) * 6
-  const btn = [['确认', '#53D3A8'], ['追问', '#FF9C6B'], ['不是我', '#B9A6FF']] as const
+  const btn = [[L('确认', 'Confirm'), '#53D3A8'], [L('追问', 'Ask'), '#FF9C6B'], [L('不是我', 'Not me'), '#B9A6FF']] as const
   const hOf = (i: number) => 14 + 70 * clamp(ease.back(prog(t, A + 0.6 + i * 0.15, A + 1.2 + i * 0.15)))
   return (
     <Layer o={o}>
       <div style={{ position: 'absolute', left: 0, right: 0, top: 70, textAlign: 'center' }}>
-        <div style={{ fontSize: 92, fontWeight: 700, textShadow: '0 12px 34px rgb(20 10 60 / 55%)', ...rise(ease.out(prog(t, A, A + 0.9)), 20, 12) }}>省下 {s.savedMin} 分钟</div>
-        <div style={{ fontSize: 22, opacity: 0.92, marginTop: 12, ...rise(ease.out(prog(t, A + 0.5, A + 1.2)), 10, 4) }}>{s.total - s.kept.length} 条已经压平；有关的原话，随时回放</div>
+        <div style={{ fontSize: 92, fontWeight: 700, textShadow: '0 12px 34px rgb(20 10 60 / 55%)', ...rise(ease.out(prog(t, A, A + 0.9)), 20, 12) }}>{L(`省下 ${s.savedMin} 分钟`, `${s.savedMin} min saved`)}</div>
+        <div style={{ fontSize: 22, opacity: 0.92, marginTop: 12, ...rise(ease.out(prog(t, A + 0.5, A + 1.2)), 10, 4) }}>{L(`${s.total - s.kept.length} 条已经压平；有关的原话，随时回放`, `${s.total - s.kept.length} flattened; replay your quotes anytime`)}</div>
       </div>
       <World cx={cx} cy={cy} phi={phi}>
         <Block x={0} y={0} z={-74} w={380} d={130} h={34} color="#7B6A9E" r={10} ao={false} />
@@ -307,7 +308,7 @@ function Outro({ s, t }: { s: ReelSpec; t: number }) {
         const p = clamp(prog(t, A + 1.0 + i * 0.15, A + 1.4 + i * 0.15))
         return <div key={b} style={{ position: 'absolute', left: cx + X, top: cy + Y - 34, transform: 'translate(-50%, -100%)', padding: '8px 18px', borderRadius: 999, background: 'rgb(255 255 255 / 94%)', color: INK, fontSize: 20, fontWeight: 700, boxShadow: '0 10px 24px -10px rgb(30 15 60 / 60%)', ...rise(p, 10, 4) }}>{b}</div>
       })}
-      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 34, textAlign: 'center', fontSize: 15, opacity: 0.8, letterSpacing: '0.24em' }}>会映 MEETREEL</div>
+      <div style={{ position: 'absolute', left: 0, right: 0, bottom: 34, textAlign: 'center', fontSize: 15, opacity: 0.8, letterSpacing: '0.24em' }}>{L('会映 MEETREEL', 'MEETREEL')}</div>
     </Layer>
   )
 }

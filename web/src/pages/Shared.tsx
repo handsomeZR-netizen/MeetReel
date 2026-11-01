@@ -14,6 +14,7 @@ import { Empty, Face, Kb, RankTag, TypePill } from '@/components/common/bits'
 import { NOTE_COLORS } from '@/components/sketch/Briefs'
 import { FeishuCard } from '@/components/common/FeishuCard'
 import { reelHref } from '@/components/reel/spec'
+import { L } from '@/lib/i18n'
 
 export function Shared() {
   const route = useRoute()
@@ -30,15 +31,15 @@ export function Shared() {
 
   return (
     <>
-      <TopBar crumbs={[{ label: '我的会议', to: as === ME ? '/?v=meet' : `/?as=${as}&v=meet` }, { label: as === ME ? '发给我的' : `发给${me.name}的` }, ...(cur ? [{ label: cur.meeting.title }] : [])]} />
+      <TopBar crumbs={[{ label: L('我的会议', 'My meetings'), to: as === ME ? '/?v=meet' : `/?as=${as}&v=meet` }, { label: as === ME ? L('发给我的', 'Sent to me') : L(`发给${me.name}的`, `Sent to ${me.name}`) }, ...(cur ? [{ label: cur.meeting.title }] : [])]} />
       <div className="flex-none border-b px-6 py-3.5">
         <div className="flex flex-wrap items-center gap-3">
           <div className="min-w-0">
-            <h1 className="flex items-center gap-2 text-[20px] font-semibold tracking-tight">{as === ME ? '发给我的简报' : `发给${me.name}的简报`}<RankTag p={me} /></h1>
-            <p className="text-ink-3 text-[13px]">收到者视角：每份只含和 {as === ME ? '你' : me.name} 有关的条目，写明为什么发过来；原话一点就回到录像。</p>
+            <h1 className="flex items-center gap-2 text-[20px] font-semibold tracking-tight">{as === ME ? L('发给我的简报', 'Briefs sent to me') : L(`发给${me.name}的简报`, `Briefs sent to ${me.name}`)}<RankTag p={me} /></h1>
+            <p className="text-ink-3 text-[13px]">{L(`收到者视角：每份只含和 ${as === ME ? '你' : me.name} 有关的条目，写明为什么发过来；原话一点就回到录像。`, `Recipient view: each brief holds only what concerns ${as === ME ? 'you' : me.name}, with why it was sent; tap a quote to jump to the recording.`)}</p>
           </div>
           <div className="ml-auto flex items-center gap-2">
-            <span className="text-ink-3 inline-flex items-center gap-1 text-[12.5px]"><ShieldCheck size={14} /> 切换身份预览</span>
+            <span className="text-ink-3 inline-flex items-center gap-1 text-[12.5px]"><ShieldCheck size={14} /> {L('切换身份预览', 'Preview as')}</span>
             <div className="flex flex-wrap gap-1 rounded-full bg-[#F2F3F5] p-1">
               {STAFF.map(p => (
                 <button key={p.id} onClick={() => go('/shared', { as: p.id })} className={cn('relative rounded-full p-0.5 transition-transform hover:-translate-y-px')} title={`${p.name} · ${RANKS[p.rank].level} ${RANKS[p.rank].label} · ${p.role}`}>
@@ -51,9 +52,9 @@ export function Shared() {
         </div>
       </div>
 
-      <div className="grid min-h-0 flex-1 grid-cols-[360px_minmax(0,1fr)] max-lg:grid-cols-1">
+      <div className="grid min-h-0 flex-1 grid-cols-[360px_minmax(0,1fr)] max-lg:grid-cols-[minmax(0,1fr)]">
         <div className="min-h-0 overflow-y-auto border-r p-3">
-          {!inbox.length && <Empty icon="coffee" title="还没有收到简报" sub="这个人最近的会都没有必读内容，不打扰。" />}
+          {!inbox.length && <Empty icon="coffee" title={L('还没有收到简报', 'No briefs yet')} sub={L('这个人最近的会都没有必读内容，不打扰。', 'Nothing in this person’s recent meetings is a must-read, so no pings.')} />}
           <div className="flex flex-col gap-3 pt-2">
             {inbox.map(({ meeting: m, brief: b }, i) => {
               const p = projectById(m.project)
@@ -73,7 +74,7 @@ export function Shared() {
                     <b className="min-w-0 flex-1 truncate text-[16px]">{m.title}</b>
                     <span className="flex-none text-[12px] opacity-60">{cnDate(m.date)}</span>
                   </div>
-                  <div className="mt-0.5 text-[12.5px] opacity-60">{pub.name} 发布（{RANKS[pub.rank].label}） · {quiet ? '不打扰' : `${b.entries.length} 条 · 约 ${b.readSeconds} 秒`}</div>
+                  <div className="mt-0.5 text-[12.5px] opacity-60">{L(`${pub.name} 发布（${RANKS[pub.rank].label}）`, `From ${pub.name} (${RANKS[pub.rank].label})`)} · {quiet ? L('不打扰', 'No ping') : L(`${b.entries.length} 条 · 约 ${b.readSeconds} 秒`, `${b.entries.length} items · ~${b.readSeconds}s`)}</div>
                   <p className="mt-1 line-clamp-3 text-[14px] leading-relaxed">{b.headline}</p>
                 </motion.button>
               )
@@ -84,12 +85,12 @@ export function Shared() {
         <div className="min-h-0 overflow-y-auto">
           <AnimatePresence mode="wait">
             {cur && (
-              <motion.div key={cur.meeting.id + as} className="mx-auto grid max-w-[1000px] gap-6 px-6 py-6 xl:grid-cols-[minmax(0,1fr)_280px]" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
+              <motion.div key={cur.meeting.id + as} className="mx-auto grid grid-cols-[minmax(0,1fr)] max-w-[1000px] gap-6 px-6 py-6 max-md:px-4 max-md:py-4 xl:grid-cols-[minmax(0,1fr)_280px]" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }} transition={{ duration: 0.2 }}>
                 <div>
                   <div className="text-ink-3 mb-2 flex items-center gap-2 text-[12.5px]">
-                    <span className="min-w-0 flex-1">飞书 · 会映会议助手 代 {personById(cur.meeting.publisher).name} 发来一张卡片</span>
+                    <span className="min-w-0 flex-1">{L(`飞书 · 会映会议助手 代 ${personById(cur.meeting.publisher).name} 发来一张卡片`, `Lark · MeetReel assistant sent a card on behalf of ${personById(cur.meeting.publisher).name}`)}</span>
                     {cur.meeting.id === RUN_ID && (
-                      <a href={reelHref(as)} className="sg-onyx inline-flex h-7 flex-none items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-transform hover:-translate-y-px"><SquarePlay size={13} />看{as === ME ? '我' : ` ${me.name} `}的 30 秒</a>
+                      <a href={reelHref(as)} className="sg-onyx inline-flex h-7 flex-none items-center gap-1.5 rounded-full px-3 text-[12px] font-medium transition-transform hover:-translate-y-px"><SquarePlay size={13} />{L(`看${as === ME ? '我' : ` ${me.name} `}的 30 秒`, `Watch ${as === ME ? 'my' : `${me.name}’s`} 30 s`)}</a>
                     )}
                   </div>
                   <FeishuCard meeting={cur.meeting.id} pid={as} />
@@ -114,7 +115,7 @@ function SourceTimeline({ meetingId, pid }: { meetingId: string; pid: PersonId }
   const items = [...new Set(ids)].map(id => m.items.find(i => i.id === id)!).sort((a, b) => quoteSpan(a).t0 - quoteSpan(b).t0)
   return (
     <div className="rounded-2xl border bg-white p-4">
-      <div className="flex items-center gap-2"><Kb name="hourglass" size={20} /><b className="text-[14px]">原话在录像里的位置</b></div>
+      <div className="flex items-center gap-2"><Kb name="hourglass" size={20} /><b className="text-[14px]">{L('原话在录像里的位置', 'Where the quotes are in the recording')}</b></div>
       <div className="relative mt-3 pl-4">
         <span className="bg-border absolute top-1 bottom-1 left-[5px] w-px" />
         {items.map(it => {
@@ -129,7 +130,7 @@ function SourceTimeline({ meetingId, pid }: { meetingId: string; pid: PersonId }
                 <span className="text-ink-3">{personById(seg.speaker).name}</span>
               </div>
               <div className="text-ink-2 group-hover:text-ink mt-0.5 text-[13px] leading-snug">
-                {vis === 'full' ? <>“{it.quote}” <Play size={10} className="text-primary ml-0.5 inline" fill="currentColor" /></> : <span className="inline-flex items-center gap-1"><Lock size={12} /> 原话受限</span>}
+                {vis === 'full' ? <>“{it.quote}” <Play size={10} className="text-primary ml-0.5 inline" fill="currentColor" /></> : <span className="inline-flex items-center gap-1"><Lock size={12} /> {L('原话受限', 'Quote restricted')}</span>}
               </div>
             </button>
           )
@@ -145,12 +146,12 @@ function WhyBox({ meetingId, pid }: { meetingId: string; pid: PersonId }) {
   const p = personById(pid)
   return (
     <div className="rounded-2xl border bg-[#FAFAF8] p-4 text-[13px]">
-      <div className="flex items-center gap-2"><Kb name="route" size={20} /><b className="text-[14px]">为什么是这几条</b></div>
-      <p className="text-ink-2 mt-2 leading-relaxed">路由官对照 {p.name} 的关注档案：负责 {p.profile.owns.join('、') || '—'}；依赖 {p.profile.dependsOn.join('、') || '—'}；订阅 {p.profile.interests.join('、') || '—'}。</p>
+      <div className="flex items-center gap-2"><Kb name="route" size={20} /><b className="text-[14px]">{L('为什么是这几条', 'Why these items')}</b></div>
+      <p className="text-ink-2 mt-2 leading-relaxed">{L(`路由官对照 ${p.name} 的关注档案：负责 ${p.profile.owns.join('、') || '—'}；依赖 ${p.profile.dependsOn.join('、') || '—'}；订阅 ${p.profile.interests.join('、') || '—'}。`, `The Router checked ${p.name}’s interest profile — owns: ${p.profile.owns.join(', ') || '—'}; depends on: ${p.profile.dependsOn.join(', ') || '—'}; follows: ${p.profile.interests.join(', ') || '—'}.`)}</p>
       <div className="mt-2 flex flex-wrap gap-1">
-        {m.publisher === pid ? <span className="rounded-full bg-[#E0E7FF] px-2 py-0.5 text-[12px] text-[#3730A3]">发布者：看全部</span>
+        {m.publisher === pid ? <span className="rounded-full bg-[#E0E7FF] px-2 py-0.5 text-[12px] text-[#3730A3]">{L('发布者：看全部', 'Publisher: sees everything')}</span>
           : reasons.length ? reasons.map(r => <span key={r} className={cn('rounded-full px-2 py-0.5 text-[12px]', r === 'R4' ? 'bg-ink text-white' : 'bg-white text-ink-2 border')}>{r} {REASONS[r]}</span>)
-          : <span className="text-ink-3">没有命中，不打扰</span>}
+          : <span className="text-ink-3">{L('没有命中，不打扰', 'No hits — no ping')}</span>}
       </div>
     </div>
   )

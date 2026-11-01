@@ -3,6 +3,7 @@
 import { personById, REASONS, type PersonId } from './model'
 import { ALL_ITEMS, MEETINGS, meetingById, type Item, type Meeting, type Segment } from './meetings'
 import { RUN_ID, runBrief, type Brief, type BriefEntry } from './run'
+import { L, plural } from '@/lib/i18n'
 
 /** 秒 → 00:17 */
 export const mmss = (s: number) => {
@@ -55,12 +56,12 @@ export function visibility(it: Item, pid: PersonId): Visibility {
 // ---------- 简报 ----------
 
 const WHY: Record<string, (it: Item) => string> = {
-  R1: () => '会上点了你的名',
-  R2: () => '会上点到了你的角色',
-  R3: () => '你负责的事被提到了',
-  R4: () => '你依赖的东西变了',
-  R5: it => `你订阅了「${it.topic}」`,
-  R6: () => '管理者规则',
+  R1: () => L('会上点了你的名', 'You were named in the meeting'),
+  R2: () => L('会上点到了你的角色', 'Your role was called on'),
+  R3: () => L('你负责的事被提到了', 'Something you own came up'),
+  R4: () => L('你依赖的东西变了', 'Something you depend on changed'),
+  R5: it => L(`你订阅了「${it.topic}」`, `You follow “${it.topic}”`),
+  R6: () => L('管理者规则', 'Manager rule'),
 }
 
 /** 主案例用编辑官逐人改写的版本，其他会议按路由结果拼一份；发布者拿到的是发布者版 */
@@ -69,19 +70,21 @@ export function briefFor(meetingId: string, pid: PersonId): Brief {
   if (meetingId === RUN_ID) return runBrief(pid)
   if (m.publisher === pid) {
     const n = new Set(m.routes.map(r => r.person)).size
-    return { person: pid, meeting: meetingId, host: true, readSeconds: 40, headline: `发布者版：${m.items.length} 条全部条目已分发给 ${n} 个人。`, entries: [] }
+    return { person: pid, meeting: meetingId, host: true, readSeconds: 40, headline: L(`发布者版：${m.items.length} 条全部条目已分发给 ${n} 个人。`, `Publisher version: all ${m.items.length} items sent to ${n} people.`), entries: [] }
   }
   const rs = m.routes.filter(r => r.person === pid)
   const entries: BriefEntry[] = rs.map(r => {
     const it = m.items.find(i => i.id === r.item)!
-    return { item: it.id, forYou: it.detail ? `${it.title}：${it.detail}。` : `${it.title}。`, why: r.reasons.map(k => WHY[k](it)).join('；'), reasons: r.reasons }
+    return { item: it.id, forYou: it.detail ? L(`${it.title}：${it.detail}。`, `${it.title}: ${it.detail}.`) : L(`${it.title}。`, `${it.title}.`), why: r.reasons.map(k => WHY[k](it)).join(L('；', '; ')), reasons: r.reasons }
   })
   const mine = rs.map(r => m.items.find(i => i.id === r.item)!).filter(i => i.type === 'action' && i.owner === pid)
   const headline = !entries.length
-    ? '这场会没有需要你必读的内容。'
+    ? L('这场会没有需要你必读的内容。', 'Nothing in this meeting is a must-read for you.')
     : mine.length
-      ? `你有 ${mine.length} 条待办：${mine.map(i => `${i.title}${i.due ? `（${i.due}）` : ''}`).join('；')}。`
-      : `${entries.length} 件和你有关的事：${entries.slice(0, 2).map(e => m.items.find(i => i.id === e.item)!.title).join('；')}${entries.length > 2 ? ' 等' : ''}。`
+      ? L(`你有 ${mine.length} 条待办：${mine.map(i => `${i.title}${i.due ? `（${i.due}）` : ''}`).join('；')}。`,
+        `You have ${plural(mine.length, 'to-do')}: ${mine.map(i => `${i.title}${i.due ? ` (${i.due})` : ''}`).join('; ')}.`)
+      : L(`${entries.length} 件和你有关的事：${entries.slice(0, 2).map(e => m.items.find(i => i.id === e.item)!.title).join('；')}${entries.length > 2 ? ' 等' : ''}。`,
+        `${plural(entries.length, 'thing')} for you: ${entries.slice(0, 2).map(e => m.items.find(i => i.id === e.item)!.title).join('; ')}${entries.length > 2 ? ', and more' : ''}.`)
   return { person: pid, meeting: meetingId, headline, readSeconds: Math.max(10, entries.length * 10), entries }
 }
 
@@ -109,8 +112,10 @@ export interface SegHit { meeting: Meeting; seg: Segment; at: number }
 export function searchSegments(q: string): SegHit[] {
   const k = q.trim()
   if (!k) return []
-  return MEETINGS.flatMap(m => m.segments.filter(s => s.text.includes(k) || personById(s.speaker).name.includes(k)).map(seg => {
-    const i = seg.text.indexOf(k)
+  // 英文不分大小写
+  const low = (s: string) => s.toLowerCase()
+  return MEETINGS.flatMap(m => m.segments.filter(s => low(s.text).includes(low(k)) || low(personById(s.speaker).name).includes(low(k))).map(seg => {
+    const i = low(seg.text).indexOf(low(k))
     return { meeting: m, seg, at: i >= 0 ? charTime(seg, i) : seg.start }
   }))
 }

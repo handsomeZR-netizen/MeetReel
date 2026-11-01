@@ -1,7 +1,8 @@
 import { motion } from 'motion/react'
 import {
-  CalendarCheck, ChevronLeft, ChevronRight, Library, Network, PanelLeftClose, PanelLeftOpen, SquarePen, SquarePlay,
+  CalendarCheck, ChevronLeft, ChevronRight, Library, Network, PanelLeftClose, PanelLeftOpen, SquarePen, SquarePlay, X,
 } from 'lucide-react'
+import { L, isEn } from '@/lib/i18n'
 import { MEETINGS } from '@/data/meetings'
 import { ME, personById } from '@/data/model'
 import { href, useNav, useRoute } from '@/lib/router'
@@ -13,11 +14,11 @@ import { AccountMenu } from './Account'
 // 新建会议和智能分发合成一个入口：上传 → 会映问你几件事 → 多智能体按人分发。
 // 每人 30 秒：一场会剪成每个人自己的 30 秒，直接放在侧栏里
 const NAV = [
-  { key: 'new', label: '新建会映', icon: SquarePen, to: '/new' },
-  { key: 'home', label: '与我有关', icon: CalendarCheck, to: '/' },
-  { key: 'reel', label: '每人 30 秒', icon: SquarePlay, to: '/reel' },
-  { key: 'kb', label: '会议知识库', icon: Library, to: '/kb' },
-  { key: 'org', label: '组织与角色', icon: Network, to: '/org' },
+  { key: 'new', label: L('新建会映', 'New reel'), icon: SquarePen, to: '/new' },
+  { key: 'home', label: L('与我有关', 'For me'), icon: CalendarCheck, to: '/' },
+  { key: 'reel', label: L('每人 30 秒', '30s per person'), icon: SquarePlay, to: '/reel' },
+  { key: 'kb', label: L('会议知识库', 'Knowledge base'), icon: Library, to: '/kb' },
+  { key: 'org', label: L('组织与角色', 'Org & roles'), icon: Network, to: '/org' },
 ] as const
 
 // 品牌 Logo：scripts/transparent_logo.py 生成到 assets/brand/ 之后自动换上，没有时用内置的 M 标
@@ -36,7 +37,8 @@ function activeKey(path: string[]) {
   return p0
 }
 
-export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onCollapse: (v: boolean) => void }) {
+/** onClose：手机上作为抽屉打开时传入，右上角换成关闭按钮 */
+export function Sidebar({ collapsed, onCollapse, onClose }: { collapsed: boolean; onCollapse: (v: boolean) => void; onClose?: () => void }) {
   const { path } = useRoute()
   const nav = useNav()
   const dispatched = useStore(s => s.dispatched)
@@ -54,26 +56,34 @@ export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onColla
     >
       <div className={cn('flex h-full flex-col py-4', collapsed ? 'px-3' : 'px-3.5')}>
         <div className={cn('mb-4 flex items-center', collapsed ? 'flex-col gap-2' : 'h-14 gap-1 pl-2')}>
-          <a href={href('/')} className={cn('flex min-w-0 items-center gap-2.5', collapsed && 'justify-center')} aria-label="会映 MeetReel">
-            {BRAND.full && BRAND.mark ? (
-              <img src={collapsed ? BRAND.mark : BRAND.full} alt="会映 MeetReel" className={cn('block w-auto select-none', collapsed ? 'h-9' : 'h-[46px]')} draggable={false} />
+          <a href={href('/')} className={cn('flex min-w-0 items-center gap-2.5', collapsed && 'justify-center')} aria-label={L('会映 MeetReel', 'MeetReel')}>
+            {/* 横版 Logo 里写着“会映”，英文界面用图标 + MeetReel 字样 */}
+            {BRAND.full && BRAND.mark && isEn && !collapsed ? (
+              <>
+                <img src={BRAND.mark} alt="" className="block h-9 w-auto select-none" draggable={false} />
+                <span className="text-[19px] font-bold tracking-tight whitespace-nowrap">MeetReel</span>
+              </>
+            ) : BRAND.full && BRAND.mark ? (
+              <img src={collapsed ? BRAND.mark : BRAND.full} alt={L('会映 MeetReel', 'MeetReel')} className={cn('block w-auto select-none', collapsed ? 'h-9' : 'h-[46px]')} draggable={false} />
             ) : (
               <>
                 <span className="flex-none"><Logo size={30} /></span>
-                {!collapsed && <span className="text-[19px] font-bold tracking-tight whitespace-nowrap">会映 <span className="font-semibold">MeetReel</span></span>}
+                {!collapsed && <span className="text-[19px] font-bold tracking-tight whitespace-nowrap">{L('会映 ', '')}<span className="font-semibold">MeetReel</span></span>}
               </>
             )}
           </a>
           <div className={cn('flex items-center gap-0.5', !collapsed && 'ml-auto')}>
-            <button className={ib} onClick={() => onCollapse(!collapsed)} aria-label={collapsed ? '展开侧栏' : '收起侧栏'} title={collapsed ? '展开侧栏' : '收起侧栏'}>
+            {onClose ? <button className={ib} onClick={onClose} aria-label={L('关闭导航', 'Close navigation')}><X size={18} /></button> : <>
+            <button className={ib} onClick={() => onCollapse(!collapsed)} aria-label={collapsed ? L('展开侧栏', 'Expand sidebar') : L('收起侧栏', 'Collapse sidebar')} title={collapsed ? L('展开侧栏', 'Expand sidebar') : L('收起侧栏', 'Collapse sidebar')}>
               {collapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
             </button>
             {!collapsed && (
               <>
-                <button className={ib} disabled={nav.idx <= 0} onClick={() => history.back()} aria-label="后退" title="后退"><ChevronLeft size={18} /></button>
-                <button className={ib} disabled={nav.idx >= nav.max} onClick={() => history.forward()} aria-label="前进" title="前进"><ChevronRight size={18} /></button>
+                <button className={ib} disabled={nav.idx <= 0} onClick={() => history.back()} aria-label={L('后退', 'Back')} title={L('后退', 'Back')}><ChevronLeft size={18} /></button>
+                <button className={ib} disabled={nav.idx >= nav.max} onClick={() => history.forward()} aria-label={L('前进', 'Forward')} title={L('前进', 'Forward')}><ChevronRight size={18} /></button>
               </>
             )}
+            </>}
           </div>
         </div>
 
@@ -88,7 +98,7 @@ export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onColla
                 <span className={cn('relative grid flex-none place-items-center', active ? 'text-primary' : 'text-[#4E5969]')}><I size={19} strokeWidth={active ? 2.2 : 1.8} /></span>
                 {!collapsed && <span className={cn('relative flex-1 truncate text-[14.5px]', active ? 'text-ink font-semibold' : 'text-[#1F2329]')}>{n.label}</span>}
                 {badge != null && (
-                  <span className={cn('relative grid h-[18px] min-w-[18px] place-items-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-white', collapsed && 'absolute top-1 right-1 h-4 min-w-4 text-[10px]')} title={`${badge} 场等你分发`}>{badge}</span>
+                  <span className={cn('relative grid h-[18px] min-w-[18px] place-items-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-white', collapsed && 'absolute top-1 right-1 h-4 min-w-4 text-[10px]')} title={L(`${badge} 场等你分发`, `${badge} waiting for you to dispatch`)}>{badge}</span>
                 )}
               </>
             )
@@ -99,7 +109,7 @@ export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onColla
 
         {!collapsed && (
           <div className="mt-7 flex min-h-0 flex-1 flex-col">
-            <div className="text-ink-3 px-3 pb-2 text-[13px]">最近会议</div>
+            <div className="text-ink-3 px-3 pb-2 text-[13px]">{L('最近会议', 'Recent meetings')}</div>
             <div className="-mx-1 flex min-h-0 flex-col gap-0.5 overflow-y-auto px-1 pb-2">
               {recent.map(m => {
                 const act = openMeeting === m.id
@@ -108,9 +118,9 @@ export function Sidebar({ collapsed, onCollapse }: { collapsed: boolean; onColla
                     <div className="flex items-center gap-2.5">
                       <span className={cn('flex-none', act ? 'bg-primary size-2 rounded-[3px]' : 'size-1.5 rounded-full bg-[#1F2329]')} />
                       <span className={cn('flex-1 truncate text-[14px]', act ? 'font-semibold' : 'font-medium text-[#1F2329]')}>{m.title}</span>
-                      {!dispatched[m.id] && <span className="flex-none rounded-md bg-amber-100 px-1.5 py-px text-[10.5px] font-medium text-amber-700">待分发</span>}
+                      {!dispatched[m.id] && <span className="flex-none rounded-md bg-amber-100 px-1.5 py-px text-[10.5px] font-medium text-amber-700">{L('待分发', 'To send')}</span>}
                     </div>
-                    <div className="text-ink-3 mt-1 pl-[18px] text-[12.5px] tabular-nums">{cnDate(m.date)}{m.time ? ` ${m.time}` : ''} · {m.publisher === ME ? '我发布' : `${personById(m.publisher).name} 发布`}</div>
+                    <div className="text-ink-3 mt-1 pl-[18px] text-[12.5px] tabular-nums">{cnDate(m.date)}{m.time ? ` ${m.time}` : ''} · {m.publisher === ME ? L('我发布', 'by me') : L(`${personById(m.publisher).name} 发布`, `by ${personById(m.publisher).name}`)}</div>
                   </a>
                 )
               })}

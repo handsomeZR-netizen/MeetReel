@@ -8,6 +8,7 @@ import type { Item, Meeting } from '@/data/meetings'
 import { charAtTime, chapterAt, isSpeaking, itemTime, mmss, quoteSpan, segAt } from '@/data/derive'
 import { cn } from '@/lib/utils'
 import { TypePill } from '@/components/common/bits'
+import { L } from '@/lib/i18n'
 
 interface Props {
   meeting: Meeting
@@ -37,19 +38,19 @@ export function MeetingVideo({ meeting: m, t, playing, onToggle, focus, pulse = 
         <span className="mv-rec"><i /> REC</span>
         <span className="font-mono tabular-nums">{mmss(t)}</span>
         <span className="truncate opacity-80">{m.title}</span>
-        <span className="ml-auto opacity-60 max-sm:hidden">{m.video ? '直播录像 · B 站转载' : '会映录制'}</span>
+        <span className="ml-auto opacity-60 max-sm:hidden">{m.video ? L('直播录像 · B 站转载', 'Livestream recording · Bilibili repost') : L('会映录制', 'Recorded by MeetReel')}</span>
       </div>
 
       <div className="mv-stage">
         <div className="mv-slide">
           <div className="mv-agenda">
-            <b>议程</b>
+            <b>{L('议程', 'Agenda')}</b>
             {m.chapters.map((c, i) => (
               <span key={c.name} className={i === ci ? 'on' : i < ci ? 'past' : ''}><i />{c.name}</span>
             ))}
           </div>
           <div className="mv-body">
-            <small>议题 {ci + 1} / {m.chapters.length} · {personById(m.host).name} 主持</small>
+            <small>{L('议题', 'Topic')} {ci + 1} / {m.chapters.length} · {L(`${personById(m.host).name} 主持`, `hosted by ${personById(m.host).name}`)}</small>
             <AnimatePresence mode="wait">
               <motion.h4 key={chapter.name} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.25 }}>
                 {chapter.name}
@@ -73,7 +74,7 @@ export function MeetingVideo({ meeting: m, t, playing, onToggle, focus, pulse = 
                   </motion.div>
                 ))}
               </AnimatePresence>
-              {!said.length && <div className="text-[clamp(8px,1vw,12.5px)] text-[#A3A3AC]">讨论中…</div>}
+              {!said.length && <div className="text-[clamp(8px,1vw,12.5px)] text-[#A3A3AC]">{L('讨论中…', 'Discussing…')}</div>}
             </div>
           </div>
         </div>
@@ -135,7 +136,7 @@ function RealVideo({ src, poster, t, playing, speed, speaker }: { src: string; p
     <div className="mv-real">
       <video ref={ref} src={src} poster={poster} playsInline preload="auto" />
       {speaker && <span className="mv-name"><span className="mv-bars"><i /><i /><i /></span>{personById(speaker).name}</span>}
-      <button className="mv-mute" onClick={e => { e.stopPropagation(); setMuted(x => !x) }} aria-label={muted ? '打开声音' : '静音'}>
+      <button className="mv-mute" onClick={e => { e.stopPropagation(); setMuted(x => !x) }} aria-label={muted ? L('打开声音', 'Unmute') : L('静音', 'Mute')}>
         {muted ? <VolumeX size={14} /> : <Volume2 size={14} />}
       </button>
     </div>

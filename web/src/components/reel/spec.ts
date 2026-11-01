@@ -9,15 +9,16 @@ import { SUGGEST, addDays, md, resolveDue, type Due } from '@/data/schedule'
 import { RUN_ID } from '@/data/run'
 import { WEEK, weekday as _w } from '@/lib/utils'
 import { href } from '@/lib/router'
-import briefsJson from '../../../../data/cases/xiaomi-safety/briefs.json'
+import { XM_BRIEFS as briefsJson } from '@/data/xm-en'
+import { L } from '@/lib/i18n'
 
 export type ReelStyle = 'apple' | 'sketch' | 'pop' | 'iso'
 
 export const REEL_STYLES: { id: ReelStyle; label: string; hint: string }[] = [
-  { id: 'apple', label: 'Apple 发布会', hint: '黑底、彩色光环、大字居中，适合高管' },
-  { id: 'sketch', label: '手绘便利贴', hint: '手账本、钢笔字、荧光笔划重点，适合组长' },
-  { id: 'pop', label: '波普漫画', hint: '网点月亮、旁白框、拟声字，适合成员' },
-  { id: 'iso', label: '3D 等距', hint: '暮色浮岛，有关的长成发光柱，适合路演' },
+  { id: 'apple', label: L('Apple 发布会', 'Keynote'), hint: L('黑底、彩色光环、大字居中，适合高管', 'Black stage, color halo, big centered type — for executives') },
+  { id: 'sketch', label: L('手绘便利贴', 'Sticky notes'), hint: L('手账本、钢笔字、荧光笔划重点，适合组长', 'Notebook, pen lettering, highlighter — for team leads') },
+  { id: 'pop', label: L('波普漫画', 'Pop comic'), hint: L('网点月亮、旁白框、拟声字，适合成员', 'Halftone moon, captions, sound effects — for members') },
+  { id: 'iso', label: L('3D 等距', '3D isometric'), hint: L('暮色浮岛，有关的长成发光柱，适合路演', 'Floating island at dusk, what matters grows into light pillars — for pitches') },
 ]
 
 /** 某个人的 30 秒 */
@@ -40,7 +41,10 @@ export const ACT = {
 
 export type ActName = keyof typeof ACT
 
-export const ACT_LABEL: Record<ActName, string> = { intro: '片头', filter: '筛选', items: '逐条', next: '接下来', outro: '收尾' }
+export const ACT_LABEL: Record<ActName, string> = L(
+  { intro: '片头', filter: '筛选', items: '逐条', next: '接下来', outro: '收尾' },
+  { intro: 'Intro', filter: 'Filter', items: 'Items', next: 'Next up', outro: 'Outro' },
+)
 
 export interface KnowEntry {
   item: Item
@@ -61,12 +65,15 @@ function personalEntries(m: Meeting, pid: PersonId): KnowEntry[] {
     const it = m.items.find(i => i.id === r.item)!
     const c = curated?.entries.find(e => e.item === r.item)
     const f = fallback?.entries.find(e => e.item === r.item)
-    const why = c?.why || f?.why || r.reasons.map(k => (k === 'R5' ? `你订阅了「${it.topic}」` : WHY[k] ?? k)).join('；')
+    const why = c?.why || f?.why || r.reasons.map(k => (k === 'R5' ? L(`你订阅了「${it.topic}」`, `You follow “${it.topic}”`) : WHY[k] ?? k)).join(L('；', '; '))
     return { item: it, tier: c?.tier ?? r.tier ?? 'must', why, forYou: c?.forYou ?? f?.forYou ?? it.title }
   })
 }
 
-const WHY: Record<string, string> = { R1: '会上点了你的名', R2: '会上点到了你的角色', R3: '你负责的事被提到了', R4: '你依赖的东西变了', R6: '管理者规则' }
+const WHY: Record<string, string> = L(
+  { R1: '会上点了你的名', R2: '会上点到了你的角色', R3: '你负责的事被提到了', R4: '你依赖的东西变了', R6: '管理者规则' },
+  { R1: 'You were named in the meeting', R2: 'Your role was called on', R3: 'Something you own came up', R4: 'Something you depend on changed', R6: 'Manager rule' },
+)
 
 export interface Beat {
   entry: KnowEntry
@@ -104,23 +111,23 @@ export interface ReelSpec {
 
 // 这场直播和每个人手上哪件事接上：影响链，跨会议
 const NEXT: Partial<Record<PersonId, { item: string; link: string }>> = {
-  jiangwan: { item: 'rt_05', link: '直播里的安全口径，要用进你 11/5 前交的门店话术卡' },
-  weiran: { item: 'sf_04', link: '丁志举的座椅夹手，正是你 11/7 要补进清单的那一项' },
-  chengcheng: { item: 'ow_05', link: '90 天打卡换 4000 积分，可以放进你 11/10 的积分方案' },
-  songlan: { item: 'sf_02', link: '一票否决，正好给你 11 月经营会的方案当参照' },
-  hanzong: { item: 'sf_02', link: '11 月经营会上，宋岚会提“安全评审变成一道关”' },
-  gaoyuan: { item: 'ow_03', link: '交付当天引导开通评分；对方培训做到了 484 场' },
-  dengkai: { item: 'rt_02', link: '对方加送 699 元双表盘，权益对比表要更新' },
-  xunuo: { item: 'sf_06', link: '电子安全这场没讲，OTA 复核流程照常下次周会过' },
-  linxia: { item: 'rt_03', link: '直播里的权益变化，补进你整理的对比素材' },
-  tangchuan: { item: 'sf_05', link: '座椅相关评审记录，11/7 前配合魏然整理' },
+  jiangwan: { item: 'rt_05', link: L('直播里的安全口径，要用进你 11/5 前交的门店话术卡', 'The livestream’s safety messaging feeds the store talk-track card you deliver by 11/5') },
+  weiran: { item: 'sf_04', link: L('丁志举的座椅夹手，正是你 11/7 要补进清单的那一项', 'Ding Zhi’s seat-pinch example is exactly the item you’re adding to the checklist by 11/7') },
+  chengcheng: { item: 'ow_05', link: L('90 天打卡换 4000 积分，可以放进你 11/10 的积分方案', '90-day check-in for 4,000 points could go into your 11/10 points plan') },
+  songlan: { item: 'sf_02', link: L('一票否决，正好给你 11 月经营会的方案当参照', 'Their safety veto is a ready reference for your Nov ops review proposal') },
+  hanzong: { item: 'sf_02', link: L('11 月经营会上，宋岚会提“安全评审变成一道关”', 'At the Nov ops review, Song Lan will propose making the safety review a hard gate') },
+  gaoyuan: { item: 'ow_03', link: L('交付当天引导开通评分；对方培训做到了 484 场', 'Switch on the score at delivery; they ran 484 trainings') },
+  dengkai: { item: 'rt_02', link: L('对方加送 699 元双表盘，权益对比表要更新', 'They’re adding a ¥699 dual-screen dash — update the perk comparison') },
+  xunuo: { item: 'sf_06', link: L('电子安全这场没讲，OTA 复核流程照常下次周会过', 'Electronic safety wasn’t covered; the OTA re-check process still goes to the next weekly') },
+  linxia: { item: 'rt_03', link: L('直播里的权益变化，补进你整理的对比素材', 'Add the livestream’s perk changes to the comparison material you’re gathering') },
+  tangchuan: { item: 'sf_05', link: L('座椅相关评审记录，11/7 前配合魏然整理', 'Seat-related review records, with Wei Ran, by 11/7') },
 }
 
 const dueLabel = (it: Item, due: Due) => {
   if (due.kind === 'date') return `${md(due.date)} ${_w(due.date)}`
   if (due.kind === 'milestone') return due.label
   const s = SUGGEST[it.id]
-  return s ? `建议 ${md(s.date)}` : '还没定截止'
+  return s ? L(`建议 ${md(s.date)}`, `Suggested ${md(s.date)}`) : L('还没定截止', 'No due date yet')
 }
 
 export function reelSpec(pid: PersonId, meetingId = RUN_ID): ReelSpec {

@@ -10,6 +10,7 @@ import { itemTime, mmss, segAt } from '@/data/derive'
 import type { Clock } from '@/lib/useClock'
 import { cn } from '@/lib/utils'
 import { Face } from '@/components/common/bits'
+import { L } from '@/lib/i18n'
 
 const GUTTER = 30
 
@@ -123,7 +124,7 @@ export function Scrubber({ meeting: m, clock, focusId, onItem }: Props) {
                   <>
                     <div className="flex items-center gap-1.5"><span className="font-mono text-ink-3">{mmss(itemTime(pin))}</span><span style={{ color: ITEM_TYPES[pin.type].color }} className="font-semibold">{ITEM_TYPES[pin.type].label}</span></div>
                     <div className="mt-0.5 text-[13px] font-medium">{pin.title}</div>
-                    <div className="text-ink-3 mt-0.5 truncate">“{pin.quote}” · 点击定位</div>
+                    <div className="text-ink-3 mt-0.5 truncate">“{pin.quote}” · {L('点击定位', 'click to jump')}</div>
                   </>
                 ) : hoverSeg && (
                   <>
@@ -154,7 +155,7 @@ export function Scrubber({ meeting: m, clock, focusId, onItem }: Props) {
                       className="absolute top-0 h-3 rounded-full transition-[filter]"
                       style={{ left: x(s.start), width: Math.max(4, x(s.end) - x(s.start)), background: p.fg, opacity: on ? 1 : 0.55, boxShadow: on ? `0 0 0 3px ${p.bg}` : undefined }}
                       onClick={() => clock.seek(s.start)}
-                      title={`${p.name} ${mmss(s.start)}：${s.text}`}
+                      title={`${p.name} ${mmss(s.start)}${L('：', ': ')}${s.text}`}
                     />
                   )
                 })}
@@ -171,16 +172,16 @@ export function PlayerControls({ clock, captions, onCaptions, extra }: { clock: 
   const speeds = [1, 1.5, 2]
   return (
     <div className="flex items-center gap-1.5">
-      <button className="bg-ink grid size-9 place-items-center rounded-full text-white transition-transform hover:scale-105" onClick={clock.toggle} aria-label={clock.playing ? '暂停' : '播放'}>
+      <button className="bg-ink grid size-9 place-items-center rounded-full text-white transition-transform hover:scale-105" onClick={clock.toggle} aria-label={clock.playing ? L('暂停', 'Pause') : L('播放', 'Play')}>
         <MorphIcon icon={clock.playing ? Pause : Play} size={15} strokeWidth={2.4} />
       </button>
-      <button className="text-ink-2 grid size-8 place-items-center rounded-lg hover:bg-black/5" onClick={() => clock.seek(clock.t - 5)} aria-label="后退 5 秒"><RotateCcw size={15} /></button>
-      <button className="text-ink-2 grid size-8 place-items-center rounded-lg hover:bg-black/5" onClick={() => clock.seek(clock.t + 5)} aria-label="前进 5 秒"><RotateCw size={15} /></button>
+      <button className="text-ink-2 grid size-8 place-items-center rounded-lg hover:bg-black/5" onClick={() => clock.seek(clock.t - 5)} aria-label={L('后退 5 秒', 'Back 5 seconds')}><RotateCcw size={15} /></button>
+      <button className="text-ink-2 grid size-8 place-items-center rounded-lg hover:bg-black/5" onClick={() => clock.seek(clock.t + 5)} aria-label={L('前进 5 秒', 'Forward 5 seconds')}><RotateCw size={15} /></button>
       <span className="text-ink-2 ml-1 font-mono text-[12.5px] tabular-nums">{mmss(clock.t)} <span className="text-ink-4">/ {mmss(clock.duration)}</span></span>
       <div className="ml-auto flex items-center gap-1.5">
         {extra}
-        <button className={cn('grid h-8 place-items-center rounded-lg px-2 transition-colors', captions ? 'text-ink bg-black/5' : 'text-ink-3 hover:bg-black/5')} onClick={() => onCaptions(!captions)} aria-label="字幕" title="字幕"><Captions size={16} /></button>
-        <button className="text-ink-2 h-8 min-w-11 rounded-lg px-2 font-mono text-[12.5px] hover:bg-black/5" onClick={() => clock.setSpeed(speeds[(speeds.indexOf(clock.speed) + 1) % speeds.length])} title="倍速">{clock.speed}×</button>
+        <button className={cn('grid h-8 place-items-center rounded-lg px-2 transition-colors', captions ? 'text-ink bg-black/5' : 'text-ink-3 hover:bg-black/5')} onClick={() => onCaptions(!captions)} aria-label={L('字幕', 'Captions')} title={L('字幕', 'Captions')}><Captions size={16} /></button>
+        <button className="text-ink-2 h-8 min-w-11 rounded-lg px-2 font-mono text-[12.5px] hover:bg-black/5" onClick={() => clock.setSpeed(speeds[(speeds.indexOf(clock.speed) + 1) % speeds.length])} title={L('倍速', 'Speed')}>{clock.speed}×</button>
       </div>
     </div>
   )

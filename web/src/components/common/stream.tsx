@@ -6,6 +6,7 @@ import { itemById } from '@/data/meetings'
 import { mmss, quoteSpan } from '@/data/derive'
 import { goSource } from '@/lib/router'
 import { RUN_ID } from '@/data/run'
+import { L } from '@/lib/i18n'
 
 type Tok = { k: 'text'; s: string; b: boolean } | { k: 'cite'; id: string }
 
@@ -51,7 +52,7 @@ export function Cite({ id, showMeeting }: { id: string; showMeeting?: (meetingId
       initial={{ scale: 0.6, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       onClick={() => goSource(meeting.id, Math.max(0, t0 - 0.4), it.id)}
-      title={`“${it.quote}” — ${personById(seg.speaker).name}，点击回到录像`}
+      title={L(`“${it.quote}” — ${personById(seg.speaker).name}，点击回到录像`, `“${it.quote}” — ${personById(seg.speaker).name}. Click to jump to the recording`)}
     >
       <i>▶</i>{withTitle ? `${meeting.title} · ` : ''}{personById(seg.speaker).name} {mmss(t0)}
     </motion.button>

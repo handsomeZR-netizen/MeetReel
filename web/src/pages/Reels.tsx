@@ -15,6 +15,7 @@ import { Pop, PopRow } from '@/components/common/Pop'
 import { ACT, REEL_STYLES, beatWindow, defaultStyle, reelSpec, tc, type ReelSpec, type ReelStyle } from '@/components/reel/spec'
 import { Stage, useReelClock, type ReelClock } from '@/components/reel/kit'
 import { ReelFrame, ReelPlayer } from '@/components/reel/Player'
+import { L } from '@/lib/i18n'
 
 /** 只有画面、铺满窗口：录屏导出、单帧截图用（#/reel?frame&s=pop&t=12） */
 export function ReelFrameOnly() {
@@ -33,7 +34,8 @@ export function ReelFrameOnly() {
 }
 
 // 部门顺序：管理层在最上面，其余按组织页的顺序
-const TEAMS = ['管理层', '安全部', '市场部', '用户运营部', '交付中心', '销售部']
+// 和 model.ts 里的 team 一致
+const TEAMS = L(['管理层', '安全部', '市场部', '用户运营部', '交付中心', '销售部'], ['Leadership', 'Safety', 'Marketing', 'User Operations', 'Delivery Center', 'Sales'])
 
 export function Reels() {
   const route = useRoute()
@@ -50,39 +52,39 @@ export function Reels() {
 
   return (
     <>
-      <TopBar crumbs={[{ label: '每人 30 秒' }, { label: me.name }]} />
+      <TopBar crumbs={[{ label: L('每人 30 秒', '30s per person') }, { label: me.name }]} />
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-[1280px] flex-col gap-5 px-6 py-6">
+        <div className="mx-auto flex max-w-[1280px] flex-col gap-5 px-6 py-6 max-md:px-4 max-md:py-4">
           <header className="max-w-[760px]">
-            <h1 className="text-[24px] font-semibold tracking-tight">每人 30 秒</h1>
+            <h1 className="text-[24px] font-semibold tracking-tight">{L('每人 30 秒', '30 seconds per person')}</h1>
             <p className="text-ink-3 mt-1.5 text-[13.5px] leading-relaxed">
-              一场会讲了 {spec.total} 条，不是每个人都要看完。会映对照每个人<b className="text-ink-2 font-medium">负责、依赖、订阅</b>的事筛一遍，给需要的人各剪一条只讲 TA 的 30 秒，推到飞书；沾不上边的人不打扰。
+              {L(`一场会讲了 ${spec.total} 条，不是每个人都要看完。会映对照每个人`, `A meeting covers ${spec.total} items, and not everyone needs all of them. MeetReel filters by what each person `)}<b className="text-ink-2 font-medium">{L('负责、依赖、订阅', 'owns, depends on and follows')}</b>{L('的事筛一遍，给需要的人各剪一条只讲 TA 的 30 秒，推到飞书；沾不上边的人不打扰。', ', cuts a 30-second reel just about them for each person who needs one, and pushes it to Lark. Everyone else isn’t pinged.')}
             </p>
           </header>
 
-          <div className="grid items-start gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
+          <div className="grid grid-cols-[minmax(0,1fr)] items-start gap-5 xl:grid-cols-[320px_minmax(0,1fr)]">
             <DeliveryMap specs={specs} as={as} beatItem={beat >= 0 ? spec.beats[beat].entry.item.id : null} onPick={pick} />
 
             <div className="flex min-w-0 flex-col gap-4">
               <div className="flex flex-wrap items-center gap-3">
                 <Face p={me} size={44} ring="#5F3E54" />
-                <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-1.5"><b className="text-[18px] tracking-tight">{me.name} 的 30 秒</b><RankTag p={me} /><LeaderTag pid={me.id} /></div>
+                <div className="min-w-0 flex-1 max-md:basis-[220px]">
+                  <div className="flex flex-wrap items-center gap-1.5"><b className="text-[18px] tracking-tight">{L(`${me.name} 的 30 秒`, `${me.name}’s 30 seconds`)}</b><RankTag p={me} /><LeaderTag pid={me.id} /></div>
                   <div className="text-ink-3 mt-0.5 text-[12.5px]">
                     {me.team}{me.group ? ` · ${me.group}` : ''} · {me.role} ·{' '}
-                    {spec.kept.length ? <>从 {spec.total} 条里留下 <b className="text-ink">{spec.kept.length}</b> 条，不用看完整场，约省下 {spec.savedMin} 分钟</> : '这场没有和 TA 有关的，不打扰'}
+                    {spec.kept.length ? L(<>从 {spec.total} 条里留下 <b className="text-ink">{spec.kept.length}</b> 条，不用看完整场，约省下 {spec.savedMin} 分钟</>, <>Keeps <b className="text-ink">{spec.kept.length}</b> of {spec.total} items — no need to watch it all, saves about {spec.savedMin} min</>) : L('这场没有和 TA 有关的，不打扰', 'Nothing here concerns them — no ping')}
                   </div>
                 </div>
                 <Pop
                   align="right"
                   width={280}
-                  label={<><Clapperboard size={14} className="flex-none" /><span className="text-ink-3">画面</span>{REEL_STYLES.find(x => x.id === style)!.label}</>}
+                  label={<><Clapperboard size={14} className="flex-none" /><span className="text-ink-3">{L('画面', 'Look')}</span>{REEL_STYLES.find(x => x.id === style)!.label}</>}
                 >
                   {close => (
                     <>
-                      <div className="text-ink-3 px-2.5 pt-1.5 pb-1 text-[11.5px]">同一份分镜换一层皮；默认按职级挑</div>
+                      <div className="text-ink-3 px-2.5 pt-1.5 pb-1 text-[11.5px]">{L('同一份分镜换一层皮；默认按职级挑', 'Same storyboard, different skin; the default follows the person’s level')}</div>
                       {REEL_STYLES.map(st => (
-                        <PopRow key={st.id} on={style === st.id} onClick={() => { setStyle(st.id); close() }} count={st.id === defaultStyle(as) ? '默认' : undefined}>
+                        <PopRow key={st.id} on={style === st.id} onClick={() => { setStyle(st.id); close() }} count={st.id === defaultStyle(as) ? L('默认', 'Default') : undefined}>
                           <span className="min-w-0">
                             <span className="block">{st.label}</span>
                             <span className="text-ink-3 block truncate text-[11.5px] font-normal">{st.hint}</span>
@@ -157,20 +159,20 @@ const DeliveryMap = memo(function DeliveryMap({ specs, as, beatItem, onPick }: {
 
   return (
     <section className="sg-card rounded-[24px] p-3 max-xl:order-2 xl:sticky xl:top-2">
-      <a href={href(`/m/${m.id}`)} className="sg-dark group flex gap-3 rounded-[18px] p-3" title="回放这场会">
+      <a href={href(`/m/${m.id}`)} className="sg-dark group flex gap-3 rounded-[18px] p-3" title={L('回放这场会', 'Replay this meeting')}>
         {m.video && <img src={m.video.poster} alt="" className="h-[74px] w-[42px] flex-none rounded-lg object-cover opacity-90 transition-transform group-hover:scale-105" draggable={false} />}
         <span className="min-w-0 flex-1">
-          <span className="block text-[11px] text-white/45">源头 · {cnDate(m.date)} · {personById(m.publisher).name} 发布</span>
+          <span className="block text-[11px] text-white/45">{L('源头', 'Source')} · {cnDate(m.date)} · {L(`${personById(m.publisher).name} 发布`, `from ${personById(m.publisher).name}`)}</span>
           <b className="mt-0.5 block truncate text-[14px] text-white">{m.title}</b>
           <span className="mt-2 flex items-center gap-2.5">
             <ItemDots order={order} kept={cur.kept} hot={beatItem} cell={8} gap={3} on="#BBA3D6" off="rgb(255 255 255 / 12%)" />
-            <span className="text-[11px] leading-tight text-white/55"><b className="font-mono text-[13px] text-white">{cur.kept.length}</b>/{cur.total}<br />给{as === ME ? '你' : personById(as).name}</span>
+            <span className="text-[11px] leading-tight text-white/55"><b className="font-mono text-[13px] text-white">{cur.kept.length}</b>/{cur.total}<br />{L(`给${as === ME ? '你' : personById(as).name}`, `for ${as === ME ? 'you' : personById(as).name}`)}</span>
           </span>
         </span>
       </a>
 
       <div className="text-ink-3 mt-3 flex items-center gap-1.5 px-1 text-[12px]">
-        <Kb name="paperPlane" size={16} />送到 {reached} 个人 · {STAFF.length - reached} 人不打扰
+        <Kb name="paperPlane" size={16} />{L(`送到 ${reached} 个人 · ${STAFF.length - reached} 人不打扰`, `Sent to ${reached} · ${STAFF.length - reached} not pinged`)}
       </div>
 
       <div ref={list} className="relative mt-1 pl-8">
@@ -198,7 +200,7 @@ const DeliveryMap = memo(function DeliveryMap({ specs, as, beatItem, onPick }: {
                       <span className="text-ink-3 block truncate text-[11.5px]">{p.role}</span>
                     </span>
                     {quiet
-                      ? <span className="text-ink-4 flex-none text-[11.5px]">不打扰</span>
+                      ? <span className="text-ink-4 flex-none text-[11.5px]">{L('不打扰', 'No ping')}</span>
                       : <ItemDots order={order} kept={s.kept} cell={4} gap={1.5} on={on ? '#5F3E54' : '#8C7689'} off="rgb(95 62 84 / 10%)" />}
                   </button>
                   <AnimatePresence initial={false}>
@@ -218,15 +220,15 @@ const DeliveryMap = memo(function DeliveryMap({ specs, as, beatItem, onPick }: {
 function Profile({ pid }: { pid: PersonId }) {
   const p = personById(pid)
   const chips = [
-    ...p.profile.owns.slice(0, 3).map(x => ({ k: '负责', x, cls: 'sg-well text-ink-2' })),
-    ...p.profile.dependsOn.slice(0, 2).map(x => ({ k: '依赖', x, cls: 'bg-rose-50/80 text-rose-700 shadow-[inset_0_0_0_1px_rgb(225_29_72/12%)]' })),
-    ...p.profile.interests.slice(0, 2).map(x => ({ k: '订阅', x, cls: 'bg-[rgb(95_62_84/8%)] text-[var(--plum)] shadow-[inset_0_0_0_1px_rgb(95_62_84/12%)]' })),
+    ...p.profile.owns.slice(0, 3).map(x => ({ k: L('负责', 'Owns'), x, cls: 'sg-well text-ink-2' })),
+    ...p.profile.dependsOn.slice(0, 2).map(x => ({ k: L('依赖', 'Depends'), x, cls: 'bg-rose-50/80 text-rose-700 shadow-[inset_0_0_0_1px_rgb(225_29_72/12%)]' })),
+    ...p.profile.interests.slice(0, 2).map(x => ({ k: L('订阅', 'Follows'), x, cls: 'bg-[rgb(95_62_84/8%)] text-[var(--plum)] shadow-[inset_0_0_0_1px_rgb(95_62_84/12%)]' })),
   ]
   return (
     <motion.div className="overflow-hidden" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.24, ease: [0.2, 0.7, 0.2, 1] }}>
       <div className="flex flex-wrap gap-1 px-2 pt-1.5 pb-2.5 text-[11px]">
         {chips.map(c => <span key={c.k + c.x} className={cn('rounded-full px-2 py-px', c.cls)}>{c.k} {c.x}</span>)}
-        {!chips.length && <span className="text-ink-3">还没有关注档案</span>}
+        {!chips.length && <span className="text-ink-3">{L('还没有关注档案', 'No interest profile yet')}</span>}
       </div>
     </motion.div>
   )
@@ -241,8 +243,8 @@ function Beats({ spec, clock, beat }: { spec: ReelSpec; clock: ReelClock; beat: 
   const seek = (t: number) => { clock.seek(t + 0.05); clock.play() }
   return (
     <section>
-      <div className="mb-2 flex items-baseline gap-2"><h2 className="text-[15px] font-semibold">片子里讲的</h2><span className="text-ink-3 text-[12.5px]">每一条都连着 {spec.person.name} 手上的事，点一下跳到那一段</span></div>
-      <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="mb-2 flex items-baseline gap-2"><h2 className="text-[15px] font-semibold">{L('片子里讲的', 'In the reel')}</h2><span className="text-ink-3 text-[12.5px]">{L(`每一条都连着 ${spec.person.name} 手上的事，点一下跳到那一段`, `Each one ties to something ${spec.person.name} is working on — click to jump to that moment`)}</span></div>
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-2.5 sm:grid-cols-2 xl:grid-cols-4">
         {spec.beats.map((b, i) => {
           const [a, z] = beatWindow(i, n)
           const on = beat === i
@@ -251,12 +253,12 @@ function Beats({ spec, clock, beat }: { spec: ReelSpec; clock: ReelClock; beat: 
               <div className="flex items-center gap-2">
                 <span className="font-mono text-[11px] font-semibold opacity-60">0{i + 1}</span>
                 <TypePill item={b.entry.item} />
-                {b.entry.tier === 'must' && <span className="rounded-md bg-rose-50 px-1 text-[10.5px] leading-4 text-rose-700">必读</span>}
+                {b.entry.tier === 'must' && <span className="rounded-md bg-rose-50 px-1 text-[10.5px] leading-4 text-rose-700">{L('必读', 'Must-read')}</span>}
                 <span className="ml-auto font-mono text-[10.5px] opacity-50">{tc(a)}</span>
               </div>
               <b className="mt-2 line-clamp-2 block text-[13.5px] leading-snug">{b.entry.forYou}</b>
-              <p className="reel-why mt-1.5 line-clamp-3 text-[12px] leading-snug">为什么是你：{b.entry.why}</p>
-              <p className="reel-why mt-1.5 truncate text-[11.5px]">原话 · {b.speaker.name} {tc(b.at)}</p>
+              <p className="reel-why mt-1.5 line-clamp-3 text-[12px] leading-snug">{L('为什么是你：', 'Why you: ')}{b.entry.why}</p>
+              <p className="reel-why mt-1.5 truncate text-[11.5px]">{L('原话', 'Quote')} · {b.speaker.name} {tc(b.at)}</p>
               {on && <span className="absolute inset-x-0 bottom-0 h-[3px] origin-left bg-[#E9B8DA]" style={{ transform: `scaleX(${(clock.t - a) / (z - a)})` }} />}
             </button>
           )
@@ -265,12 +267,12 @@ function Beats({ spec, clock, beat }: { spec: ReelSpec; clock: ReelClock; beat: 
           <button className={cn('reel-beat next relative overflow-hidden rounded-[18px] p-3 text-left', nextOn && 'on')} onClick={() => seek(ACT.next[0])}>
             <div className="flex items-center gap-2">
               <Kb name="calendar" size={18} />
-              <span className="text-[12px] font-semibold">接下来</span>
+              <span className="text-[12px] font-semibold">{L('接下来', 'Next up')}</span>
               <span className="ml-auto rounded-md bg-amber-50 px-1.5 text-[11px] leading-[18px] text-amber-700">{spec.next.dueLabel}</span>
             </div>
             <b className="mt-2 line-clamp-2 block text-[13.5px] leading-snug">{spec.next.item.title}</b>
             <p className="reel-why mt-1.5 line-clamp-3 text-[12px] leading-snug">{spec.next.link}</p>
-            <p className="reel-why mt-1.5 truncate text-[11.5px]">来自 {spec.next.meeting.title.replace(/ · .*/, '')}</p>
+            <p className="reel-why mt-1.5 truncate text-[11.5px]">{L('来自', 'From')} {spec.next.meeting.title.replace(/ · .*/, '')}</p>
             {nextOn && <span className="absolute inset-x-0 bottom-0 h-[3px] origin-left bg-[#E9B8DA]" style={{ transform: `scaleX(${(clock.t - ACT.next[0]) / (ACT.next[1] - ACT.next[0])})` }} />}
           </button>
         )}
@@ -291,29 +293,29 @@ function WhereItWent({ spec }: { spec: ReelSpec }) {
       <button className="flex w-full items-center gap-3 px-4 py-3 text-left hover:bg-white/60" onClick={() => setOpen(o => !o)} aria-expanded={open}>
         <Kb name="stamp" size={22} />
         <span className="min-w-0 flex-1">
-          <b className="block text-[14px]">{spec.total} 条都去哪了</b>
-          <span className="text-ink-3 block text-[12px]">留给 {spec.person.name} {kept.length} 条{spec.more ? `（片子讲 ${inReel.length} 条，另外 ${spec.more} 条在飞书简报里）` : ''} · 划掉 {cut.length} 条</span>
+          <b className="block text-[14px]">{L(`${spec.total} 条都去哪了`, `Where all ${spec.total} items went`)}</b>
+          <span className="text-ink-3 block text-[12px]">{L(`留给 ${spec.person.name} ${kept.length} 条${spec.more ? `（片子讲 ${inReel.length} 条，另外 ${spec.more} 条在飞书简报里）` : ''} · 划掉 ${cut.length} 条`, `${kept.length} kept for ${spec.person.name}${spec.more ? ` (${inReel.length} in the reel, ${spec.more} more in the Lark brief)` : ''} · ${cut.length} cut`)}</span>
         </span>
         <span className={cn('grid size-7 flex-none place-items-center rounded-full transition-transform', open ? 'sg-onyx rotate-180' : 'sg-raised text-ink-2')}><ChevronDown size={15} /></span>
       </button>
       <AnimatePresence initial={false}>
         {open && (
           <motion.div className="overflow-hidden" initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: 0.26, ease: [0.2, 0.7, 0.2, 1] }}>
-            <div className="grid gap-4 border-t border-[rgb(95_62_84/7%)] p-4 md:grid-cols-2">
+            <div className="grid grid-cols-[minmax(0,1fr)] gap-4 border-t border-[rgb(95_62_84/7%)] p-4 md:grid-cols-2">
               <div>
-                <div className="mb-2 text-[12.5px] font-medium">留给 TA 的</div>
+                <div className="mb-2 text-[12.5px] font-medium">{L('留给 TA 的', 'Kept for them')}</div>
                 <ul className="flex flex-col gap-1">
                   {kept.map(it => (
                     <li key={it.id} className="sg-raised flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-[12.5px]">
                       <TypePill item={it} /><span className="min-w-0 flex-1 truncate">{it.title}</span>
-                      <span className="text-ink-3 flex-none text-[11px]">{inReel.includes(it.id) ? '片子里' : '简报里'}</span>
+                      <span className="text-ink-3 flex-none text-[11px]">{inReel.includes(it.id) ? L('片子里', 'in reel') : L('简报里', 'in brief')}</span>
                     </li>
                   ))}
-                  {!kept.length && <li className="text-ink-3 text-[12.5px]">一条都没有，这场不打扰 {spec.person.name}。</li>}
+                  {!kept.length && <li className="text-ink-3 text-[12.5px]">{L(`一条都没有，这场不打扰 ${spec.person.name}。`, `None — ${spec.person.name} isn’t pinged this time.`)}</li>}
                 </ul>
               </div>
               <div>
-                <div className="text-ink-3 mb-2 text-[12.5px] font-medium">划掉的 · 和 TA 负责、依赖、订阅的都对不上</div>
+                <div className="text-ink-3 mb-2 text-[12.5px] font-medium">{L('划掉的 · 和 TA 负责、依赖、订阅的都对不上', 'Cut · doesn’t match anything they own, depend on or follow')}</div>
                 <ul className="flex flex-col gap-1">
                   {cut.map(it => (
                     <li key={it.id} className="sg-well flex items-center gap-2 rounded-xl px-2.5 py-1.5 text-[12.5px] opacity-70">

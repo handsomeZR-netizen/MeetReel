@@ -3,7 +3,8 @@
 import { useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { Dialog, Popover } from 'radix-ui'
-import { ChevronRight, LogOut, Plus, RotateCcw, Settings2, X } from 'lucide-react'
+import { ChevronRight, Languages, LogOut, Plus, RotateCcw, Settings2, X } from 'lucide-react'
+import { L, isEn, setLang } from '@/lib/i18n'
 import { ME, MODELS, PROJECTS, RANKS, REASONS, SENSITIVITY, STAFF, personById } from '@/data/model'
 import { inboxOf } from '@/data/derive'
 import { usedModels } from '@/data/run'
@@ -40,7 +41,7 @@ export function AccountMenu({ collapsed }: { collapsed: boolean }) {
           <button className={cn('flex w-full items-center gap-3 rounded-2xl p-2.5 text-left transition-colors hover:bg-white/60 data-[state=open]:bg-white/75 data-[state=open]:shadow-[inset_0_1px_0_#fff,0_0_0_1px_rgb(95_62_84/7%),0_8px_18px_-12px_rgb(40_24_36/35%)]', collapsed && 'justify-center p-1.5')}>
             <span className="relative flex-none">
               <Face p={me} size={44} className="!rounded-xl" />
-              <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-[#F3F5F9] bg-emerald-500" title="在线" />
+              <span className="absolute -right-0.5 -bottom-0.5 size-3 rounded-full border-2 border-[#F3F5F9] bg-emerald-500" title={L('在线', 'Online')} />
             </span>
             {!collapsed && (
               <span className="min-w-0 flex-1 leading-tight">
@@ -59,7 +60,7 @@ export function AccountMenu({ collapsed }: { collapsed: boolean }) {
             <button className="pc-hero group flex w-full items-center gap-3 rounded-[17px] p-3.5 text-left" onClick={() => go('info')}>
               <Face p={me} size={46} className="!rounded-[14px] shadow-[0_0_0_2px_rgb(255_255_255/40%)]" />
               <span className="min-w-0 flex-1 leading-tight">
-                <span className="block text-[11px] text-white/60">个人中心 · {me.team}</span>
+                <span className="block text-[11px] text-white/60">{L('个人中心', 'Profile')} · {me.team}</span>
                 <span className="mt-1 flex items-center gap-1.5"><b className="text-[16px]">{me.name}</b><HeroRank /></span>
                 <span className="mt-1 block truncate text-[12px] text-white/70">{me.role}</span>
               </span>
@@ -67,17 +68,18 @@ export function AccountMenu({ collapsed }: { collapsed: boolean }) {
             </button>
             <div className="flex flex-wrap gap-1 px-2 pt-2.5 pb-1">
               <LeaderTag pid={ME} />
-              <span className="sg-well text-ink-2 rounded-md px-1.5 text-[11px] leading-[18px]">可见 · {SENSITIVITY[me.profile.clearance].label}</span>
+              <span className="sg-well text-ink-2 rounded-md px-1.5 text-[11px] leading-[18px]">{L('可见', 'Clearance')} · {SENSITIVITY[me.profile.clearance].label}</span>
             </div>
             <div className="p-1">
-              <MenuRow kb="notebook" label="个人信息" onClick={() => go('info')} />
-              <MenuRow kb="target" label="我的画像" meta={`${owns} 个关注点`} onClick={() => go('profile')} />
-              <MenuRow kb="bell" label="通知与偏好" meta={Object.keys(channels).filter(k => channels[k]).join(' · ')} onClick={() => go('prefs')} />
+              <MenuRow kb="notebook" label={L('个人信息', 'Personal info')} onClick={() => go('info')} />
+              <MenuRow kb="target" label={L('我的画像', 'My profile')} meta={L(`${owns} 个关注点`, `${owns} interests`)} onClick={() => go('profile')} />
+              <MenuRow kb="bell" label={L('通知与偏好', 'Notifications')} meta={Object.keys(channels).filter(k => channels[k]).join(' · ')} onClick={() => go('prefs')} />
+              <MenuRow icon={<Languages size={14} />} label={L('语言 · Language', 'Language · 语言')} meta={L('中文 → English', 'English → 中文')} onClick={() => setLang(isEn ? 'zh' : 'en')} />
             </div>
             <div className="mx-2.5 h-px bg-[rgb(95_62_84/8%)]" />
             <div className="p-1">
-              <MenuRow icon={<RotateCcw size={14} />} label="重置演示数据" onClick={() => { actions.reset(); setOpen(false); location.hash = '#/' }} />
-              <MenuRow icon={<LogOut size={14} />} label="退出登录" danger onClick={() => { setOpen(false); actions.signOut() }} />
+              <MenuRow icon={<RotateCcw size={14} />} label={L('重置演示数据', 'Reset demo data')} onClick={() => { actions.reset(); setOpen(false); location.hash = '#/' }} />
+              <MenuRow icon={<LogOut size={14} />} label={L('退出登录', 'Sign out')} danger onClick={() => { setOpen(false); actions.signOut() }} />
             </div>
           </Popover.Content>
         </Popover.Portal>
@@ -100,9 +102,9 @@ function MenuRow({ kb, icon, label, meta, danger, onClick }: { kb?: KoboyoName; 
 // ---------------- 个人中心 ----------------
 
 const TABS: { id: Tab; label: string; kb: KoboyoName }[] = [
-  { id: 'info', label: '个人信息', kb: 'notebook' },
-  { id: 'profile', label: '我的画像', kb: 'target' },
-  { id: 'prefs', label: '通知与偏好', kb: 'bell' },
+  { id: 'info', label: L('个人信息', 'Info'), kb: 'notebook' },
+  { id: 'profile', label: L('我的画像', 'Profile'), kb: 'target' },
+  { id: 'prefs', label: L('通知与偏好', 'Notifications'), kb: 'bell' },
 ]
 
 function ProfileCenter({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab | null) => void }) {
@@ -115,13 +117,13 @@ function ProfileCenter({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab | null)
           <div className="pc-hero flex items-center gap-4 rounded-[22px] px-5 py-5">
             <Face p={me} size={60} className="!rounded-[18px] shadow-[0_0_0_3px_rgb(255_255_255/35%)]" />
             <div className="min-w-0 flex-1 leading-tight">
-              <Dialog.Title className="text-[11.5px] font-normal text-white/60">会映 · 个人中心 · {me.team}{me.group ? ` · ${me.group}` : ''}</Dialog.Title>
+              <Dialog.Title className="text-[11.5px] font-normal text-white/60">{L('会映 · 个人中心', 'MeetReel · Profile')} · {me.team}{me.group ? ` · ${me.group}` : ''}</Dialog.Title>
               <div className="mt-1.5 flex flex-wrap items-center gap-1.5"><b className="text-[22px] tracking-tight">{me.name}</b><HeroRank /><LeaderTag pid={ME} /></div>
-              <div className="mt-1.5 text-[13px] text-white/70">{me.role} · 汇报给 {me.reportsTo ? personById(me.reportsTo).name : '—'} · 飞书已绑定</div>
+              <div className="mt-1.5 text-[13px] text-white/70">{me.role} · {L('汇报给', 'Reports to')} {me.reportsTo ? personById(me.reportsTo).name : '—'} · {L('飞书已绑定', 'Lark connected')}</div>
             </div>
-            <Dialog.Close className="grid size-8 flex-none place-items-center self-start rounded-full bg-white/15 text-white shadow-[inset_0_1px_0_rgb(255_255_255/25%)] transition-colors hover:bg-white/25" aria-label="关闭"><X size={15} /></Dialog.Close>
+            <Dialog.Close className="grid size-8 flex-none place-items-center self-start rounded-full bg-white/15 text-white shadow-[inset_0_1px_0_rgb(255_255_255/25%)] transition-colors hover:bg-white/25" aria-label={L('关闭', 'Close')}><X size={15} /></Dialog.Close>
           </div>
-          <Dialog.Description className="sr-only">个人信息、关注画像和通知偏好</Dialog.Description>
+          <Dialog.Description className="sr-only">{L('个人信息、关注画像和通知偏好', 'Personal info, interest profile and notification preferences')}</Dialog.Description>
           <div className="px-3 pt-3.5">
             <div className="sg-well inline-flex rounded-full p-1">
               {TABS.map(t => {
@@ -146,9 +148,9 @@ function ProfileCenter({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab | null)
             </AnimatePresence>
           </div>
           <div className="flex items-center gap-3 px-4 pt-1 pb-2">
-            <span className="text-ink-3 text-[12px]">资料来自飞书通讯录；画像由路由官维护，你的确认和退回会让它更准。</span>
+            <span className="text-ink-3 text-[12px]">{L('资料来自飞书通讯录；画像由路由官维护，你的确认和退回会让它更准。', 'Details come from the Lark directory; the Router maintains your profile, and every confirm or bounce makes it sharper.')}</span>
             <button className="sg-raised ml-auto inline-flex h-8 flex-none items-center gap-1.5 rounded-full px-3.5 text-[13px] text-rose-600 transition-transform hover:-translate-y-px" onClick={() => { onTab(null); actions.signOut() }}>
-              <LogOut size={14} /> 退出登录
+              <LogOut size={14} /> {L('退出登录', 'Sign out')}
             </button>
           </div>
         </Dialog.Content>
@@ -159,7 +161,7 @@ function ProfileCenter({ tab, onTab }: { tab: Tab | null; onTab: (t: Tab | null)
 
 function Row({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <div className="pc-row grid grid-cols-[96px_minmax(0,1fr)] items-center gap-3 py-3">
+    <div className="pc-row grid grid-cols-[80px_minmax(0,1fr)] items-center gap-3 py-3 sm:grid-cols-[110px_minmax(0,1fr)]">
       <span className="text-ink-3 text-[13px]">{label}</span>
       <div className="text-ink flex min-w-0 flex-wrap items-center gap-1.5 text-[13.5px]">{children}</div>
     </div>
@@ -173,22 +175,22 @@ function InfoTab() {
   const boss = me.reportsTo ? personById(me.reportsTo) : null
   return (
     <div className="sg-card rounded-[20px] px-4">
-      <Row label="姓名">{me.name}<span className="text-ink-3">· 别名 {me.profile.aliases.join('、')}</span></Row>
-      <Row label="部门">{me.team}{me.group ? ` / ${me.group}` : ''}</Row>
-      <Row label="职务">{me.role}</Row>
-      <Row label="职级"><RankTag p={me} /><span className="text-ink-2 text-[12.5px]">简报默认写成：{RANKS[me.rank].brief}</span></Row>
-      <Row label="汇报给">{boss ? <span className="inline-flex items-center gap-1.5"><Face p={boss} size={22} />{boss.name}<span className="text-ink-3">· {boss.role}</span></span> : '—'}</Row>
-      <Row label="组员">
+      <Row label={L('姓名', 'Name')}>{me.name}<span className="text-ink-3">· {L('别名', 'aka')} {me.profile.aliases.join(L('、', ', '))}</span></Row>
+      <Row label={L('部门', 'Department')}>{me.team}{me.group ? ` / ${me.group}` : ''}</Row>
+      <Row label={L('职务', 'Title')}>{me.role}</Row>
+      <Row label={L('职级', 'Level')}><RankTag p={me} /><span className="text-ink-2 text-[12.5px]">{L('简报默认写成：', 'Briefs default to: ')}{RANKS[me.rank].brief}</span></Row>
+      <Row label={L('汇报给', 'Reports to')}>{boss ? <span className="inline-flex items-center gap-1.5"><Face p={boss} size={22} />{boss.name}<span className="text-ink-3">· {boss.role}</span></span> : '—'}</Row>
+      <Row label={L('组员', 'Team')}>
         {team.map(x => <span key={x.id} className="sg-raised inline-flex items-center gap-1.5 rounded-full py-0.5 pr-2.5 pl-0.5"><Face p={x} size={22} />{x.name}<RankTag p={x} short /></span>)}
       </Row>
-      <Row label="参与项目">
+      <Row label={L('参与项目', 'Projects')}>
         {projects.map(p => (
           <span key={p.id} className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[12.5px] font-medium" style={{ color: p.color, background: p.soft }}>
             <span className="size-1.5 rounded-full" style={{ background: p.color }} />{p.name}{p.leader === ME && ' · Leader'}
           </span>
         ))}
       </Row>
-      <Row label="可见范围"><b className="font-medium">{SENSITIVITY[me.profile.clearance].label}</b><span className="text-ink-2 text-[12.5px]">{SENSITIVITY[me.profile.clearance].desc}</span></Row>
+      <Row label={L('可见范围', 'Clearance')}><b className="font-medium">{SENSITIVITY[me.profile.clearance].label}</b><span className="text-ink-2 text-[12.5px]">{SENSITIVITY[me.profile.clearance].desc}</span></Row>
     </div>
   )
 }
@@ -202,15 +204,15 @@ function PortraitTab() {
   const [draft, setDraft] = useState('')
   const inbox = inboxOf(ME, id => !!dispatched[id])
   const stats = [
-    { v: inbox.length, l: '份简报发给我' },
-    { v: inbox.reduce((n, x) => n + x.brief.entries.length, 0), l: '条和我有关' },
-    { v: Object.values(confirmed).filter(p => p === ME).length, l: '条我确认负责' },
+    { v: inbox.length, l: L('份简报发给我', 'briefs sent to me') },
+    { v: inbox.reduce((n, x) => n + x.brief.entries.length, 0), l: L('条和我有关', 'items for me') },
+    { v: Object.values(confirmed).filter(p => p === ME).length, l: L('条我确认负责', 'items I own') },
   ]
   const groups: { r: string; title: string; words: string[]; edit?: boolean }[] = [
-    { r: 'R3', title: '我负责的', words: me.profile.owns },
-    { r: 'R5', title: '我订阅的话题', words: interests, edit: true },
-    { r: 'R4', title: '我依赖的', words: me.profile.dependsOn },
-    { r: 'R2', title: '别人这样叫我', words: me.profile.aliases },
+    { r: 'R3', title: L('我负责的', 'What I own'), words: me.profile.owns },
+    { r: 'R5', title: L('我订阅的话题', 'Topics I follow'), words: interests, edit: true },
+    { r: 'R4', title: L('我依赖的', 'What I depend on'), words: me.profile.dependsOn },
+    { r: 'R2', title: L('别人这样叫我', 'What people call me'), words: me.profile.aliases },
   ]
   const add = () => {
     const v = draft.trim()
@@ -227,7 +229,7 @@ function PortraitTab() {
           </div>
         ))}
       </div>
-      <p className="text-ink-2 px-1 text-[13px] leading-relaxed">会议里一说到下面这些词，路由官就会考虑发给你，并在简报里写明“为什么发给你”。没说到的，不打扰。</p>
+      <p className="text-ink-2 px-1 text-[13px] leading-relaxed">{L('会议里一说到下面这些词，路由官就会考虑发给你，并在简报里写明“为什么发给你”。没说到的，不打扰。', 'When a meeting touches any of these words, the Router considers sending it to you and says why in your brief. If none come up, you’re not pinged.')}</p>
       {groups.map(g => (
         <div key={g.r} className="sg-card rounded-[18px] p-3.5">
           <div className="mb-2.5 flex items-center gap-2">
@@ -238,13 +240,13 @@ function PortraitTab() {
             {g.words.length ? g.words.map(w => (
               <span key={w} className={cn('inline-flex h-7 items-center gap-1 rounded-full px-3 text-[13px]', g.r === 'R3' ? 'sg-onyx' : 'sg-raised text-ink')}>
                 {w}
-                {g.edit && <button className="text-ink-3 hover:text-ink -mr-1.5 grid size-4 place-items-center rounded-full hover:bg-black/5" onClick={() => actions.toggleInterest(w)} aria-label={`取消订阅 ${w}`}><X size={11} /></button>}
+                {g.edit && <button className="text-ink-3 hover:text-ink -mr-1.5 grid size-4 place-items-center rounded-full hover:bg-black/5" onClick={() => actions.toggleInterest(w)} aria-label={L(`取消订阅 ${w}`, `Unfollow ${w}`)}><X size={11} /></button>}
               </span>
-            )) : <span className="text-ink-3 text-[12.5px]">暂无</span>}
+            )) : <span className="text-ink-3 text-[12.5px]">{L('暂无', 'None yet')}</span>}
             {g.edit && (
               <span className="sg-well inline-flex h-7 items-center gap-1 rounded-full pr-1 pl-2.5">
                 <Plus size={12} className="text-ink-3" />
-                <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder="加一个话题，回车" className="placeholder:text-ink-4 w-[110px] bg-transparent text-[12.5px] outline-none" />
+                <input value={draft} onChange={e => setDraft(e.target.value)} onKeyDown={e => e.key === 'Enter' && add()} placeholder={L('加一个话题，回车', 'Add a topic, press Enter')} className="placeholder:text-ink-4 w-[110px] bg-transparent text-[12.5px] outline-none" />
               </span>
             )}
           </div>
@@ -263,8 +265,8 @@ function PrefsTab() {
   return (
     <div className="flex flex-col gap-3.5">
       <div>
-        <div className="mb-2 px-1 text-[13px] font-semibold">推送渠道</div>
-        <div className="grid grid-cols-2 gap-2">
+        <div className="mb-2 px-1 text-[13px] font-semibold">{L('推送渠道', 'Channels')}</div>
+        <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
           {Object.keys(channels).map(c => (
             <label key={c} className="sg-card flex h-12 cursor-pointer items-center justify-between rounded-2xl px-4 text-[13.5px]">
               {c}<Switch className="sg-switch" checked={channels[c]} onCheckedChange={() => actions.toggleChannel(c)} />
@@ -273,16 +275,33 @@ function PrefsTab() {
         </div>
       </div>
       <div className="sg-card rounded-[20px] px-4">
-        <Row label="免打扰"><label className="flex items-center gap-2"><Switch className="sg-switch" checked={quiet} onCheckedChange={setQuiet} />没有必读内容的会，不单独推送</label></Row>
-        <Row label="待办提醒"><label className="flex items-center gap-2"><Switch className="sg-switch" checked={digest} onCheckedChange={setDigest} />截止前一天早上 9 点在飞书提醒</label></Row>
-        <Row label="默认模型">
+        <Row label={L('免打扰', 'Quiet mode')}><label className="flex items-center gap-2"><Switch className="sg-switch" checked={quiet} onCheckedChange={setQuiet} />{L('没有必读内容的会，不单独推送', 'No separate ping for meetings with nothing must-read')}</label></Row>
+        <Row label={L('待办提醒', 'Reminders')}><label className="flex items-center gap-2"><Switch className="sg-switch" checked={digest} onCheckedChange={setDigest} />{L('截止前一天早上 9 点在飞书提醒', 'Remind me in Lark at 9 am the day before a due date')}</label></Row>
+        <Row label={L('默认模型', 'Models')}>
           <span className="inline-flex items-center gap-1">{used.map(id => <ModelIcon key={id} icon={id} size={16} />)}</span>
-          {used.length > 1 ? `多模型协同 · ${used.length} 个` : MODELS.find(m => m.id === used[0])?.label}
-          <span className="text-ink-3 text-[12.5px]">在新建会映的输入框里切换</span>
+          {used.length > 1 ? L(`多模型协同 · ${used.length} 个`, `Multi-model · ${used.length}`) : MODELS.find(m => m.id === used[0])?.label}
+          <span className="text-ink-3 text-[12.5px]">{L('在新建会映的输入框里切换', 'Switch in the New reel composer')}</span>
         </Row>
-        <Row label="简报语言">简体中文<span className="text-ink-3 text-[12.5px]">原话保留原文</span></Row>
+        <Row label={L('界面语言', 'Language')}><LangSwitch /></Row>
+        <Row label={L('简报语言', 'Brief language')}>{L('简体中文', 'English')}<span className="text-ink-3 text-[12.5px]">{L('原话保留原文', 'Quotes stay in the original')}</span></Row>
       </div>
     </div>
+  )
+}
+
+/** 中文 / English 分段切换；切换会刷新页面（演示数据回到初始状态） */
+export function LangSwitch({ className }: { className?: string }) {
+  return (
+    <span className={cn('sg-well inline-flex rounded-full p-0.5 text-[12.5px]', className)} role="group" aria-label="语言 / Language">
+      {(['zh', 'en'] as const).map(l => {
+        const on = (l === 'en') === isEn
+        return (
+          <button key={l} onClick={() => setLang(l)} aria-pressed={on} className={cn('h-7 rounded-full px-3 transition-colors', on ? 'sg-onyx font-medium text-white' : 'text-ink-2 hover:text-ink')}>
+            {l === 'zh' ? '中文' : 'English'}
+          </button>
+        )
+      })}
+    </span>
   )
 }
 
@@ -294,15 +313,15 @@ export function SignedOut({ logo }: { logo?: string }) {
     <motion.div className="glass-workspace fixed inset-0 z-[70] grid place-items-center" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
       <motion.div className="pc-sheet w-[min(400px,92vw)] rounded-[28px] p-2" initial={{ y: 12, scale: 0.98 }} animate={{ y: 0, scale: 1 }} transition={{ type: 'spring', stiffness: 300, damping: 28 }}>
         <div className="flex flex-col items-center px-6 pt-7 pb-5 text-center">
-          {logo ? <img src={logo} alt="会映 MeetReel" className="h-14 w-auto" draggable={false} /> : <b className="text-[22px]">会映 MeetReel</b>}
-          <p className="text-ink-2 mt-3 text-[14px]">你已退出。每场会，按人发到对的人手里。</p>
+          {logo ? <img src={logo} alt={L('会映 MeetReel', 'MeetReel')} className="h-14 w-auto" draggable={false} /> : <b className="text-[22px]">{L('会映 MeetReel', 'MeetReel')}</b>}
+          <p className="text-ink-2 mt-3 text-[14px]">{L('你已退出。每场会，按人发到对的人手里。', 'You’re signed out. Every meeting, split per person and sent to the right people.')}</p>
         </div>
         <button className="pc-hero group flex w-full items-center gap-3 rounded-[22px] p-3.5 text-left" onClick={actions.signIn}>
           <Face p={me} size={44} className="!rounded-[14px] shadow-[0_0_0_2px_rgb(255_255_255/40%)]" />
           <span className="min-w-0 flex-1 leading-tight"><b className="block text-[15px]">{me.name}</b><span className="text-[12.5px] text-white/70">{me.team} · {me.role}</span></span>
-          <span className="sg-white-btn rounded-full px-3.5 py-1.5 text-[13px] font-semibold">继续登录</span>
+          <span className="sg-white-btn rounded-full px-3.5 py-1.5 text-[13px] font-semibold">{L('继续登录', 'Continue')}</span>
         </button>
-        <button className="text-ink-2 hover:text-ink mx-auto mt-2.5 mb-1.5 block text-[13px] hover:underline" onClick={actions.signIn}>使用其他飞书账号</button>
+        <button className="text-ink-2 hover:text-ink mx-auto mt-2.5 mb-1.5 block text-[13px] hover:underline" onClick={actions.signIn}>{L('使用其他飞书账号', 'Use another Lark account')}</button>
       </motion.div>
     </motion.div>
   )

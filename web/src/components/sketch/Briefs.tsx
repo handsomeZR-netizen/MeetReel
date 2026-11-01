@@ -9,6 +9,7 @@ import { goSource } from '@/lib/router'
 import { actions, useStore } from '@/lib/store'
 import { Kb } from '@/components/common/bits'
 import { Rough } from './rough'
+import { L } from '@/lib/i18n'
 
 export const NOTE_COLORS = ['#FFF3B0', '#FFD8E4', '#D0EBFF', '#D3F9D8', '#E5DBFF', '#FFE8CC', '#C5F6FA', '#EDEDE8']
 const TILT = [-2.5, 1.5, -1, 2, -1.8, 1, -2.2, 1.2]
@@ -58,9 +59,9 @@ export function StickyNotes({ meeting, people, ready, onOpen }: { meeting: strin
                 i={i}
                 quiet={quiet}
                 title={p.name}
-                sub={b.host ? '发布者' : `${RANKS[p.rank].level} · ${p.role}`}
+                sub={b.host ? L('发布者', 'Publisher') : `${RANKS[p.rank].level} · ${p.role}`}
                 count={quiet ? <Kb name="coffee" size={20} /> : b.host ? m.items.length : b.entries.length}
-                foot={quiet ? '不打扰，只进日报' : '点开看 →'}
+                foot={quiet ? L('不打扰，只进日报', 'No ping, digest only') : L('点开看 →', 'Open →')}
                 onClick={() => onOpen(pid)}
               >
                 <p>{b.headline}</p>
@@ -104,13 +105,13 @@ function PaperBody({ meeting, pid, onClose }: { meeting: string; pid: PersonId; 
   const rows = b.host ? m.items.map(i => i.id) : b.entries.map(e => e.item)
   return (
     <>
-      <button className="sk-paper-x" onClick={onClose} aria-label="关闭"><X size={18} /></button>
+      <button className="sk-paper-x" onClick={onClose} aria-label={L('关闭', 'Close')}><X size={18} /></button>
       <div className="sk-paper-head">
         <span className="sk-paper-face" style={{ background: p.bg, color: p.fg }}>{p.short}</span>
-        <div><b>{p.name}</b><small>{b.host ? '发布者版' : `${RANKS[p.rank].level} ${RANKS[p.rank].label} · ${p.role}`}{quiet ? ' · 这场不打扰' : ` · 约 ${b.readSeconds} 秒读完`}</small></div>
+        <div><b>{p.name}</b><small>{b.host ? L('发布者版', 'Publisher version') : `${RANKS[p.rank].level} ${RANKS[p.rank].label} · ${p.role}`}{quiet ? L(' · 这场不打扰', ' · no ping this time') : L(` · 约 ${b.readSeconds} 秒读完`, ` · ~${b.readSeconds}s read`)}</small></div>
       </div>
       <p className="sk-paper-headline">{b.headline}</p>
-      {quiet && <div className="flex items-center gap-3 py-3.5 text-[17px] text-[#4A4A4A]"><Kb name="coffee" size={40} /> 没有需要你必读的内容。和你沾边的变化放进了日报。</div>}
+      {quiet && <div className="flex items-center gap-3 py-3.5 text-[17px] text-[#4A4A4A]"><Kb name="coffee" size={40} /> {L('没有需要你必读的内容。和你沾边的变化放进了日报。', 'Nothing must-read for you. Anything loosely related went into your daily digest.')}</div>}
       <ol className="sk-paper-list">
         {rows.map(iid => {
           const it = m.items.find(i => i.id === iid)!
@@ -123,7 +124,7 @@ function PaperBody({ meeting, pid, onClose }: { meeting: string; pid: PersonId; 
           const { t0, seg } = quoteSpan(it)
           return (
             <li key={iid}>
-              <button className="sk-check" onClick={() => mine && actions.confirm(iid, pid)} aria-label="确认" title={mine ? '勾选即确认' : ok ? `${personById(confirmed[iid]).name} 已确认` : ''}>
+              <button className="sk-check" onClick={() => mine && actions.confirm(iid, pid)} aria-label={L('确认', 'Confirm')} title={mine ? L('勾选即确认', 'Tick to confirm') : ok ? L(`${personById(confirmed[iid]).name} 已确认`, `${personById(confirmed[iid]).name} confirmed`) : ''}>
                 <svg width="22" height="22" viewBox="0 0 22 22">
                   <Rough shape={{ kind: 'rect', x: 2, y: 2, w: 18, h: 18 }} opts={{ stroke: INK, strokeWidth: 1.4, roughness: 1.2 }} draw={0} />
                   {ok && <Rough shape={{ kind: 'path', d: 'M5,11 l5,6 l10,-15' }} opts={{ stroke: '#2F9E44', strokeWidth: 2.4, roughness: 0.6 }} draw={0.25} />}
@@ -132,21 +133,21 @@ function PaperBody({ meeting, pid, onClose }: { meeting: string; pid: PersonId; 
               <div className="min-w-0">
                 <div className="sk-paper-t"><span style={{ color: c.color }}>{c.label}</span>{vis === 'redacted' ? it.redacted : it.title}{it.sensitivity === 'restricted' && <Lock size={13} className="sk-lock" />}</div>
                 {e && <p>{e.forYou}</p>}
-                {e && <small className={r4 ? 'r4' : ''}>为什么发给你：{e.why}（{e.reasons.map(r => REASONS[r]).join('、')}）</small>}
-                {b.host && <small>发给：{recipientsOf(m, iid).map(x => personById(x).name).join('、') || '只在账本里'}{ok ? ` · ${personById(confirmed[iid]).name}已确认` : ''}</small>}
+                {e && <small className={r4 ? 'r4' : ''}>{L('为什么发给你：', 'Why you: ')}{e.why}{L(`（${e.reasons.map(r => REASONS[r]).join('、')}）`, ` (${e.reasons.map(r => REASONS[r]).join(', ')})`)}</small>}
+                {b.host && <small>{L('发给：', 'Sent to: ')}{recipientsOf(m, iid).map(x => personById(x).name).join(L('、', ', ')) || L('只在账本里', 'ledger only')}{ok ? L(` · ${personById(confirmed[iid]).name}已确认`, ` · ${personById(confirmed[iid]).name} confirmed`) : ''}</small>}
                 {vis === 'full' ? (
-                  <button className="sk-src" onClick={() => { onClose(); goSource(m.id, Math.max(0, t0 - 0.4), it.id) }} title="回到录像里的这一秒">
+                  <button className="sk-src" onClick={() => { onClose(); goSource(m.id, Math.max(0, t0 - 0.4), it.id) }} title={L('回到录像里的这一秒', 'Jump to this moment in the recording')}>
                     <i>▶</i>“{it.quote}”<em>— {personById(seg.speaker).name} {mmss(t0)}</em>
                   </button>
                 ) : (
-                  <small className="mt-1.5 inline-flex items-center gap-1"><Lock size={12} /> 原话含受限信息，你看到的是脱敏版</small>
+                  <small className="mt-1.5 inline-flex items-center gap-1"><Lock size={12} /> {L('原话含受限信息，你看到的是脱敏版', 'The quote contains restricted info — you’re seeing the redacted version')}</small>
                 )}
               </div>
             </li>
           )
         })}
       </ol>
-      <div className="sk-paper-foot"><Kb name="paperPlane" size={22} /> 由投递官发到飞书 · 勾选就是“确认” · 点原话回到录像</div>
+      <div className="sk-paper-foot"><Kb name="paperPlane" size={22} /> {L('由投递官发到飞书 · 勾选就是“确认” · 点原话回到录像', 'Sent to Lark by the Courier · tick to confirm · tap a quote to jump to the recording')}</div>
     </>
   )
 }

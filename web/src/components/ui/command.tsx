@@ -3,6 +3,7 @@ import { Command as CommandPrimitive } from 'cmdk'
 import { Dialog as DialogPrimitive } from 'radix-ui'
 import { SearchIcon } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { L } from '@/lib/i18n'
 
 function Command({ className, ...props }: React.ComponentProps<typeof CommandPrimitive>) {
   return (
@@ -15,8 +16,8 @@ function Command({ className, ...props }: React.ComponentProps<typeof CommandPri
 }
 
 function CommandDialog({
-  title = '命令面板',
-  description = '搜索人、条目或操作',
+  title = L('命令面板', 'Command palette'),
+  description = L('搜索人、条目或操作', 'Search people, items or actions'),
   children,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Root> & { title?: string; description?: string }) {

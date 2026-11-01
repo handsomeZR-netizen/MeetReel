@@ -1,7 +1,7 @@
 // 我的日程：会议和待办放在同一张日历上。
 // 会议是项目色的块，待办是带状态圈的条目；点状态圈改状态，点条目回到会上说这句话的那一秒。
 // 缺截止的待办进右侧“未排期”，AI 给出建议日期和依据，接受后落到日历上。
-import { useCallback, useMemo, useState, type CSSProperties, type ReactNode } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from 'react'
 import { motion } from 'motion/react'
 import { ChevronLeft, ChevronRight, Flag, Send, Waypoints } from 'lucide-react'
 import { RANKS, personById, projectById, type PersonId } from '@/data/model'
@@ -16,8 +16,9 @@ import { go, goSource, href } from '@/lib/router'
 import { cn } from '@/lib/utils'
 import { Face, Kb } from '@/components/common/bits'
 import { DotLoader } from '@/components/common/DotMatrix'
+import { L, monthName } from '@/lib/i18n'
 
-const WEEK_HEAD = ['一', '二', '三', '四', '五', '六', '日']
+const WEEK_HEAD = L(['周一', '周二', '周三', '周四', '周五', '周六', '周日'], ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'])
 
 export function StatusIcon({ s, size = 14 }: { s: TodoStatus; size?: number }) {
   const c = STATUS[s].color
@@ -44,7 +45,7 @@ function StatusButton({ id, s }: { id: string; s: TodoStatus }) {
   return (
     <button
       className="grid size-[18px] flex-none place-items-center rounded-full hover:bg-black/[.06]"
-      title={`${STATUS[s].label} · 点一下改成「${STATUS[next].label}」`}
+      title={L(`${STATUS[s].label} · 点一下改成「${STATUS[next].label}」`, `${STATUS[s].label} · click to set “${STATUS[next].label}”`)}
       onClick={e => { e.stopPropagation(); actions.setStatus(id, next) }}
     >
       <StatusIcon s={s} />
@@ -74,7 +75,7 @@ function TodoChip({ e, s, compact }: { e: TodoEntry; s: TodoStatus; compact?: bo
       tabIndex={0}
       onClick={() => goSource(e.item.meeting, Math.max(0, itemTime(e.item) - 0.4), e.item.id)}
       onKeyDown={k => { if (k.key === 'Enter') goSource(e.item.meeting, Math.max(0, itemTime(e.item) - 0.4), e.item.id) }}
-      title={`${todoKey(e.item.id)} · ${e.item.title}\n${e.due.label} 截止 · 来自「${e.meeting.title}」\n点一下回到原话`}
+      title={L(`${todoKey(e.item.id)} · ${e.item.title}\n${e.due.label} 截止 · 来自「${e.meeting.title}」\n点一下回到原话`, `${todoKey(e.item.id)} · ${e.item.title}\nDue ${e.due.label} · from “${e.meeting.title}”\nClick to jump to the quote`)}
       className={cn('ev-todo', s === 'triage' && 'triage', overdue && 'overdue', s === 'done' && 'done')}
     >
       <StatusButton id={e.item.id} s={s} />
@@ -84,7 +85,7 @@ function TodoChip({ e, s, compact }: { e: TodoEntry; s: TodoStatus; compact?: bo
           <span className="text-ink-3 mt-0.5 block truncate text-[10.5px]">
             <span className="ev-key">{todoKey(e.item.id)}</span>
             {e.due.kind === 'date' && e.due.follows ? <> · {e.due.label}</> : null}
-            {overdue ? <span className="text-rose-600"> · 已逾期</span> : null}
+            {overdue ? <span className="text-rose-600"> · {L('已逾期', 'Overdue')}</span> : null}
           </span>
         )}
       </span>
@@ -112,16 +113,16 @@ function MeetingBlock({ e, compact }: { e: MeetingEntry; compact?: boolean }) {
   // 收到的写清谁发布、什么职级；我发布的写清发给了几个人，还没发就标待分发
   const sent = new Set(m.routes.map(r => r.person)).size
   return (
-    <a href={href(`/m/${m.id}`)} className={cn('ev', mine && 'mine')} style={{ '--c': p.color } as CSSProperties} title={`${m.title} · ${p.name} · ${pub.name} 发布`}>
+    <a href={href(`/m/${m.id}`)} className={cn('ev', mine && 'mine')} style={{ '--c': p.color } as CSSProperties} title={`${m.title} · ${p.name} · ${L(`${pub.name} 发布`, `from ${pub.name}`)}`}>
       <span className="ev-top">
         <span className="ev-dot" />
         {m.time}
-        <span className="ev-role">{mine ? <><Send size={9} strokeWidth={2.4} />我发布</> : '收到'}</span>
+        <span className="ev-role">{mine ? <><Send size={9} strokeWidth={2.4} />{L('我发布', 'Mine')}</> : L('收到', 'Received')}</span>
       </span>
       <span className="ev-title">{name}</span>
       <span className="ev-foot">
         {mine
-          ? dispatched ? <>已发给 {sent} 人</> : <><DotLoader cols={3} rows={2} dot={2.5} gap={1.5} />已转写 · 待分发</>
+          ? dispatched ? <>{L(`已发给 ${sent} 人`, `Sent to ${sent}`)}</> : <><DotLoader cols={3} rows={2} dot={2.5} gap={1.5} />{L('已转写 · 待分发', 'Transcribed · to send')}</>
           : <><Face p={pub} size={14} /><span className="truncate">{pub.name}</span><span className="ev-lv">{RANKS[pub.rank].level}</span></>}
       </span>
     </a>
@@ -159,10 +160,10 @@ export function Schedule({ as, side }: { as: PersonId; side?: ReactNode }) {
 
   const title = mode === 'week'
     ? `${md(first)} – ${md(last)}`
-    : `${cursor.slice(0, 4)} 年 ${Number(cursor.slice(5, 7))} 月`
+    : L(`${cursor.slice(0, 4)} 年 ${Number(cursor.slice(5, 7))} 月`, `${monthName(Number(cursor.slice(5, 7)))} ${cursor.slice(0, 4)}`)
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
+    <div className="grid grid-cols-[minmax(0,1fr)] gap-5 xl:grid-cols-[minmax(0,1fr)_300px]">
       <div className="flex min-w-0 flex-col gap-3">
         {pending.map(m => <PendingBar key={m.id} m={m} />)}
 
@@ -170,15 +171,15 @@ export function Schedule({ as, side }: { as: PersonId; side?: ReactNode }) {
           <h2 className="text-[17px] font-semibold tabular-nums">{title}</h2>
           {mode === 'week' && <span className="text-ink-3 text-[12.5px]">{cursor.slice(0, 4)}</span>}
           <div className="sg-well ml-1 flex items-center gap-0.5 rounded-full p-[3px]">
-            <button className="sg-icon-btn size-7 hover:bg-white/80" onClick={() => shift(-1)} aria-label="上一页"><ChevronLeft size={15} /></button>
-            <button className="sg-raised h-7 rounded-full px-3 text-[12.5px] font-medium" onClick={() => setCursor(TODAY)}>今天</button>
-            <button className="sg-icon-btn size-7 hover:bg-white/80" onClick={() => shift(1)} aria-label="下一页"><ChevronRight size={15} /></button>
+            <button className="sg-icon-btn size-7 hover:bg-white/80" onClick={() => shift(-1)} aria-label={L('上一页', 'Previous')}><ChevronLeft size={15} /></button>
+            <button className="sg-raised h-7 rounded-full px-3 text-[12.5px] font-medium" onClick={() => setCursor(TODAY)}>{L('今天', 'Today')}</button>
+            <button className="sg-icon-btn size-7 hover:bg-white/80" onClick={() => shift(1)} aria-label={L('下一页', 'Next')}><ChevronRight size={15} /></button>
           </div>
           <div className="sg-well ml-auto flex rounded-full p-[3px] text-[12.5px]">
             {(['week', 'month'] as const).map(k => (
               <button key={k} onClick={() => setMode(k)} className={cn('relative h-7 rounded-full px-3.5 transition-colors', mode === k ? 'font-medium text-white' : 'text-ink-2 hover:text-ink')}>
                 {mode === k && <motion.span layoutId="cal-mode" className="sg-onyx absolute inset-0 rounded-full" transition={{ type: 'spring', stiffness: 500, damping: 38 }} />}
-                <span className="relative">{k === 'week' ? '周' : '月'}</span>
+                <span className="relative">{k === 'week' ? L('周', 'Week') : L('月', 'Month')}</span>
               </button>
             ))}
           </div>
@@ -210,17 +211,25 @@ export function Schedule({ as, side }: { as: PersonId; side?: ReactNode }) {
 
 type DayMap = Map<string, { meetings: MeetingEntry[]; todos: TodoEntry[] }>
 
+// 手机上一周七列太挤：保持可读的列宽，整张日历左右滑
 function WeekGrid({ days, byDay, status }: { days: string[]; byDay: DayMap; status: (id: string) => TodoStatus }) {
+  const scroller = useRef<HTMLDivElement>(null)
+  // 横向能滑的时候（手机），先把今天滑到眼前
+  useEffect(() => {
+    const el = scroller.current, today = el?.querySelector<HTMLElement>('.cal-col.today')
+    if (el && today && el.scrollWidth > el.clientWidth) el.scrollLeft = today.offsetLeft - (el.clientWidth - today.offsetWidth) / 2
+  }, [days])
   return (
-    <div className="glass-panel grid grid-cols-7 overflow-hidden rounded-[22px] border">
+    <div ref={scroller} className="max-md:-mx-4 max-md:overflow-x-auto max-md:px-4 max-md:pb-1">
+    <div className="glass-panel grid grid-cols-7 overflow-hidden rounded-[22px] border max-md:min-w-[760px]">
       {days.map((d, i) => {
         const v = byDay.get(d)
         const today = d === TODAY
         return (
           <div key={d} className={cn('cal-col flex min-h-[380px] min-w-0 flex-col gap-2 p-1.5', today && 'today', i > 4 && !today && 'weekend')}>
             <div className="flex items-center gap-1.5 pt-0.5 pb-1.5 pl-1">
-              <span className={cn('text-[11.5px] font-medium', today ? 'text-[var(--plum)]' : 'text-ink-3')}>周{WEEK_HEAD[i]}</span>
-              {dayNum(d) === 1 && <span className="text-ink-3 text-[11px]">{Number(d.slice(5, 7))}月</span>}
+              <span className={cn('text-[11.5px] font-medium', today ? 'text-[var(--plum)]' : 'text-ink-3')}>{WEEK_HEAD[i]}</span>
+              {dayNum(d) === 1 && <span className="text-ink-3 text-[11px]">{L(`${Number(d.slice(5, 7))}月`, monthName(Number(d.slice(5, 7))))}</span>}
               <span className="cal-day ml-auto">{dayNum(d)}</span>
             </div>
             {v?.meetings.map(e => <MeetingBlock key={e.meeting.id} e={e} />)}
@@ -229,14 +238,16 @@ function WeekGrid({ days, byDay, status }: { days: string[]; byDay: DayMap; stat
         )
       })}
     </div>
+    </div>
   )
 }
 
 function MonthGrid({ days, month, byDay, status, onPick }: { days: string[]; month: string; byDay: DayMap; status: (id: string) => TodoStatus; onPick: (d: string) => void }) {
   return (
-    <div className="glass-panel overflow-hidden rounded-2xl border">
+    <div className="max-md:-mx-4 max-md:overflow-x-auto max-md:px-4 max-md:pb-1">
+    <div className="glass-panel overflow-hidden rounded-2xl border max-md:min-w-[620px]">
       <div className="grid grid-cols-7 border-b border-[rgb(95_62_84/7%)] text-center text-[11.5px]">
-        {WEEK_HEAD.map(w => <span key={w} className="text-ink-3 py-1.5">周{w}</span>)}
+        {WEEK_HEAD.map(w => <span key={w} className="text-ink-3 py-1.5">{w}</span>)}
       </div>
       <div className="grid grid-cols-7">
         {days.map(d => {
@@ -248,11 +259,12 @@ function MonthGrid({ days, month, byDay, status, onPick }: { days: string[]; mon
             <div key={d} onClick={() => onPick(d)} className={cn('flex min-h-[108px] min-w-0 cursor-pointer flex-col gap-1 border-t border-l border-[rgb(95_62_84/7%)] p-1.5 [&:nth-child(7n+1)]:border-l-0 hover:bg-white/50', monthOf(d) !== month && 'opacity-45', today && 'bg-[rgb(95_62_84/6%)]')}>
               <span className={cn('mb-0.5 grid h-5 min-w-5 place-items-center self-start rounded-[7px] px-1 text-[11.5px] font-medium tabular-nums', today ? 'sg-onyx' : 'text-ink-2')}>{dayNum(d)}</span>
               {rows.slice(0, 3).map(r => <div key={r.k} onClick={e => e.stopPropagation()}>{r.node}</div>)}
-              {rows.length > 3 && <span className="text-ink-3 px-1 text-[11px]">还有 {rows.length - 3} 项</span>}
+              {rows.length > 3 && <span className="text-ink-3 px-1 text-[11px]">{L(`还有 ${rows.length - 3} 项`, `+${rows.length - 3} more`)}</span>}
             </div>
           )
         })}
       </div>
+    </div>
     </div>
   )
 }
@@ -261,7 +273,7 @@ function Legend() {
   return (
     <div className="text-ink-3 flex flex-wrap items-center gap-x-4 gap-y-1 px-1 text-[11.5px]">
       {(Object.keys(STATUS) as TodoStatus[]).map(s => <span key={s} className="inline-flex items-center gap-1"><StatusIcon s={s} size={12} />{STATUS[s].label}</span>)}
-      <span>点状态圈往后推一格 · 点条目回到会上那句话</span>
+      <span>{L('点状态圈往后推一格 · 点条目回到会上那句话', 'Click a status ring to move it forward · click an item to jump to what was said')}</span>
     </div>
   )
 }
@@ -274,10 +286,10 @@ function PendingBar({ m }: { m: Meeting }) {
     <div className="sg-dark flex flex-wrap items-center gap-3 rounded-[18px] py-2 pr-2 pl-4">
       <DotLoader cols={4} rows={3} className="text-[#E9B8DA]" />
       <span className="min-w-0 flex-1 text-[13.5px]">
-        <b className="font-semibold text-white">{m.title}</b><span className="text-white/55"> 已转写，等你确认后按人发出去</span>
+        <b className="font-semibold text-white">{m.title}</b><span className="text-white/55">{L(' 已转写，等你确认后按人发出去', ' is transcribed — confirm and it goes out per person')}</span>
         <span className="ml-2 inline-flex items-center gap-1.5 rounded-full bg-white/[.08] px-2 py-0.5 text-[11.5px] text-white/75 shadow-[inset_0_0_0_1px_rgb(255_255_255/8%)]"><i className="size-1.5 rounded-full" style={{ background: p.color }} />{p.name}</span>
       </span>
-      <button className="sg-white-btn inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold" onClick={() => go(`/dispatch/${m.id}`, { run: 1 })}><Waypoints size={14} /> 开始智能分发</button>
+      <button className="sg-white-btn inline-flex h-8 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-semibold" onClick={() => go(`/dispatch/${m.id}`, { run: 1 })}><Waypoints size={14} /> {L('开始智能分发', 'Start dispatch')}</button>
     </div>
   )
 }
@@ -288,8 +300,8 @@ function Unscheduled({ list, status }: { list: TodoEntry[]; status: (id: string)
   return (
     <section>
       <div className="mb-3 flex items-baseline gap-2">
-        <h2 className="text-[17px] font-semibold">未排期</h2>
-        <span className="text-ink-3 text-[12.5px]">{list.length} 件 · 还没有截止日期</span>
+        <h2 className="text-[17px] font-semibold">{L('未排期', 'Unscheduled')}</h2>
+        <span className="text-ink-3 text-[12.5px]">{L(`${list.length} 件 · 还没有截止日期`, `${list.length} · no due date yet`)}</span>
       </div>
       {list.length ? (
         <div className="sg-card overflow-hidden rounded-[20px]">
@@ -305,8 +317,8 @@ function Unscheduled({ list, status }: { list: TodoEntry[]; status: (id: string)
                 {sug ? (
                   <div className="sg-well ml-[22px] flex items-center gap-2 rounded-xl py-1.5 pr-1.5 pl-2.5 text-[12px]">
                     <Kb name="lightbulb" size={14} className="flex-none text-[var(--plum)]" />
-                    <span className="min-w-0 flex-1"><b className="font-semibold">建议 {md(sug.date)}</b><span className="text-ink-3"> · {sug.why}</span></span>
-                    <button className="sg-onyx h-7 flex-none rounded-full px-3 text-[12px] font-medium transition-transform hover:-translate-y-px" onClick={() => actions.schedule(e.item.id, sug.date)}>排上</button>
+                    <span className="min-w-0 flex-1"><b className="font-semibold">{L('建议', 'Suggested')} {md(sug.date)}</b><span className="text-ink-3"> · {sug.why}</span></span>
+                    <button className="sg-onyx h-7 flex-none rounded-full px-3 text-[12px] font-medium transition-transform hover:-translate-y-px" onClick={() => actions.schedule(e.item.id, sug.date)}>{L('排上', 'Schedule')}</button>
                   </div>
                 ) : (
                   <span className="text-ink-3 ml-[22px] text-[12px]">{e.due.label}</span>
@@ -316,7 +328,7 @@ function Unscheduled({ list, status }: { list: TodoEntry[]; status: (id: string)
           })}
         </div>
       ) : (
-        <div className="sg-well text-ink-3 rounded-[20px] px-4 py-5 text-[13px]">待办都有日期了。</div>
+        <div className="sg-well text-ink-3 rounded-[20px] px-4 py-5 text-[13px]">{L('待办都有日期了。', 'Every to-do has a date.')}</div>
       )}
     </section>
   )

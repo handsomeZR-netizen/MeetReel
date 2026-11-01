@@ -8,6 +8,7 @@ import { charAtTime, charTime, isSpeaking, mmss, quoteSpan, segAt } from '@/data
 import { cn } from '@/lib/utils'
 import { Face } from '@/components/common/bits'
 import { Switch } from '@/components/ui/misc'
+import { L } from '@/lib/i18n'
 
 interface Props {
   meeting: Meeting
@@ -72,21 +73,21 @@ export function Transcript({ meeting: m, t, onSeek, focusId, onFocus }: Props) {
             <input
               value={query}
               onChange={e => setQuery(e.target.value)}
-              placeholder="在逐字稿里搜索"
+              placeholder={L('在逐字稿里搜索', 'Search the transcript')}
               className="focus:border-ring focus:ring-ring/30 h-8 w-full rounded-lg border bg-white pr-7 pl-8 text-[13px] outline-none focus:ring-[3px]"
             />
-            {query && <button className="text-ink-3 absolute top-1/2 right-2 -translate-y-1/2" onClick={() => setQuery('')} aria-label="清空"><X size={13} /></button>}
+            {query && <button className="text-ink-3 absolute top-1/2 right-2 -translate-y-1/2" onClick={() => setQuery('')} aria-label={L('清空', 'Clear')}><X size={13} /></button>}
           </div>
-          <label className="text-ink-2 flex flex-none items-center gap-1.5 text-[12.5px]"><Switch checked={follow} onCheckedChange={setFollow} /> 跟随</label>
+          <label className="text-ink-2 flex flex-none items-center gap-1.5 text-[12.5px]"><Switch checked={follow} onCheckedChange={setFollow} /> {L('跟随', 'Follow')}</label>
         </div>
         <div className="flex flex-wrap items-center gap-1.5">
-          <button className={cn('h-6 rounded-full px-2.5 text-[12px] transition-colors', !who ? 'bg-ink text-white' : 'text-ink-2 bg-muted hover:bg-black/10')} onClick={() => setWho(null)}>全部</button>
+          <button className={cn('h-6 rounded-full px-2.5 text-[12px] transition-colors', !who ? 'bg-ink text-white' : 'text-ink-2 bg-muted hover:bg-black/10')} onClick={() => setWho(null)}>{L('全部', 'All')}</button>
           {speakers.map(pid => (
             <button key={pid} className={cn('flex h-6 items-center gap-1 rounded-full pr-2.5 pl-0.5 text-[12px] transition-colors', who === pid ? 'bg-ink text-white' : 'text-ink-2 bg-muted hover:bg-black/10')} onClick={() => setWho(w => (w === pid ? null : pid))}>
               <Face p={pid} size={20} />{personById(pid).name}
             </button>
           ))}
-          {query.trim() && <span className="text-ink-3 ml-auto text-[12px]">{hits} 段命中</span>}
+          {query.trim() && <span className="text-ink-3 ml-auto text-[12px]">{L(`${hits} 段命中`, `${hits} hits`)}</span>}
         </div>
       </div>
 
@@ -121,7 +122,7 @@ export function Transcript({ meeting: m, t, onSeek, focusId, onFocus }: Props) {
             initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 10 }}
             onClick={() => { setFollow(true); if (cur) scrollTo(cur.id) }}
           >
-            <ArrowDownToLine size={14} /> 回到播放位置
+            <ArrowDownToLine size={14} /> {L('回到播放位置', 'Back to playhead')}
           </motion.button>
         )}
       </AnimatePresence>

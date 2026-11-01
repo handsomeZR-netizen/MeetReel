@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { useRoute } from '@/lib/router'
-import { setSearchOpener } from '@/lib/ui'
+import { setNavOpener, setSearchOpener, usePhone } from '@/lib/ui'
 import { TooltipProvider } from '@/components/ui/misc'
 import { useStore } from '@/lib/store'
 import { BRAND, Sidebar } from '@/components/shell/Sidebar'
@@ -19,15 +19,22 @@ export function App() {
   const route = useRoute()
   const [collapsed, setCollapsed] = useState(false)
   const [cmd, setCmd] = useState(false)
+  const [navOpen, setNavOpen] = useState(false)
+  const phone = usePhone()
   const signedIn = useStore(s => s.signedIn)
+
+  // 手机上点了导航（换了页面）就收起抽屉
+  useEffect(() => setNavOpen(false), [route.raw, phone])
 
   useEffect(() => {
     setSearchOpener(() => setCmd(true))
+    setNavOpener(() => setNavOpen(true))
     const onKey = (e: KeyboardEvent) => {
       if (e.key.toLowerCase() === 'k' && (e.metaKey || e.ctrlKey)) {
         e.preventDefault()
         setCmd(o => !o)
       }
+      if (e.key === 'Escape') setNavOpen(false)
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -51,8 +58,8 @@ export function App() {
   return (
     <TooltipProvider>
       <div className="glass-workspace flex h-svh overflow-hidden">
-        <Sidebar collapsed={collapsed} onCollapse={setCollapsed} />
-        <main className="glass-workspace-pane relative m-2 ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border">
+        {!phone && <Sidebar collapsed={collapsed} onCollapse={setCollapsed} />}
+        <main className="glass-workspace-pane relative m-2 ml-0 flex min-w-0 flex-1 flex-col overflow-hidden rounded-2xl border max-md:m-0 max-md:rounded-none max-md:border-0">
           <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={key}
@@ -67,6 +74,25 @@ export function App() {
           </AnimatePresence>
         </main>
       </div>
+      {/* 手机：侧栏变成从左边滑出的抽屉 */}
+      <AnimatePresence>
+        {phone && navOpen && (
+          <motion.div className="fixed inset-0 z-50" initial="closed" animate="open" exit="closed">
+            <motion.div
+              className="absolute inset-0 bg-[#2A1B26]/30 backdrop-blur-[2px]"
+              variants={{ open: { opacity: 1 }, closed: { opacity: 0 } }}
+              onClick={() => setNavOpen(false)}
+            />
+            <motion.div
+              className="glass-workspace absolute inset-y-0 left-0 max-w-[86vw] shadow-[0_20px_60px_-10px_rgb(42_27_38/45%)]"
+              variants={{ open: { x: 0 }, closed: { x: '-100%' } }}
+              transition={{ type: 'spring', stiffness: 420, damping: 42 }}
+            >
+              <Sidebar collapsed={false} onCollapse={() => {}} onClose={() => setNavOpen(false)} />
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
       <CommandMenu open={cmd} onOpenChange={setCmd} />
       <AnimatePresence>{!signedIn && <SignedOut logo={BRAND.full} />}</AnimatePresence>
     </TooltipProvider>

@@ -1,6 +1,7 @@
 // 会议的附加信息：地点、类型、相关文件、简报的阅读回执（mock）。
 // 主案例的资料是真文件（data/cases/xiaomi-safety/kb/），知识库和成员简报里都能直接打开。
 import type { PersonId } from './model'
+import { L, isEn } from '@/lib/i18n'
 import fileManifest from './file-manifest.json'
 
 export type FileKind = 'doc' | 'pdf' | 'xls' | 'ppt' | 'md' | 'img'
@@ -24,7 +25,7 @@ const DEDAO = Object.values(import.meta.glob<string>('../../../data/*【得到�
 
 export const EXTRAS: Record<string, MeetingExtra> = {
   xm_safety: {
-    place: '直播（B 站转载）', online: true, kind: '竞品直播', sentAt: '10/31 刚刚',
+    place: L('直播（B 站转载）', 'Livestream (Bilibili repost)'), online: true, kind: L('竞品直播', 'Competitor livestream'), sentAt: L('10/31 刚刚', '10/31 just now'),
     files: [
       { name: '小米汽车安全专场_会映纪要.pdf', kind: 'pdf', owner: 'jiangwan', date: '10/31 16:02', size: '7 KB', url: kb('小米汽车安全专场_会映纪要.pdf') },
       { name: '竞品安全体系对标表.docx', kind: 'doc', owner: 'jiangwan', date: '10/31 16:10', size: '38 KB', url: kb('竞品安全体系对标表.docx') },
@@ -37,7 +38,7 @@ export const EXTRAS: Record<string, MeetingExtra> = {
     readAt: {},
   },
   retail_weekly: {
-    place: '门店运营中心 3F', online: false, kind: '周会', sentAt: '10/30 16:58',
+    place: L('门店运营中心 3F', 'Retail Ops Center, 3F'), online: false, kind: L('周会', 'Weekly'), sentAt: '10/30 16:58',
     files: [
       { name: '购车权益对比表 v3.xlsx', kind: 'xls', owner: 'linxia', date: '10/30 15:20', size: '0.6 MB' },
       { name: '门店安全话术卡（草稿）.pptx', kind: 'ppt', owner: 'dengkai', date: '10/30 17:05', size: '3.2 MB' },
@@ -45,7 +46,7 @@ export const EXTRAS: Record<string, MeetingExtra> = {
     readAt: { jiangwan: '10/30 17:20', gaoyuan: '10/30 17:02', linxia: '10/30 17:01', hanzong: '10/31 09:10' },
   },
   own_monthly: {
-    place: '会议室 B205', online: true, kind: '月会', sentAt: '10/29 11:40',
+    place: L('会议室 B205', 'Room B205'), online: true, kind: L('月会', 'Monthly'), sentAt: '10/29 11:40',
     files: [
       { name: '10 月车主 App 数据.xlsx', kind: 'xls', owner: 'chengcheng', date: '10/29 09:30', size: '2.4 MB' },
       { name: '驾驶评分 × 积分试点方案.docx', kind: 'doc', owner: 'chengcheng', date: '10/29 10:10', size: '0.9 MB' },
@@ -53,7 +54,7 @@ export const EXTRAS: Record<string, MeetingExtra> = {
     readAt: { jiangwan: '10/29 12:05', gaoyuan: '10/29 11:46', hanzong: '10/29 14:30', dengkai: '10/29 13:12' },
   },
   sf_weekly: {
-    place: '安全部会议室', online: true, kind: '周会', sentAt: '10/28 15:20',
+    place: L('安全部会议室', 'Safety Dept. meeting room'), online: true, kind: L('周会', 'Weekly'), sentAt: '10/28 15:20',
     files: [
       { name: '安委会常设方案（草案）.docx', kind: 'doc', owner: 'songlan', date: '10/28 13:40', size: '1.1 MB' },
       { name: '座椅夹手投诉工单.pdf', kind: 'pdf', owner: 'weiran', date: '10/27 18:20', size: '0.7 MB' },
@@ -73,3 +74,21 @@ for (const meeting of Object.values(EXTRAS)) {
     }
   }
 }
+
+// 英文界面只换显示的文件名；文件本身还是中文原件，链接在上面已经按中文名算好了
+const FILE_EN: Record<string, string> = {
+  '小米汽车安全专场_会映纪要.pdf': 'Xiaomi Auto safety livestream_MeetReel notes.pdf',
+  '竞品安全体系对标表.docx': 'Competitor safety system benchmark.docx',
+  '安全体系拆解_目标组织机制.md': 'Safety system breakdown_goal-org-mechanism.md',
+  '得到大脑转写（原文）.md': 'Dedao Brain transcript (original).md',
+  '直播截图_00-21_开场两部分.jpg': 'Livestream still_00-21_two-part opening.jpg',
+  '直播截图_05-30_安全委员会.jpg': 'Livestream still_05-30_Safety Committee.jpg',
+  '直播截图_08-40_安全预防团队.jpg': 'Livestream still_08-40_safety prevention team.jpg',
+  '购车权益对比表 v3.xlsx': 'Purchase perk comparison v3.xlsx',
+  '门店安全话术卡（草稿）.pptx': 'Store safety talk-track card (draft).pptx',
+  '10 月车主 App 数据.xlsx': 'Owner app data, Oct.xlsx',
+  '驾驶评分 × 积分试点方案.docx': 'Driving score × points pilot plan.docx',
+  '安委会常设方案（草案）.docx': 'Standing Safety Committee proposal (draft).docx',
+  '座椅夹手投诉工单.pdf': 'Seat pinch complaint ticket.pdf',
+}
+if (isEn) for (const meeting of Object.values(EXTRAS)) for (const file of meeting.files) file.name = FILE_EN[file.name] ?? file.name

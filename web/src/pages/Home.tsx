@@ -4,7 +4,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from 'react'
 import { AnimatePresence, motion } from 'motion/react'
 import { ArrowRight, CalendarDays, CheckCircle2, ChevronDown, Clapperboard, Clock3, MessageCircleQuestion, Play, SquarePen, UserCheck, Waypoints } from 'lucide-react'
-import { ME, PROJECTS, RANKS, STAFF, personById, projectById, type PersonId, type Rank } from '@/data/model'
+import { ME, PROJECTS, RANKS, STAFF, personById, projectById, term, type PersonId, type Rank } from '@/data/model'
 import { MEETINGS, itemById, type Meeting } from '@/data/meetings'
 import { inboxOf, isQuiet, outboxOf } from '@/data/derive'
 import { RUN_ID } from '@/data/run'
@@ -17,11 +17,12 @@ import { Face, FaceStack, Kb, LeaderTag, RankTag, SourceChip } from '@/component
 import { BriefPaper, NOTE_COLORS, Sticky, StickyNotes } from '@/components/sketch/Briefs'
 import { Schedule } from '@/components/schedule/Schedule'
 import { ViewSwitch } from '@/components/common/ViewSwitch'
+import { L } from '@/lib/i18n'
 
 const TODAY = '2026-10-31'
 const hello = () => {
   const h = new Date().getHours()
-  return h < 11 ? '上午好' : h < 13 ? '中午好' : h < 18 ? '下午好' : '晚上好'
+  return h < 11 ? L('上午好', 'Good morning') : h < 13 ? L('中午好', 'Good afternoon') : h < 18 ? L('下午好', 'Good afternoon') : L('晚上好', 'Good evening')
 }
 
 export function Home() {
@@ -38,14 +39,14 @@ export function Home() {
 
   return (
     <>
-      <TopBar crumbs={[{ label: '与我有关', to: '/' }, ...(as !== ME ? [{ label: `以 ${me.name} 的身份预览` }] : [])]}>
-        <Button size="sm" onClick={() => go('/new')}><SquarePen /> 新建会映</Button>
+      <TopBar crumbs={[{ label: L('与我有关', 'For me'), to: '/' }, ...(as !== ME ? [{ label: L(`以 ${me.name} 的身份预览`, `Previewing as ${me.name}`) }] : [])]}>
+        <Button size="sm" onClick={() => go('/new')}><SquarePen /> {L('新建会映', 'New reel')}</Button>
       </TopBar>
       <div className="min-h-0 flex-1 overflow-y-auto">
-        <div className="mx-auto flex max-w-[1240px] flex-col gap-7 px-6 py-6">
+        <div className="mx-auto flex max-w-[1240px] flex-col gap-7 px-6 py-6 max-md:gap-5 max-md:px-4 max-md:py-4">
           <header className="flex flex-wrap items-end justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-[24px] font-semibold tracking-tight">{as === ME ? `${hello()}，${me.name}` : `${me.name} 的会议`}</h1>
+              <h1 className="text-[24px] font-semibold tracking-tight">{as === ME ? L(`${hello()}，${me.name}`, `${hello()}, ${me.name}`) : L(`${me.name} 的会议`, `${me.name}’s meetings`)}</h1>
               <div className="text-ink-3 mt-1.5 flex flex-wrap items-center gap-1.5 text-[13.5px]">
                 <span>{me.team}{me.group ? ` · ${me.group}` : ''} · {me.role}</span>
                 <RankTag p={me} /><LeaderTag pid={as} />
@@ -63,16 +64,16 @@ export function Home() {
           <>
             <div className="flex min-w-0 flex-col gap-7">
               <section>
-                <SectionHead role="发布者" title="我发布的" sub="你上传、你确认之后，会映才按人发出去" />
+                <SectionHead role={L('发布者', 'Publisher')} title={L('我发布的', 'Published by me')} sub={L('你上传、你确认之后，会映才按人发出去', 'MeetReel only sends per person after you upload and confirm')} />
                 {outbox.length ? (
                   <div className="flex flex-col gap-4">{outbox.map(m => <PublishedCard key={m.id} m={m} />)}</div>
                 ) : (
-                  <div className="text-ink-3 rounded-2xl border border-dashed px-5 py-6 text-[13.5px]">{me.name} 最近没有发布会议。</div>
+                  <div className="text-ink-3 rounded-2xl border border-dashed px-5 py-6 text-[13.5px]">{L(`${me.name} 最近没有发布会议。`, `${me.name} hasn’t published any meetings recently.`)}</div>
                 )}
               </section>
 
               <section>
-                <SectionHead role="收到者" title="发给我的" sub={`${inbox.length} 份简报 · 每份只含和你有关的条目，写明为什么发给你`} />
+                <SectionHead role={L('收到者', 'Recipient')} title={L('发给我的', 'Sent to me')} sub={L(`${inbox.length} 份简报 · 每份只含和你有关的条目，写明为什么发给你`, `${inbox.length} briefs · each holds only what concerns you, and says why`)} />
                 {inbox.length ? (
                   <div className="sk-board rounded-2xl px-4 pb-3">
                     <div className="sk-stickies">
@@ -84,7 +85,7 @@ export function Home() {
                             i={i + 2}
                             title={m.title.replace(/ · .*/, '')}
                             count={b.entries.length}
-                            foot={<>{pub.name} 发布 · {RANKS[pub.rank].label} · 点开看 →</>}
+                            foot={<>{L(`${pub.name} 发布`, `From ${pub.name}`)} · {RANKS[pub.rank].label} · {L('点开看 →', 'Open →')}</>}
                             onClick={() => go('/shared', { as, b: m.id })}
                           >
                             <p>{b.headline}</p>
@@ -94,7 +95,7 @@ export function Home() {
                     </div>
                   </div>
                 ) : (
-                  <div className="text-ink-3 rounded-2xl border border-dashed px-5 py-6 text-[13.5px]">还没有别人发给 {me.name} 的简报。</div>
+                  <div className="text-ink-3 rounded-2xl border border-dashed px-5 py-6 text-[13.5px]">{L(`还没有别人发给 ${me.name} 的简报。`, `Nobody has sent ${me.name} a brief yet.`)}</div>
                 )}
               </section>
             </div>
@@ -112,7 +113,7 @@ function SectionHead({ role, title, sub, children }: { role?: string; title: str
   return (
     <div className="mb-3 flex flex-wrap items-baseline gap-2">
       <h2 className="text-[17px] font-semibold">{title}</h2>
-      {role && <span className="text-ink-2 rounded-md bg-[#F2F3F5] px-1.5 py-px text-[11.5px]">{role}视角</span>}
+      {role && <span className="text-ink-2 rounded-md bg-[#F2F3F5] px-1.5 py-px text-[11.5px]">{L(`${role}视角`, `${role} view`)}</span>}
       {sub && <span className="text-ink-3 text-[12.5px]">{sub}</span>}
       <span className="ml-auto">{children}</span>
     </div>
@@ -134,7 +135,7 @@ function ViewAs({ as }: { as: PersonId }) {
   return (
     <div className="relative" onClick={e => e.stopPropagation()}>
       <button className="sg-raised flex h-9 items-center gap-2 rounded-full pr-3 pl-1 text-[13px] transition-transform hover:-translate-y-px" onClick={() => setOpen(o => !o)}>
-        <Face p={as} size={24} /><span className="text-ink-3">以</span><b className="font-semibold">{personById(as).name}</b><span className="text-ink-3">的身份看</span>
+        <Face p={as} size={24} /><span className="text-ink-3">{L('以', 'Viewing as')}</span><b className="font-semibold">{personById(as).name}</b><span className="text-ink-3">{L('的身份看', '')}</span>
         <ChevronDown size={14} className="text-ink-3" />
       </button>
       <AnimatePresence>
@@ -143,7 +144,7 @@ function ViewAs({ as }: { as: PersonId }) {
             className="pc-sheet absolute top-11 right-0 z-30 w-[340px] rounded-[22px] p-2"
             initial={{ opacity: 0, y: -6 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -4 }} transition={{ duration: 0.15 }}
           >
-            <div className="text-ink-3 px-2 pt-1 pb-2 text-[12px]">切换身份预览：权限闸和简报都按这个人生效</div>
+            <div className="text-ink-3 px-2 pt-1 pb-2 text-[12px]">{L('切换身份预览：权限闸和简报都按这个人生效', 'Preview as someone else: permissions and briefs apply as that person')}</div>
             {RANK_ORDER.map(r => {
               const list = STAFF.filter(x => x.rank === r)
               return (
@@ -154,7 +155,7 @@ function ViewAs({ as }: { as: PersonId }) {
                       <Face p={x} size={24} />
                       <span className="min-w-0 flex-1 truncate text-[13px]"><b className="font-medium">{x.name}</b><span className="text-ink-3 ml-1.5 text-[12px]">{x.team} · {x.role}</span></span>
                       <LeaderTag pid={x.id} className="max-w-[110px] truncate" />
-                      {x.id === ME && <span className="text-ink-3 text-[11px]">我</span>}
+                      {x.id === ME && <span className="text-ink-3 text-[11px]">{L('我', 'me')}</span>}
                     </button>
                   ))}
                 </div>
@@ -183,7 +184,7 @@ function PublishedCard({ m }: { m: Meeting }) {
     <motion.div layout className={cn('overflow-hidden rounded-3xl border bg-white', !dispatched && 'border-[#C9D8FF] shadow-[0_18px_40px_-28px_rgba(47,100,242,.6)]')}>
       <div className="flex gap-5 p-5 max-sm:flex-col">
         {m.video ? (
-          <a href={href(`/m/${m.id}`)} className="group relative block h-[212px] w-[120px] flex-none overflow-hidden rounded-2xl bg-black" title="回放">
+          <a href={href(`/m/${m.id}`)} className="group relative block h-[212px] w-[120px] flex-none overflow-hidden rounded-2xl bg-black" title={L('回放', 'Replay')}>
             <img src={m.video.poster} alt="" className="size-full object-cover opacity-90 transition-transform duration-500 group-hover:scale-105" draggable={false} />
             <span className="absolute inset-0 grid place-items-center"><span className="grid size-11 place-items-center rounded-full bg-white/90 text-black shadow-lg transition-transform group-hover:scale-110"><Play size={18} fill="currentColor" className="ml-0.5" /></span></span>
             <span className="absolute bottom-2 left-2 rounded-md bg-black/60 px-1.5 py-0.5 font-mono text-[11px] text-white">09:49</span>
@@ -194,34 +195,34 @@ function PublishedCard({ m }: { m: Meeting }) {
         <div className="flex min-w-0 flex-1 flex-col">
           <div className="flex flex-wrap items-center gap-2 text-[12.5px]">
             <span className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 font-medium" style={{ color: p.color, background: p.soft }}><span className="size-1.5 rounded-full" style={{ background: p.color }} />{p.name}</span>
-            <span className="text-ink-2 rounded-full bg-[#F2F3F5] px-2 py-0.5">{m.kind}{m.external ? ' · 外部' : ''}</span>
+            <span className="text-ink-2 rounded-full bg-[#F2F3F5] px-2 py-0.5">{m.kind}{m.external ? L(' · 外部', ' · external') : ''}</span>
             {dispatched
-              ? <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={13} /> 已分发</span>
-              : <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700"><span className="live-dot" /> 已转写 · 等你分发</span>}
+              ? <span className="inline-flex items-center gap-1 text-emerald-600"><CheckCircle2 size={13} /> {L('已分发', 'Sent')}</span>
+              : <span className="inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-2 py-0.5 font-medium text-amber-700"><span className="live-dot" /> {L('已转写 · 等你分发', 'Transcribed · ready to send')}</span>}
           </div>
           <a href={href(`/m/${m.id}`)} className="mt-2 text-[20px] leading-snug font-semibold tracking-tight hover:underline">{m.title}</a>
           <p className="text-ink-2 mt-1.5 line-clamp-2 text-[13.5px] leading-relaxed">{m.summary}</p>
 
           <div className="mt-3 flex flex-wrap items-center gap-x-5 gap-y-2 text-[12.5px]">
-            <span className="flex items-center gap-2"><span className="text-ink-3">发布者</span><Face p={m.publisher} size={22} /><b className="font-medium">{personById(m.publisher).name}</b><RankTag p={m.publisher} /></span>
+            <span className="flex items-center gap-2"><span className="text-ink-3">{L('发布者', 'Publisher')}</span><Face p={m.publisher} size={22} /><b className="font-medium">{personById(m.publisher).name}</b><RankTag p={m.publisher} /></span>
             <ArrowRight size={14} className="text-ink-4" />
-            <span className="flex items-center gap-2"><span className="text-ink-3">收到者 {receivers.length} 人</span><FaceStack ids={receivers} size={22} max={8} /></span>
-            <span className="text-ink-3">{byRank.map(x => `${x.n} 位${RANKS[x.r].label}`).join(' · ')}</span>
+            <span className="flex items-center gap-2"><span className="text-ink-3">{L(`收到者 ${receivers.length} 人`, `${receivers.length} recipients`)}</span><FaceStack ids={receivers} size={22} max={8} /></span>
+            <span className="text-ink-3">{byRank.map(x => L(`${x.n} 位${RANKS[x.r].label}`, `${x.n} ${RANKS[x.r].label}${x.n > 1 ? 's' : ''}`)).join(' · ')}</span>
           </div>
           {m.external && !dispatched && (
-            <p className="text-ink-3 mt-2 text-[12.5px]">直播里没人点到我们任何人的名。会映按每个人负责的事、订阅的话题和管理者规则判断谁该知道，发出去之前先给你看。</p>
+            <p className="text-ink-3 mt-2 text-[12.5px]">{L('直播里没人点到我们任何人的名。会映按每个人负责的事、订阅的话题和管理者规则判断谁该知道，发出去之前先给你看。', 'Nobody on our side was named in the stream. MeetReel decides who should know from what each person owns, the topics they follow and manager rules — and shows you before sending.')}</p>
           )}
 
           <div className="mt-auto flex flex-wrap gap-2 pt-4">
             {dispatched ? (
               <>
-                <Button variant="outline" onClick={() => go(`/m/${m.id}`, { tab: 'dist' })}>看分发结果</Button>
-                <Button variant="ghost" onClick={() => go(`/m/${m.id}`)}><Play /> 回放与溯源</Button>
+                <Button variant="outline" onClick={() => go(`/m/${m.id}`, { tab: 'dist' })}>{L('看分发结果', 'See results')}</Button>
+                <Button variant="ghost" onClick={() => go(`/m/${m.id}`)}><Play /> {L('回放与溯源', 'Replay & sources')}</Button>
               </>
             ) : (
               <>
-                <Button onClick={() => go(`/dispatch/${m.id}`, { run: 1 })}><Waypoints /> 开始智能分发</Button>
-                <Button variant="outline" onClick={() => go(`/m/${m.id}`)}><Play /> 先看回放</Button>
+                <Button onClick={() => go(`/dispatch/${m.id}`, { run: 1 })}><Waypoints /> {L('开始智能分发', 'Start dispatch')}</Button>
+                <Button variant="outline" onClick={() => go(`/m/${m.id}`)}><Play /> {L('先看回放', 'Watch first')}</Button>
               </>
             )}
           </div>
@@ -230,7 +231,7 @@ function PublishedCard({ m }: { m: Meeting }) {
       <AnimatePresence initial={false}>
         {dispatched && (
           <motion.div className="sk-board border-t px-5 pt-3 pb-2" initial={{ opacity: 0, height: 0 }} animate={{ opacity: 1, height: 'auto' }}>
-            <div className="flex items-center gap-2"><Kb name="mailbox" size={24} /><b className="font-hand text-[19px]">每人一份简报 · {run ? '已投递飞书' : `${cnDate(m.date)} 已投递`}</b></div>
+            <div className="flex items-center gap-2"><Kb name="mailbox" size={24} /><b className="font-hand text-[19px]">{L('每人一份简报', 'One brief per person')} · {run ? L('已投递飞书', 'delivered to Lark') : L(`${cnDate(m.date)} 已投递`, `delivered ${cnDate(m.date)}`)}</b></div>
             <StickyNotes meeting={m.id} people={people} ready={() => true} onOpen={setPaper} />
           </motion.div>
         )}
@@ -252,10 +253,10 @@ function ViewTabs({ as, view }: { as: PersonId; view: 'cal' | 'meet' }) {
       className="-mt-2"
       value={view}
       items={[
-        { k: 'cal', label: '日程', icon: CalendarDays, hint: '会议和待办放在一张日历上', href: link() },
+        { k: 'cal', label: L('日程', 'Calendar'), icon: CalendarDays, hint: L('会议和待办放在一张日历上', 'Meetings and to-dos on one calendar'), href: link() },
         {
-          k: 'meet', label: '会议', icon: Clapperboard, hint: '我发布的、发给我的、全部会议', href: link('meet'),
-          badge: waiting > 0 && <span className="relative grid h-[18px] min-w-[18px] place-items-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-white" title={`${waiting} 场等你分发`}>{waiting}</span>,
+          k: 'meet', label: L('会议', 'Meetings'), icon: Clapperboard, hint: L('我发布的、发给我的、全部会议', 'Published by me, sent to me, all meetings'), href: link('meet'),
+          badge: waiting > 0 && <span className="relative grid h-[18px] min-w-[18px] place-items-center rounded-full bg-amber-500 px-1 text-[11px] font-semibold text-white" title={L(`${waiting} 场等你分发`, `${waiting} waiting for you to dispatch`)}>{waiting}</span>,
         },
       ]}
     />
@@ -278,41 +279,41 @@ function ToDo({ as }: { as: PersonId }) {
   const askedTo = (item: string, meeting: string) => owners[item] ?? itemById(item).owner ?? meetingPublisher(meeting)
 
   for (const e of events.filter(e => e.kind === 'ask' && !answered[e.id] && e.item && askedTo(e.item, e.meeting) === as)) {
-    const reply = REPLY[e.item!] ?? '已转给林夏核实'
+    const reply = REPLY[e.item!] ?? L('已转给林夏核实', 'Passed to Lin Xia to verify')
     rows.push({
-      key: `ask${e.id}`, tone: 2, kind: '追问', icon: <MessageCircleQuestion size={14} />, title: `${personById(e.person).name}：${e.text}`, item: e.item,
-      act: <button className="sk-mini-btn" onClick={() => actions.answer(e.id, reply)}>{reply.length > 10 ? '回复' : reply}</button>,
+      key: `ask${e.id}`, tone: 2, kind: L('追问', 'Question'), icon: <MessageCircleQuestion size={14} />, title: `${personById(e.person).name}${L('：', ': ')}${e.text}`, item: e.item,
+      act: <button className="sk-mini-btn" onClick={() => actions.answer(e.id, reply)}>{reply.length > L(10, 24) ? L('回复', 'Reply') : reply}</button>,
     })
   }
   if (as === ME && dispatched[RUN_ID] && !owners.xm_18) {
     rows.push({
-      key: 'verify', tone: 4, kind: '待核实', icon: <UserCheck size={14} />, title: '“行业内首个万人级培训”没给出处，物料引用前要核实', item: 'xm_18',
-      act: <button className="sk-mini-btn" onClick={() => actions.assign('xm_18', 'linxia')}>交给组员林夏</button>,
+      key: 'verify', tone: 4, kind: term('待核实'), icon: <UserCheck size={14} />, title: L('“行业内首个万人级培训”没给出处，物料引用前要核实', '“First in the industry to train 10,000 people” has no source — verify before our materials cite it'), item: 'xm_18',
+      act: <button className="sk-mini-btn" onClick={() => actions.assign('xm_18', 'linxia')}>{L('交给组员林夏', 'Hand to Lin Xia')}</button>,
     })
   }
   if (as === ME && dispatched[RUN_ID] && owners.xm_18) {
-    rows.push({ key: 'verify2', tone: 3, kind: confirmed.xm_18 ? '已接手' : '已指派', icon: <UserCheck size={14} />, title: `林夏${confirmed.xm_18 ? '确认负责' : '待确认'}：核实“行业首个”的出处`, item: 'xm_18' })
+    rows.push({ key: 'verify2', tone: 3, kind: confirmed.xm_18 ? L('已接手', 'Taken') : L('已指派', 'Assigned'), icon: <UserCheck size={14} />, title: L(`林夏${confirmed.xm_18 ? '确认负责' : '待确认'}：核实“行业首个”的出处`, `Lin Xia ${confirmed.xm_18 ? 'owns it' : 'hasn’t confirmed'}: verify the source of “first in the industry”`), item: 'xm_18' })
   }
   for (const m of MEETINGS) {
     // 确认过的待办已经上了日历，收件箱里只留还没表态的
     for (const it of m.items.filter(i => i.type === 'action' && (owners[i.id] ?? i.owner) === as && dispatched[m.id] && !done[i.id] && !confirmed[i.id])) {
       rows.push({
-        key: it.id, tone: 1, kind: '待我确认', icon: <Clock3 size={14} />,
-        title: it.title, sub: `${it.due ? `${it.due} 截止 · ` : it.flags?.includes('缺截止') ? '还没定截止 · ' : ''}${m.title}`, item: it.id,
-        act: <button className="sk-mini-btn" onClick={() => actions.confirm(it.id, as)}>我来负责</button>,
+        key: it.id, tone: 1, kind: L('待我确认', 'Needs my OK'), icon: <Clock3 size={14} />,
+        title: it.title, sub: `${it.due ? L(`${it.due} 截止 · `, `Due ${it.due} · `) : it.flags?.includes(term('缺截止')) ? L('还没定截止 · ', 'No due date yet · ') : ''}${m.title}`, item: it.id,
+        act: <button className="sk-mini-btn" onClick={() => actions.confirm(it.id, as)}>{L('我来负责', 'I’ll own it')}</button>,
       })
     }
   }
   if (as === ME) {
     rows.push({
-      key: 'gap', tone: 5, kind: '跨会议发现', icon: <Kb name="brain" size={15} />, title: '竞品安全评审有一票否决权，我们的安委会还没有', sub: '小米直播 × 10/28 安全周会',
-      act: <button className="sk-mini-btn" onClick={() => go('/kb', { q: '竞品的一票否决和我们差在哪？' })}>看依据</button>,
+      key: 'gap', tone: 5, kind: L('跨会议发现', 'Cross-meeting'), icon: <Kb name="brain" size={15} />, title: L('竞品安全评审有一票否决权，我们的安委会还没有', 'The competitor’s safety review has a veto; our committee doesn’t yet'), sub: L('小米直播 × 10/28 安全周会', 'Xiaomi stream × 10/28 safety weekly'),
+      act: <button className="sk-mini-btn" onClick={() => go('/kb', { q: L('竞品的一票否决和我们差在哪？', 'How does their safety veto compare with ours?') })}>{L('看依据', 'See why')}</button>,
     })
   }
 
   return (
     <aside className="min-w-0">
-      <SectionHead title="收件箱" sub={`${rows.length} 件 · 需要你先表态`} />
+      <SectionHead title={L('收件箱', 'Inbox')} sub={L(`${rows.length} 件 · 需要你先表态`, `${rows.length} · waiting on you`)} />
       <div className="flex flex-col gap-3">
         <AnimatePresence initial={false}>
           {rows.map((r, i) => (
@@ -334,7 +335,7 @@ function ToDo({ as }: { as: PersonId }) {
             </motion.div>
           ))}
         </AnimatePresence>
-        {!rows.length && <div className="text-ink-3 rounded-2xl border border-dashed px-4 py-5 text-[13px]">收件箱清空了。</div>}
+        {!rows.length && <div className="text-ink-3 rounded-2xl border border-dashed px-4 py-5 text-[13px]">{L('收件箱清空了。', 'Inbox zero.')}</div>}
       </div>
     </aside>
   )
@@ -343,9 +344,9 @@ function ToDo({ as }: { as: PersonId }) {
 const meetingPublisher = (id: string) => MEETINGS.find(m => m.id === id)!.publisher
 
 const REPLY: Record<string, string> = {
-  ow_06: '11/3 先发门店一版草稿',
-  xm_01: '直播里没说期限，已让林夏去门店核实',
-  xm_19: '直播只说了 4000 积分，没说折算，已转林夏查规则',
+  ow_06: L('11/3 先发门店一版草稿', 'Draft goes to stores on 11/3'),
+  xm_01: L('直播里没说期限，已让林夏去门店核实', 'The stream gave no end date — Lin Xia is checking with stores'),
+  xm_19: L('直播只说了 4000 积分，没说折算，已转林夏查规则', 'They only said 4,000 points, no conversion — Lin Xia is checking the rules'),
 }
 
 // ---------------- 全部会议：按项目，标明 Leader ----------------
@@ -357,8 +358,8 @@ function AllMeetings() {
   const projects = [...PROJECTS, ...custom]
   return (
     <section>
-      <SectionHead title="全部会议" sub="按项目归档；点一行打开回放，原话、逐字稿、录像互相定位" />
-      <div className="grid gap-3 md:grid-cols-2">
+      <SectionHead title={L('全部会议', 'All meetings')} sub={L('按项目归档；点一行打开回放，原话、逐字稿、录像互相定位', 'Filed by project; click a row to open the replay — quotes, transcript and video stay in sync')} />
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-3 md:grid-cols-2">
         {projects.map(p => {
           const ms = MEETINGS.filter(m => m.project === p.id).sort((a, b) => b.date.localeCompare(a.date))
           return (
@@ -369,7 +370,7 @@ function AllMeetings() {
                   <b className="text-[14.5px]">{p.name}</b>
                   <div className="text-ink-3 truncate text-[12px]">{p.desc}</div>
                 </div>
-                <span className="flex flex-none items-center gap-1.5 text-[12px]" title="项目组 Leader"><Face p={p.leader} size={22} /><span className="text-ink-2">{personById(p.leader).name}</span><span className="rounded-md bg-amber-50 px-1.5 text-[11px] leading-[18px] text-amber-700">Leader</span></span>
+                <span className="flex flex-none items-center gap-1.5 text-[12px]" title={L('项目组 Leader', 'Project leader')}><Face p={p.leader} size={22} /><span className="text-ink-2">{personById(p.leader).name}</span><span className="rounded-md bg-amber-50 px-1.5 text-[11px] leading-[18px] text-amber-700">Leader</span></span>
               </div>
               {ms.length ? ms.map(m => {
                 const acts = m.items.filter(i => i.type === 'action')
@@ -380,14 +381,14 @@ function AllMeetings() {
                     <span className="text-ink-3 w-10 flex-none text-[12px] tabular-nums">{m.date.slice(5).replace('-', '/')}</span>
                     <span className="min-w-0 flex-1">
                       <span className="block truncate text-[13.5px] font-medium">{m.title}</span>
-                      <span className="text-ink-3 block truncate text-[12px]">{personById(m.publisher).name} 发布 → {n} 人收到{acts.length ? ` · 待办确认 ${ok}/${acts.length}` : ''}</span>
+                      <span className="text-ink-3 block truncate text-[12px]">{L(`${personById(m.publisher).name} 发布 → ${n} 人收到${acts.length ? ` · 待办确认 ${ok}/${acts.length}` : ''}`, `${personById(m.publisher).name} → ${n} recipients${acts.length ? ` · to-dos confirmed ${ok}/${acts.length}` : ''}`)}</span>
                     </span>
                     {dispatched[m.id]
                       ? <ArrowRight size={14} className="text-ink-4 group-hover:text-ink flex-none" />
-                      : <span className="flex-none rounded-md bg-amber-50 px-1.5 py-0.5 text-[11.5px] text-amber-700">待分发</span>}
+                      : <span className="flex-none rounded-md bg-amber-50 px-1.5 py-0.5 text-[11.5px] text-amber-700">{L('待分发', 'To send')}</span>}
                   </a>
                 )
-              }) : <div className="text-ink-3 px-4 py-4 text-[12.5px]">还没有会议，新建会议时选这个项目。</div>}
+              }) : <div className="text-ink-3 px-4 py-4 text-[12.5px]">{L('还没有会议，新建会议时选这个项目。', 'No meetings yet — pick this project when creating one.')}</div>}
             </div>
           )
         })}

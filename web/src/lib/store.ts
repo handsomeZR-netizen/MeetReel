@@ -6,6 +6,7 @@ import { DEFAULT_MODELS, ME, personById, type ModelId, type PersonId, type Proje
 import { MEETINGS, itemById } from '@/data/meetings'
 import { RUN_ID } from '@/data/run'
 import type { TodoStatus } from '@/data/schedule'
+import { L } from '@/lib/i18n'
 
 export type FeedKind = 'confirm' | 'ask' | 'assign' | 'not_me' | 'answer' | 'sent' | 'read'
 
@@ -57,11 +58,11 @@ const initial = (): State => ({
   projects: [],
   signedIn: true,
   interests: personById(ME).profile.interests,
-  channels: { 飞书卡片: true, H5: true, 每日汇总: false, '90 秒视频': false },
+  channels: L<Record<string, boolean>>({ 飞书卡片: true, H5: true, 每日汇总: false, '90 秒视频': false }, { 'Lark card': true, 'Web link': true, 'Daily digest': false, '90-sec video': false }),
   events: [
-    { id: 1, when: '今天 09:10', meeting: 'retail_weekly', person: 'hanzong', kind: 'read', text: '看完了门店销售周会的简报' },
-    { id: 2, when: '昨天 17:30', meeting: 'own_monthly', item: 'ow_06', person: 'dengkai', kind: 'ask', text: '话术卡里竞品的说法，能先给门店看一版吗？' },
-    { id: 3, when: '昨天 17:01', meeting: 'retail_weekly', item: 'rt_03', person: 'linxia', kind: 'confirm' },
+    { id: 1, when: L('今天 09:10', 'Today 09:10'), meeting: 'retail_weekly', person: 'hanzong', kind: 'read', text: L('看完了门店销售周会的简报', 'Read the Store sales weekly brief') },
+    { id: 2, when: L('昨天 17:30', 'Yesterday 17:30'), meeting: 'own_monthly', item: 'ow_06', person: 'dengkai', kind: 'ask', text: L('话术卡里竞品的说法，能先给门店看一版吗？', 'Can stores see a draft of the competitor lines in the talk-track card first?') },
+    { id: 3, when: L('昨天 17:01', 'Yesterday 17:01'), meeting: 'retail_weekly', item: 'rt_03', person: 'linxia', kind: 'confirm' },
     { id: 4, when: '10/29 11:52', meeting: 'own_monthly', item: 'ow_03', person: 'gaoyuan', kind: 'confirm' },
     { id: 5, when: '10/28 16:05', meeting: 'sf_weekly', item: 'sf_06', person: 'xunuo', kind: 'confirm' },
     { id: 6, when: '10/28 15:22', meeting: 'sf_weekly', item: 'sf_04', person: 'weiran', kind: 'confirm' },
@@ -94,7 +95,7 @@ export function useStore<T>(pick: (s: State) => T): T {
 export const getState = () => state
 
 const push = (e: Omit<FeedEvent, 'id' | 'when'> & { when?: string }) =>
-  set(s => ({ events: [{ id: ++seq, when: e.when ?? '刚刚', fresh: true, ...e }, ...s.events] }))
+  set(s => ({ events: [{ id: ++seq, when: e.when ?? L('刚刚', 'Just now'), fresh: true, ...e }, ...s.events] }))
 
 const later = (ms: number, f: () => void) => window.setTimeout(f, ms)
 
@@ -118,15 +119,15 @@ export const actions = {
   dispatch(meeting: string) {
     if (state.dispatched[meeting]) return
     set(s => ({ dispatched: { ...s.dispatched, [meeting]: true } }))
-    push({ meeting, person: ME, kind: 'sent', text: '7 份简报已投递到飞书' })
+    push({ meeting, person: ME, kind: 'sent', text: L('7 份简报已投递到飞书', '7 briefs delivered to Lark') })
     if (meeting !== RUN_ID) return
     // 安全周会上派给江晚的“直播完按人分发”，到这里就做完了
     set(s => ({ done: { ...s.done, sf_08: true } }))
-    later(2600, () => push({ meeting, person: 'songlan', kind: 'read', text: '读完了，标了 2 条转给安委会' }))
-    later(5200, () => push({ meeting, item: 'xm_01', person: 'dengkai', kind: 'ask', text: '699 元的表盘是限时权益还是长期的？' }))
-    later(8200, () => push({ meeting, person: 'hanzong', kind: 'read', text: '看完了 90 秒视频简报' }))
-    later(11500, () => push({ meeting, item: 'xm_19', person: 'chengcheng', kind: 'ask', text: '4000 积分大概值多少钱？试点方案想对标' }))
-    later(15000, () => push({ meeting, item: 'xm_14', person: 'weiran', kind: 'read', text: '把座椅夹手那条加进了开发清单' }))
+    later(2600, () => push({ meeting, person: 'songlan', kind: 'read', text: L('读完了，标了 2 条转给安委会', 'Read it — flagged 2 items for the Safety Committee') }))
+    later(5200, () => push({ meeting, item: 'xm_01', person: 'dengkai', kind: 'ask', text: L('699 元的表盘是限时权益还是长期的？', 'Is the ¥699 dash a limited-time perk or permanent?') }))
+    later(8200, () => push({ meeting, person: 'hanzong', kind: 'read', text: L('看完了 90 秒视频简报', 'Watched the 90-sec video brief') }))
+    later(11500, () => push({ meeting, item: 'xm_19', person: 'chengcheng', kind: 'ask', text: L('4000 积分大概值多少钱？试点方案想对标', 'Roughly what are 4,000 points worth? Want to benchmark our pilot') }))
+    later(15000, () => push({ meeting, item: 'xm_14', person: 'weiran', kind: 'read', text: L('把座椅夹手那条加进了开发清单', 'Added the seat-pinch item to the dev checklist') }))
   },
 
   confirm(item: string, person: PersonId) {
@@ -152,7 +153,7 @@ export const actions = {
   assign(item: string, person: PersonId) {
     if (state.owners[item] === person) return
     set(s => ({ owners: { ...s.owners, [item]: person } }))
-    push({ meeting: itemById(item).meeting, item, person: ME, kind: 'assign', text: `指派给 ${personById(person).name}` })
+    push({ meeting: itemById(item).meeting, item, person: ME, kind: 'assign', text: L(`指派给 ${personById(person).name}`, `Assigned to ${personById(person).name}`) })
     later(3500, () => actions.confirm(item, person))
   },
 

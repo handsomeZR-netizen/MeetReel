@@ -2,12 +2,13 @@
 import { useState, type CSSProperties } from 'react'
 import { motion } from 'motion/react'
 import { Check, CircleCheck, Clock3, Lock, Quote, X } from 'lucide-react'
-import { ITEM_TYPES, REASONS, REASON_SHORT, personById, type PersonId } from '@/data/model'
+import { ITEM_TYPES, REASONS, REASON_SHORT, personById, term, type PersonId } from '@/data/model'
 import type { Item } from '@/data/meetings'
 import { mmss, quoteSpan } from '@/data/derive'
 import { ITEM_RUN, QUIET_AT, RUN_MEETING, RUN_PEOPLE, SENT_AT, T_END, clamp01, isQuietIn, runBrief } from '@/data/run'
 import { cn } from '@/lib/utils'
 import { Face, RankTag } from '@/components/common/bits'
+import { L } from '@/lib/i18n'
 
 type Focus = { kind: 'item'; id: string } | { kind: 'person'; id: PersonId } | null
 
@@ -49,9 +50,9 @@ export function RoutingBoard({ t, onOpen }: { t: number; onOpen: (id: PersonId) 
   return (
     <div>
       <div className="text-ink-3 mb-2 grid text-[11.5px] font-semibold tracking-wide" style={{ gridTemplateColumns: `minmax(0,1fr) ${LINES_W}px ${PERSON_W}px` }}>
-        <span>会议账本 · {ITEMS.filter(i => t >= ITEM_RUN[i.id].appearAt).length}/{ITEMS.length}</span>
+        <span>{L('会议账本', 'Meeting ledger')} · {ITEMS.filter(i => t >= ITEM_RUN[i.id].appearAt).length}/{ITEMS.length}</span>
         <span />
-        <span>收到者 · {PERSON_ORDER.length}</span>
+        <span>{L('收到者', 'Recipients')} · {PERSON_ORDER.length}</span>
       </div>
       <div className="rb-grid" style={{ gridTemplateColumns: `minmax(0,1fr) ${LINES_W}px ${PERSON_W}px`, height: COL_H }}>
         <div className="rb-ledger">
@@ -125,15 +126,15 @@ function ItemSlot({ item, t, extracting, lit, recipients, onEnter, onLeave }: { 
         <div className="rb-row1">
           <span className="type-pill" style={{ '--c': ty.color, '--soft': ty.soft } as CSSProperties}>{ty.label}</span>
           <span className="rb-title">{item.title}</span>
-          {item.sensitivity === 'restricted' && checked && <span className="rb-lock"><Lock size={11} /> 受限</span>}
+          {item.sensitivity === 'restricted' && checked && <span className="rb-lock"><Lock size={11} /> {L('受限', 'Restricted')}</span>}
         </div>
         <div className="rb-row2">
           {failed ? (
-            <span className="inline-flex items-center gap-1 font-medium text-rose-600"><X size={12} strokeWidth={3} /> 原话“{run.badQuote}”不在转写里，已打回</span>
+            <span className="inline-flex items-center gap-1 font-medium text-rose-600"><X size={12} strokeWidth={3} /> {L(`原话“${run.badQuote}”不在转写里，已打回`, `Quote “${run.badQuote}” isn’t in the transcript — sent back`)}</span>
           ) : (
             <>
-              {owner ? <span className="rb-meta"><Face p={owner} size={16} />{owner.name}{item.ownerBasis ? ` · ${item.ownerBasis}` : ''}</span> : flags.includes('缺负责人') ? <span className="rb-flag">缺负责人</span> : null}
-              {item.due ? <span className="rb-meta"><Clock3 size={12} />{item.due}</span> : flags.includes('缺截止') ? <span className="rb-flag">缺截止</span> : null}
+              {owner ? <span className="rb-meta"><Face p={owner} size={16} />{owner.name}{item.ownerBasis ? ` · ${item.ownerBasis}` : ''}</span> : flags.includes(term('缺负责人')) ? <span className="rb-flag">{term('缺负责人')}</span> : null}
+              {item.due ? <span className="rb-meta"><Clock3 size={12} />{item.due}</span> : flags.includes(term('缺截止')) ? <span className="rb-flag">{term('缺截止')}</span> : null}
               <span className="rb-meta rb-quote"><Quote size={11} className="flex-none" />{item.quote}<em>{personById(seg.speaker).name} {mmss(t0)}</em></span>
             </>
           )}
@@ -180,8 +181,8 @@ function PersonRow({ id, t, done, lit, onEnter, onLeave, onOpen }: { id: PersonI
           <RankTag p={person} />
         </div>
         <div className="mt-1 flex gap-1 overflow-hidden">
-          {quiet ? <span className="text-ink-3 text-[11.5px]">本场没有必读，不打扰</span>
-            : host ? <span className="rb-tag host">发布者版</span>
+          {quiet ? <span className="text-ink-3 text-[11.5px]">{L('本场没有必读，不打扰', 'Nothing must-read — no ping')}</span>
+            : host ? <span className="rb-tag host">{L('发布者版', 'Publisher version')}</span>
             : reasons.length ? reasons.map(r => (
               <motion.span key={r} className={cn('rb-tag', r === 'R4' && 'r4')} title={REASONS[r]} initial={{ scale: 0.6, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>{r} {REASON_SHORT[r]}</motion.span>
             )) : <span className="text-ink-3 text-[12px]">{person.role}</span>}
@@ -190,7 +191,7 @@ function PersonRow({ id, t, done, lit, onEnter, onLeave, onOpen }: { id: PersonI
       <div className="flex flex-none flex-col items-end">
         {quiet ? <span className="text-ink-4 text-xl leading-none font-semibold">0</span>
           : <motion.b key={count} className="text-xl leading-none" initial={{ scale: 1.5, color: '#2F64F2' }} animate={{ scale: 1, color: '#17171A' }} transition={{ duration: 0.35 }}>{count}</motion.b>}
-        <small className="text-ink-3 mt-1 inline-flex items-center gap-0.5 text-[10.5px]">{host ? '全量' : restricted ? <><Lock size={10} /> 含受限</> : '必读'}</small>
+        <small className="text-ink-3 mt-1 inline-flex items-center gap-0.5 text-[10.5px]">{host ? L('全量', 'Everything') : restricted ? <><Lock size={10} /> {L('含受限', 'Restricted')}</> : L('必读', 'Must-read')}</small>
       </div>
       {sent && <motion.span className="rb-sent" initial={{ scale: 0 }} animate={{ scale: 1 }} transition={{ type: 'spring', stiffness: 500, damping: 22 }}><CircleCheck size={15} /></motion.span>}
     </motion.button>

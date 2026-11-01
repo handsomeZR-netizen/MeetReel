@@ -6,17 +6,18 @@ import { FileText, Pause, Play, Repeat2, Video } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { Kb } from '@/components/common/bits'
 import { DotLoader, easeOut, hash, square, useDotCanvas } from '@/components/common/DotMatrix'
+import { L } from '@/lib/i18n'
 
 // ---------------- 每日自进化（RSI）：新资料切块入库 + 回流改写档案和规则 ----------------
 
 // 簇的颜色用在深色屏上，取亮一档
 type Cluster = { name: string; x: number; y: number; color: string }
 const CLUSTERS: Cluster[] = [
-  { name: '安全组织 · 评审', x: 0.33, y: 0.3, color: '#8B93FF' },
-  { name: '开发安全', x: 0.8, y: 0.28, color: '#2DD4BF' },
-  { name: '车主运营', x: 0.36, y: 0.71, color: '#F472B6' },
-  { name: '门店 · 竞品卖点', x: 0.8, y: 0.71, color: '#FBBF24' },
-  { name: '安全理念 · 目标', x: 0.58, y: 0.5, color: '#38BDF8' },
+  { name: L('安全组织 · 评审', 'Safety org · reviews'), x: 0.33, y: 0.3, color: '#8B93FF' },
+  { name: L('开发安全', 'Dev safety'), x: 0.8, y: 0.28, color: '#2DD4BF' },
+  { name: L('车主运营', 'Owner ops'), x: 0.36, y: 0.71, color: '#F472B6' },
+  { name: L('门店 · 竞品卖点', 'Stores · competitor pitch'), x: 0.8, y: 0.71, color: '#FBBF24' },
+  { name: L('安全理念 · 目标', 'Safety philosophy · goal'), x: 0.58, y: 0.5, color: '#38BDF8' },
 ]
 
 interface Day {
@@ -30,21 +31,27 @@ interface Day {
   learned: string
 }
 
-const DAYS: Day[] = [
+const DAYS: Day[] = L<Day[]>([
   { date: '10/27', label: '周一', sources: [{ kind: 'doc', text: '历史纪要回填 · 32 份' }], add: [4, 4, 3, 3, 2], chunks: 1180, hit: 84, learned: '冷启动：按部门和职级初始化 10 份关注档案' },
   { date: '10/28', label: '周二', sources: [{ kind: 'meet', text: '安全周会 · 9 段' }, { kind: 'doc', text: '安委会常设方案.docx' }, { kind: 'fb', text: '魏然、许诺确认待办' }], add: [5, 3, 0, 0, 1], chunks: 1226, hit: 86, learned: '编制和预算类条目默认“受限”' },
   { date: '10/29', label: '周三', sources: [{ kind: 'meet', text: '车主运营月会 · 7 段' }, { kind: 'doc', text: '评分 × 积分试点方案.docx' }, { kind: 'fb', text: '高远：交付依赖积分方案' }], add: [0, 0, 5, 1, 0], chunks: 1264, hit: 87, learned: '高远的档案新增依赖「车主积分体系」（R4）' },
   { date: '10/30', label: '周四', sources: [{ kind: 'meet', text: '门店销售周会 · 6 段' }, { kind: 'doc', text: '权益对比表 v3.xlsx' }, { kind: 'fb', text: '江晚订阅「竞品卖点」' }], add: [0, 0, 1, 5, 1], chunks: 1295, hit: 89, learned: '“权益”“表盘”归到「购车权益」话题' },
   { date: '10/31', label: '周五', sources: [{ kind: 'meet', text: '小米安全专场直播 · 92 段' }, { kind: 'doc', text: 'PDF 纪要 · 对标表 · 拆解 MD · 3 张截图' }, { kind: 'fb', text: '审核官标出 1 处绝对化表述' }], add: [6, 4, 3, 3, 4], chunks: 1459, hit: 92, learned: '外部直播模板：关掉点名规则，绝对化表述一律“待核实”' },
-]
+], [
+  { date: '10/27', label: 'Mon', sources: [{ kind: 'doc', text: 'Backfilled past minutes · 32 docs' }], add: [4, 4, 3, 3, 2], chunks: 1180, hit: 84, learned: 'Cold start: seeded 10 interest profiles from department and level' },
+  { date: '10/28', label: 'Tue', sources: [{ kind: 'meet', text: 'Safety weekly · 9 segments' }, { kind: 'doc', text: 'Standing committee proposal.docx' }, { kind: 'fb', text: 'Wei Ran, Xu Nuo confirmed to-dos' }], add: [5, 3, 0, 0, 1], chunks: 1226, hit: 86, learned: 'Headcount and budget items default to “Restricted”' },
+  { date: '10/29', label: 'Wed', sources: [{ kind: 'meet', text: 'Owner ops monthly · 7 segments' }, { kind: 'doc', text: 'Score × points pilot plan.docx' }, { kind: 'fb', text: 'Gao Yuan: delivery depends on the points plan' }], add: [0, 0, 5, 1, 0], chunks: 1264, hit: 87, learned: 'Gao Yuan’s profile now depends on “Owner points program” (R4)' },
+  { date: '10/30', label: 'Thu', sources: [{ kind: 'meet', text: 'Store sales weekly · 6 segments' }, { kind: 'doc', text: 'Perk comparison v3.xlsx' }, { kind: 'fb', text: 'Jiang Wan followed “Competitor selling points”' }], add: [0, 0, 1, 5, 1], chunks: 1295, hit: 89, learned: '“Perks” and “dash” now map to the “Purchase perks” topic' },
+  { date: '10/31', label: 'Fri', sources: [{ kind: 'meet', text: 'Xiaomi safety livestream · 92 segments' }, { kind: 'doc', text: 'PDF notes · benchmark · breakdown MD · 3 stills' }, { kind: 'fb', text: 'Auditor flagged 1 absolute claim' }], add: [6, 4, 3, 3, 4], chunks: 1459, hit: 92, learned: 'External livestream template: naming rule off, absolute claims always “Unverified”' },
+])
 
 const SRC = {
-  meet: { label: '会议', icon: Video, color: '#5F3E54' },
-  doc: { label: '资料', icon: FileText, color: '#64748B' },
-  fb: { label: '回流', icon: Repeat2, color: '#059669' },
+  meet: { label: L('会议', 'meeting'), icon: Video, color: '#5F3E54' },
+  doc: { label: L('资料', 'doc'), icon: FileText, color: '#64748B' },
+  fb: { label: L('回流', 'feedback'), icon: Repeat2, color: '#059669' },
 } as const
 
-const LOOP = ['分发', '回流', '评测打分', '改写档案', '下一场更准']
+const LOOP = L(['分发', '回流', '评测打分', '改写档案', '下一场更准'], ['Dispatch', 'Feedback', 'Score', 'Rewrite profiles', 'Sharper next time'])
 const FEEDBACK_TOTAL = [0, 3, 5, 8, 13]
 
 /** 每日自进化面板：打开时停在今天；点播放从周一起把这一周重放一遍 */
@@ -64,10 +71,10 @@ export function EvolvePanel() {
       <div className="flex items-center gap-2.5">
         <span className="sg-raised grid size-9 flex-none place-items-center rounded-xl text-[var(--plum)]"><Kb name="brain" size={22} /></span>
         <div className="min-w-0 leading-tight">
-          <h2 className="text-[16px] font-semibold">每天自进化</h2>
-          <p className="text-ink-3 truncate text-[12.5px]">新会议和资料入库，确认、退回、追问反过来改写档案和规则</p>
+          <h2 className="text-[16px] font-semibold">{L('每天自进化', 'Self-improving, daily')}</h2>
+          <p className="text-ink-3 truncate text-[12.5px]">{L('新会议和资料入库，确认、退回、追问反过来改写档案和规则', 'New meetings and docs go in; confirms, bounces and questions rewrite profiles and rules')}</p>
         </div>
-        <button className="sg-raised sg-icon-btn ml-auto size-8 flex-none" onClick={() => { if (!auto && day === DAYS.length - 1) setDay(0); setAuto(!auto) }} aria-label={auto ? '暂停' : '重放这一周'} title={auto ? '暂停' : '重放这一周'}>{auto ? <Pause size={14} /> : <Play size={14} />}</button>
+        <button className="sg-raised sg-icon-btn ml-auto size-8 flex-none" onClick={() => { if (!auto && day === DAYS.length - 1) setDay(0); setAuto(!auto) }} aria-label={auto ? L('暂停', 'Pause') : L('重放这一周', 'Replay the week')} title={auto ? L('暂停', 'Pause') : L('重放这一周', 'Replay the week')}>{auto ? <Pause size={14} /> : <Play size={14} />}</button>
       </div>
 
       <div className="sg-well mt-3.5 grid grid-cols-5 gap-1 rounded-2xl p-1">
@@ -82,7 +89,7 @@ export function EvolvePanel() {
       </div>
 
       <div className="mt-3.5">
-        <div className="text-ink-3 mb-2 flex items-center gap-2 text-[12px]">{d.date} 喂进来的<span className="h-px flex-1 bg-[rgb(95_62_84/10%)]" /></div>
+        <div className="text-ink-3 mb-2 flex items-center gap-2 text-[12px]">{L(`${d.date} 喂进来的`, `Fed in on ${d.date}`)}<span className="h-px flex-1 bg-[rgb(95_62_84/10%)]" /></div>
         <div className="flex flex-col gap-1.5">
           <AnimatePresence mode="popLayout" initial={false}>
             {d.sources.map((s, i) => {
@@ -102,14 +109,14 @@ export function EvolvePanel() {
       <VectorField day={day} />
 
       <div className="glass-metrics mt-3.5 grid grid-cols-3 gap-2">
-        <Metric label="向量块" value={d.chunks.toLocaleString()} delta={prev ? `+${d.chunks - prev.chunks}` : ''} />
-        <Metric label="路由命中率" value={`${d.hit}%`} delta={prev ? `+${d.hit - prev.hit}` : ''} bar={d.hit} />
-        <Metric label="本周回流" value={`${FEEDBACK_TOTAL[day]} 条`} />
+        <Metric label={L('向量块', 'Vector chunks')} value={d.chunks.toLocaleString()} delta={prev ? `+${d.chunks - prev.chunks}` : ''} />
+        <Metric label={L('路由命中率', 'Routing hit rate')} value={`${d.hit}%`} delta={prev ? `+${d.hit - prev.hit}` : ''} bar={d.hit} />
+        <Metric label={L('本周回流', 'Feedback this week')} value={L(`${FEEDBACK_TOTAL[day]} 条`, `${FEEDBACK_TOTAL[day]}`)} />
       </div>
 
       <AnimatePresence mode="wait" initial={false}>
         <motion.div key={d.date} className="sg-card mt-3 flex items-start gap-2.5 rounded-2xl px-3 py-2.5" initial={{ opacity: 0, y: 4 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0 }}>
-          <span className="sg-onyx mt-px inline-flex flex-none items-center gap-1 rounded-full px-2 text-[11px] leading-[20px]"><Kb name="lightbulb" size={11} />学到</span>
+          <span className="sg-onyx mt-px inline-flex flex-none items-center gap-1 rounded-full px-2 text-[11px] leading-[20px]"><Kb name="lightbulb" size={11} />{L('学到', 'Learned')}</span>
           <span className="text-[13.5px] leading-snug">{d.learned}</span>
         </motion.div>
       </AnimatePresence>
@@ -256,14 +263,14 @@ function VectorField({ day }: { day: number }) {
   return (
     <div className="vx-screen sg-dark mt-3.5 p-2.5">
       <div className="relative" style={{ aspectRatio: `${COLS} / ${ROWS}` }}>
-        <canvas ref={ref} className="absolute inset-0 size-full" aria-label={`知识库向量空间，${CLUSTERS.length} 个话题簇`} role="img" />
+        <canvas ref={ref} className="absolute inset-0 size-full" aria-label={L(`知识库向量空间，${CLUSTERS.length} 个话题簇`, `Knowledge base vector space, ${CLUSTERS.length} topic clusters`)} role="img" />
         {CLUSTERS.map(c => (
           <span key={c.name} className="vx-label" style={{ left: `${c.x * 100}%`, top: `${((c.y * ROWS + 4.2) / ROWS) * 100}%`, '--c': c.color } as CSSProperties}><i />{c.name}</span>
         ))}
       </div>
       <span className="absolute top-2.5 left-3 flex items-center gap-2 rounded-md bg-black/45 px-2 py-1 font-mono text-[10.5px] text-white/60 backdrop-blur-sm">
         <DotLoader cols={3} rows={2} dot={2} gap={1} className="text-white/70" />
-        向量空间{fresh ? ` · 今天 +${fresh} 块` : ''}
+        {L('向量空间', 'Vector space')}{fresh ? L(` · 今天 +${fresh} 块`, ` · +${fresh} today`) : ''}
       </span>
     </div>
   )
@@ -358,21 +365,21 @@ export function EvolvePill() {
         className="evo-pill"
         aria-expanded={open}
         aria-haspopup="dialog"
-        title="知识库每天自进化"
+        title={L('知识库每天自进化', 'The knowledge base improves itself every day')}
         onClick={() => {
           clearTimeout(timer.current)
           if (open && pinned.current) { pinned.current = false; setOpen(false) } else { pinned.current = true; setOpen(true) }
         }}
       >
         <EvoPixels />
-        <span className="evo-pill-label">自进化中</span>
+        <span className="evo-pill-label">{L('自进化中', 'Self-improving')}</span>
         <span className="evo-pill-icon"><Kb name="brain" size={19} /></span>
       </button>
       <AnimatePresence>
         {open && (
           <motion.div
             role="dialog"
-            aria-label="每天自进化"
+            aria-label={L('每天自进化', 'Self-improving, daily')}
             className="evo-pop pc-sheet absolute top-[calc(100%+10px)] right-0 z-40 w-[540px] max-w-[calc(100vw-40px)] origin-top-right rounded-[24px] p-4"
             initial={{ opacity: 0, y: -8, scale: 0.96 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}

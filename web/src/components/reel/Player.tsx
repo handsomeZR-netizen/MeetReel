@@ -10,6 +10,7 @@ import { AppleReel } from './AppleReel'
 import { SketchReel } from './SketchReel'
 import { PopReel } from './PopReel'
 import { IsoReel } from './IsoReel'
+import { L } from '@/lib/i18n'
 
 const SKINS: Record<ReelStyle, (p: { s: ReelSpec; t: number }) => React.ReactNode> = {
   apple: AppleReel, sketch: SketchReel, pop: PopReel, iso: IsoReel,
@@ -54,7 +55,7 @@ export function Scrubber({ clock, dark = true }: { clock: ReelClock; dark?: bool
   const acts = Object.keys(ACT) as ActName[]
   return (
     <div className={cn('flex items-center gap-3 px-3 py-2.5', dark ? 'bg-[#111] text-white/80' : 'text-ink-2')}>
-      <button className={cn('grid size-8 flex-none place-items-center rounded-full', dark ? 'bg-white/10 hover:bg-white/20' : 'sg-raised')} onClick={clock.toggle} aria-label={clock.playing ? '暂停' : '播放'}>
+      <button className={cn('grid size-8 flex-none place-items-center rounded-full', dark ? 'bg-white/10 hover:bg-white/20' : 'sg-raised')} onClick={clock.toggle} aria-label={clock.playing ? L('暂停', 'Pause') : L('播放', 'Play')}>
         {clock.playing ? <Pause size={15} fill="currentColor" /> : <Play size={15} fill="currentColor" className="ml-0.5" />}
       </button>
       <div
